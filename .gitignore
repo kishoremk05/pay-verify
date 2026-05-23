@@ -20,6 +20,7 @@ dist-ssr
 .env.*
 !.env.example
 .lovable
+clientdocument.md
 
 # Wrangler / Cloudflare
 .wrangler/
