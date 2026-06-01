@@ -95,8 +95,7 @@ function RefundsPage() {
         .select(`
           *,
           customers!customer_id (id, name, customer_code),
-          payments!payment_id (id, reference, amount_paid, payment_date),
-          profiles:processed_by (id, full_name)
+          payments!payment_id (id, reference, amount_paid, payment_date)
         `)
         .eq("organization_id", organization!.id)
         .order("created_at", { ascending: false });

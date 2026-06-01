@@ -48,11 +48,7 @@ function SecureAuditLogsPage() {
       const { data } = await (supabase as any)
         .from("audit_logs")
         .select(`
-          *,
-          profiles:performed_by (
-            id,
-            full_name
-          )
+          *
         `)
         .eq("organization_id", organization!.id)
         .order("created_at", { ascending: false });
