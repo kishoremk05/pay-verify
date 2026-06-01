@@ -8,6 +8,7 @@ import express from "express";
 import cors from "cors";
 import invoiceRoutes from "./routes/invoices.js";
 import refundRoutes from "./routes/refunds.js";
+import inviteRoutes from "./routes/invites.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "5000", 10);
@@ -46,6 +47,7 @@ app.get("/api/health", (_req, res) => {
 // ── Routes ──
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/refunds", refundRoutes);
+app.use("/api/invites", inviteRoutes);
 
 // ── Start ──
 app.listen(PORT, () => {

@@ -46,7 +46,7 @@ export const Route = createFileRoute("/_authenticated/staff-management")({
 });
 
 function StaffManagementPage() {
-  const { organization, role, user } = useAuth();
+  const { organization, role, user, profile } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -104,7 +104,7 @@ function StaffManagementPage() {
     },
   });
 
-  // Handle invitation creation
+  // Handle invitation creation and email dispatch
   const handleInviteStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!organization?.id || !user?.id) return;
@@ -113,34 +113,42 @@ function StaffManagementPage() {
     setInviting(true);
 
     try {
-      const token = crypto.randomUUID();
-
-      const { error } = await (supabase as any).from("invitations").insert({
-        organization_id: organization.id,
-        email: inviteEmail.trim().toLowerCase(),
-        role: inviteRole,
-        token: token,
-        invited_by: user.id,
+      const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || "http://localhost:5000";
+      
+      const response = await fetch(`${BACKEND_URL}/api/invites`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          organization_id: organization.id,
+          email: inviteEmail.trim().toLowerCase(),
+          role: inviteRole,
+          invited_by: user.id,
+          organization_name: organization.name,
+          invited_by_name: profile?.full_name || user?.email || "Workspace Admin",
+          frontend_url: window.location.origin,
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to send invitation email");
+      }
 
-      // Log system audit
-      await (supabase as any).from("audit_logs").insert({
-        organization_id: organization.id,
-        action_type: "staff_invite",
-        action_description: `Staff invite generated for ${inviteEmail} with role '${inviteRole}'.`,
-        performed_by: user.id,
-      });
+      const result = await response.json();
 
-      const inviteUrl = `${window.location.origin}/signup?invite=${token}`;
-      setGeneratedLink(inviteUrl);
-      toast.success("Invitation link generated successfully!");
+      setGeneratedLink(result.inviteUrl);
+      toast.success(
+        result.emailSent
+          ? "Invitation sent & registration link dispatched!"
+          : "Invitation saved, but email dispatch failed."
+      );
       setInviteEmail("");
       
       queryClient.invalidateQueries({ queryKey: ["invitations", organization.id] });
     } catch (error: any) {
-      toast.error(error.message || "Failed to generate invite");
+      toast.error(error.message || "Failed to send invite");
     } finally {
       setInviting(false);
     }
@@ -218,20 +226,20 @@ function StaffManagementPage() {
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground">Invite Workspace Member</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Generate a secure invitation registration token for staff onboarding.
+              Send a secure invitation registration link to recruit new workspace members.
             </DialogDescription>
           </DialogHeader>
 
           {generatedLink ? (
             <div className="space-y-5 py-4">
-              <div className="rounded-2xl bg-cyan-500/10 p-4 border border-cyan-500/20 text-xs text-cyan-700 dark:text-cyan-400 font-semibold leading-relaxed flex items-start gap-2.5">
+              <div className="rounded-2xl bg-emerald-500/10 p-4 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-400 font-semibold leading-relaxed flex items-start gap-2.5">
                 <Sparkles className="h-5 w-5 shrink-0 mt-0.5" />
                 <div>
-                  Invitation link successfully generated! Send this URL to your team member to register.
+                  Invitation successfully sent! An email invitation with the onboarding registration link has been dispatched to your team member.
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Onboarding Link</Label>
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Backup Onboarding Link</Label>
                 <div className="flex gap-2">
                   <Input value={generatedLink} readOnly className="rounded-full px-5 h-11 border-border/80 text-xs font-semibold bg-muted/40 select-all" />
                   <Button variant="outline" size="icon" onClick={() => copyToClipboard(generatedLink)} className="rounded-full h-11 w-11 shrink-0 border-border/80 bg-card">
@@ -296,7 +304,7 @@ function StaffManagementPage() {
                   className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white px-6 rounded-full"
                 >
                   {inviting ? <Loader2 className="h-4.5 w-4.5 animate-spin mr-2" /> : null}
-                  Generate Invite Link
+                  Send Invite Link
                 </Button>
               </DialogFooter>
             </form>
