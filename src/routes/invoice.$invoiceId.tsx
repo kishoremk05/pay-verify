@@ -19,6 +19,14 @@ import {
   Calendar,
   DollarSign,
   AlertTriangle,
+  HelpCircle,
+  Info,
+  Lock,
+  Eye,
+  CreditCard,
+  ChevronDown,
+  Check,
+  Mail,
 } from "lucide-react";
 
 export const Route = createFileRoute("/invoice/$invoiceId")({
@@ -74,6 +82,15 @@ function InvoicePortalPage() {
 
   // Dev simulation
   const [simMode, setSimMode] = useState<"none" | "success" | "fail">("none");
+
+  // Copy feedback state
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   // Fetch invoice details
   useEffect(() => {
@@ -197,142 +214,245 @@ function InvoicePortalPage() {
   const isPaid = invoice.status === "paid";
   const isReview = invoice.status === "review_required";
   const orgName = invoice.organizations?.name || "PayVerify";
+  const initials = invoice.customers?.name
+    ?.split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "PV";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950/80 to-slate-950 text-white relative overflow-hidden">
-      {/* Background decorations */}
+    <div className="min-h-screen bg-[#0b0f19] text-slate-100 font-sans relative overflow-hidden flex flex-col">
+      {/* Premium Ambient Background Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-indigo-500/5 rounded-full blur-[140px]" />
       </div>
 
-      <div className="relative z-10 max-w-3xl mx-auto px-4 py-8 sm:py-12">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-full mb-6">
-            <Shield className="h-4 w-4 text-indigo-400" />
-            <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider">Secure Payment Portal</span>
+      {/* ─── Top Header Navigation Bar (Image 2 Layout) ─── */}
+      <header className="relative z-20 w-full bg-[#0d1321]/80 backdrop-blur-xl border-b border-white/[0.05] py-4 px-6 sm:px-8">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 border border-indigo-400/20">
+              <span className="text-xl font-bold text-white">❖</span>
+            </div>
+            <div>
+              <h1 className="text-base font-black text-white tracking-tight leading-tight">{orgName}</h1>
+              <p className="text-[10px] text-slate-400 font-medium tracking-wide">Invoice Payment & Verification</p>
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight bg-gradient-to-r from-white via-indigo-200 to-violet-200 bg-clip-text text-transparent">
-            {orgName}
-          </h1>
-          <p className="text-slate-400 text-sm mt-2">Invoice Payment & Verification</p>
+          
+          <div className="flex items-center gap-5">
+            <a href="mailto:support@payverify.com" className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors font-medium">
+              <HelpCircle className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Need Help?</span>
+            </a>
+            
+            <div className="h-px w-4 bg-white/10 hidden sm:block" />
+            
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center border border-white/10 text-white font-bold text-xs shadow-md">
+                {initials}
+              </div>
+              <span className="text-xs font-bold text-slate-300 hidden md:inline truncate max-w-[120px]">
+                {invoice.customers?.name || "Customer"}
+              </span>
+              <ChevronDown className="h-3 w-3 text-slate-500 hidden md:block" />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="relative z-10 flex-1 max-w-5xl w-full mx-auto px-4 py-8 sm:py-12 flex flex-col gap-8">
+        
+        {/* ─── Hero / Title Area (Image 2 Style) ─── */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Upload Payment Proof</h2>
+            <p className="text-sm text-slate-400 mt-1">Please upload your payment receipt to help us verify your payment.</p>
+          </div>
+          
+          <div className="inline-flex items-center gap-3 bg-white/[0.02] border border-white/[0.06] backdrop-blur-md rounded-2xl p-4 shadow-xl self-start md:self-auto">
+            <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+              <Lock className="h-4 w-4 text-indigo-400" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white tracking-wide uppercase">Secure &amp; Encrypted</h4>
+              <p className="text-[10px] text-slate-500 font-medium">Your data is safe with us</p>
+            </div>
+          </div>
         </div>
 
-        {/* Invoice Summary Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 mb-6 shadow-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                <FileText className="h-5 w-5 text-indigo-400" />
-              </div>
-              <div>
-                <h2 className="text-lg font-black text-white">{invoice.invoice_number}</h2>
-                <p className="text-xs text-slate-500">Invoice ID</p>
-              </div>
+        {/* ─── 1. Invoice Details Card (Image 2 Grid Layout) ─── */}
+        <div className="bg-[#0f172a]/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500/0" />
+          
+          <div className="flex items-center justify-between pb-5 border-b border-white/[0.05] mb-6">
+            <div className="flex items-center gap-2.5">
+              <FileText className="h-4.5 w-4.5 text-indigo-400" />
+              <h3 className="text-sm font-bold text-slate-300 tracking-wider uppercase">Invoice Details</h3>
             </div>
             <span
-              className={`px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+              className={`px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${
                 isPaid
-                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5"
                   : isReview
-                    ? "bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse"
-                    : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                    ? "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-500/5 animate-pulse"
+                    : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20 shadow-indigo-500/5"
               }`}
             >
               {invoice.status === "review_required" ? "Under Review" : invoice.status}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-              <div className="flex items-center gap-2 mb-1.5">
-                <User className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Customer</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {/* Invoice ID */}
+            <div className="flex items-start gap-3 bg-white/[0.02] hover:bg-white/[0.03] border border-white/[0.04] rounded-xl p-4 transition-colors">
+              <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mt-0.5">
+                <FileText className="h-4 w-4 text-indigo-400" />
               </div>
-              <p className="text-sm font-bold text-white">{invoice.customers?.name || "—"}</p>
-              {invoice.customers?.account_number && (
-                <p className="text-xs font-mono font-bold text-indigo-400 mt-1">
-                  Acc: {invoice.customers.account_number}
-                </p>
-              )}
-            </div>
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-              <div className="flex items-center gap-2 mb-1.5">
-                <DollarSign className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Amount Due</span>
+              <div className="flex-1">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Invoice ID</p>
+                <h4 className="text-sm font-bold text-white mt-1">{invoice.invoice_number}</h4>
               </div>
-              <p className="text-lg font-black text-emerald-400">{formatCurrency(Number(invoice.amount))}</p>
             </div>
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Due Date</span>
+
+            {/* Customer Name */}
+            <div className="flex items-start gap-3 bg-white/[0.02] hover:bg-white/[0.03] border border-white/[0.04] rounded-xl p-4 transition-colors">
+              <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mt-0.5">
+                <User className="h-4 w-4 text-indigo-400" />
               </div>
-              <p className="text-sm font-bold text-white">{formatDate(invoice.due_date)}</p>
-            </div>
-            <div className="bg-white/5 rounded-2xl p-4 border border-white/5">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Building2 className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Organization</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">Customer Name</p>
+                <h4 className="text-sm font-bold text-white mt-1 truncate">{invoice.customers?.name || "—"}</h4>
               </div>
-              <p className="text-sm font-bold text-white">{orgName}</p>
             </div>
+
+            {/* Amount Due */}
+            <div className="flex items-start gap-3 bg-white/[0.02] hover:bg-white/[0.03] border border-white/[0.04] rounded-xl p-4 transition-colors">
+              <div className="h-9 w-9 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 mt-0.5">
+                <DollarSign className="h-4 w-4 text-emerald-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Amount Due</p>
+                <h4 className="text-base font-black text-emerald-400 mt-0.5">{formatCurrency(Number(invoice.amount))}</h4>
+              </div>
+            </div>
+
+            {/* Due Date */}
+            <div className="flex items-start gap-3 bg-white/[0.02] hover:bg-white/[0.03] border border-white/[0.04] rounded-xl p-4 transition-colors">
+              <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mt-0.5">
+                <Calendar className="h-4 w-4 text-indigo-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Due Date</p>
+                <h4 className="text-sm font-bold text-white mt-1">{formatDate(invoice.due_date)}</h4>
+              </div>
+            </div>
+
+            {/* Account Number */}
+            <div className="flex items-start gap-3 bg-white/[0.02] hover:bg-white/[0.03] border border-white/[0.04] rounded-xl p-4 transition-colors relative group">
+              <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mt-0.5">
+                <CreditCard className="h-4 w-4 text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Account Number</p>
+                {invoice.customers?.account_number ? (
+                  <button
+                    onClick={() => copyToClipboard(invoice.customers.account_number, "account")}
+                    className="flex items-center gap-1.5 hover:text-indigo-400 text-sm font-mono font-bold text-white mt-1 transition-colors w-full justify-between"
+                  >
+                    <span className="truncate">{invoice.customers.account_number}</span>
+                    <div className="h-6 w-6 rounded-md bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      {copiedField === "account" ? (
+                        <Check className="h-3 w-3 text-emerald-400" />
+                      ) : (
+                        <Copy className="h-3 w-3 text-slate-400" />
+                      )}
+                    </div>
+                  </button>
+                ) : (
+                  <h4 className="text-sm font-bold text-slate-500 mt-1 italic">Not Available</h4>
+                )}
+              </div>
+            </div>
+
+            {/* Organization */}
+            <div className="flex items-start gap-3 bg-white/[0.02] hover:bg-white/[0.03] border border-white/[0.04] rounded-xl p-4 transition-colors">
+              <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mt-0.5">
+                <Building2 className="h-4 w-4 text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">Organization</p>
+                <h4 className="text-sm font-bold text-white mt-1 truncate">{orgName}</h4>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        {/* Bank Payment Instructions */}
+        {/* Bank Payment Instructions (Only visible when pending) */}
         {!isPaid && (
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 mb-6 shadow-2xl">
-            <h3 className="text-sm font-black text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-indigo-400" />
+          <div className="bg-[#0f172a]/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 sm:p-8 shadow-2xl relative">
+            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2.5">
+              <Building2 className="h-4.5 w-4.5 text-indigo-400" />
               Bank Transfer Instructions
             </h3>
-            <div className="space-y-3 text-sm">
-              {/* Customer Name */}
-              <div className="flex items-center justify-between py-2 border-b border-white/5">
-                <span className="text-slate-400 text-xs font-semibold">Customer Name</span>
-                <div className="flex items-center gap-2">
+            <div className="space-y-4 text-sm mt-2">
+              <div className="flex items-center justify-between py-3 border-b border-white/[0.04]">
+                <span className="text-slate-400 text-xs font-semibold">Beneficiary Name</span>
+                <div className="flex items-center gap-2.5">
                   <span className="font-bold text-white">{invoice.customers?.name || "—"}</span>
                   <button
-                    onClick={() => navigator.clipboard.writeText(invoice.customers?.name || "")}
-                    className="h-6 w-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                    onClick={() => copyToClipboard(invoice.customers?.name || "", "customer")}
+                    className="h-6 w-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors relative"
                   >
-                    <Copy className="h-3 w-3 text-slate-400" />
+                    {copiedField === "customer" ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 text-slate-400" />
+                    )}
                   </button>
                 </div>
               </div>
-              {/* Account Number */}
-              {invoice.customers?.account_number ? (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-slate-400 text-xs font-semibold">Account Number</span>
-                  <div className="flex items-center gap-2">
+              
+              <div className="flex items-center justify-between py-3">
+                <span className="text-slate-400 text-xs font-semibold">Account Number</span>
+                {invoice.customers?.account_number ? (
+                  <div className="flex items-center gap-2.5">
                     <span className="font-mono font-black text-white tracking-widest">{invoice.customers.account_number}</span>
                     <button
-                      onClick={() => navigator.clipboard.writeText(invoice.customers.account_number)}
+                      onClick={() => copyToClipboard(invoice.customers.account_number, "account")}
                       className="h-6 w-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
                     >
-                      <Copy className="h-3 w-3 text-slate-400" />
+                      {copiedField === "account" ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5 text-slate-400" />
+                      )}
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div className="py-2 text-xs text-slate-500 italic">No account number on record for this customer.</div>
-              )}
+                ) : (
+                  <span className="text-slate-500 italic text-xs">No account number recorded</span>
+                )}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Upload Section — hidden when paid */}
+        {/* ─── 2. Upload Payment Receipt Card (Image 2 Style) ─── */}
         {!isPaid && !scanning && !result && (
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 mb-6 shadow-2xl">
-            <h3 className="text-sm font-black text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Camera className="h-4 w-4 text-indigo-400" />
-              Upload Payment Receipt
-            </h3>
-            <p className="text-xs text-slate-400 mb-6">
-              After making the payment, upload a screenshot or photo of your receipt. We will process and verify your payment.
+          <div className="bg-[#0f172a]/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 sm:p-8 shadow-2xl relative">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-white/[0.05] mb-5">
+              <Upload className="h-4.5 w-4.5 text-indigo-400" />
+              <h3 className="text-sm font-bold text-slate-300 tracking-wider uppercase">Upload Payment Receipt</h3>
+            </div>
+            
+            <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+              Upload a clear image or PDF of your payment receipt or bank transfer confirmation below. Our system will scan and verify it.
             </p>
 
             <input
@@ -343,44 +463,58 @@ function InvoicePortalPage() {
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />
 
-            {/* Drop zone */}
+            {/* Premium Dashed Dropzone */}
             <div
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               onClick={() => fileRef.current?.click()}
-              className={`relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${
+              className={`relative border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center ${
                 dragOver
                   ? "border-indigo-400 bg-indigo-500/10 scale-[1.01]"
                   : file
-                    ? "border-emerald-500/30 bg-emerald-500/5"
-                    : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5"
+                    ? "border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/40"
+                    : "border-white/10 bg-white/[0.01] hover:border-white/20 hover:bg-white/[0.02]"
               }`}
             >
               {file ? (
-                <div className="space-y-3">
+                <div className="space-y-4 w-full max-w-md">
                   {preview && (
                     <img
                       src={preview}
                       alt="Receipt preview"
-                      className="max-h-48 mx-auto rounded-xl border border-white/10 shadow-lg"
+                      className="max-h-40 mx-auto rounded-xl border border-white/10 shadow-xl object-contain"
                     />
                   )}
-                  <div className="flex items-center justify-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    <span className="text-sm font-bold text-emerald-400">{file.name}</span>
+                  {/* File card detail progress row */}
+                  <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.05] rounded-xl p-4 w-full gap-3 shadow-inner">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shrink-0">
+                        <FileText className="h-4 w-4 text-indigo-400" />
+                      </div>
+                      <div className="text-left min-w-0">
+                        <p className="text-xs font-bold text-slate-200 truncate pr-1">{file.name}</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">{(file.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                    </div>
+                    <div className="h-6 w-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                      <Check className="h-3 w-3 text-emerald-400" />
+                    </div>
                   </div>
-                  <p className="text-[10px] text-slate-500">
-                    {(file.size / 1024).toFixed(1)} KB • Click to change
+                  <p className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase hover:text-indigo-400 transition-colors">
+                    Click to choose another file
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="h-14 w-14 mx-auto rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <div className="space-y-4">
+                  <div className="h-14 w-14 mx-auto rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shadow-lg shadow-indigo-500/5">
                     <Upload className="h-6 w-6 text-indigo-400" />
                   </div>
-                  <p className="text-sm font-bold text-slate-300">Drop your receipt here, or click to browse</p>
-                  <p className="text-[10px] text-slate-500">JPEG, PNG, or PDF • Max 5MB</p>
+                  <div>
+                    <p className="text-sm font-bold text-slate-200">Drag &amp; drop your file here</p>
+                    <p className="text-xs text-indigo-400/80 font-bold mt-1">or click to browse</p>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium">Supported formats: JPG, PNG, PDF • Max size: 5MB</p>
                 </div>
               )}
             </div>
@@ -389,9 +523,9 @@ function InvoicePortalPage() {
             {(file || simMode !== "none") && (
               <button
                 onClick={handleVerify}
-                className="mt-6 w-full py-3.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30"
+                className="mt-6 w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-500/25 active:scale-[0.99] border border-indigo-400/10"
               >
-                <Upload className="h-4 w-4" />
+                <Upload className="h-4.5 w-4.5 animate-pulse" />
                 Upload Receipt
               </button>
             )}
@@ -400,123 +534,179 @@ function InvoicePortalPage() {
 
         {/* ─── Uploading Animation Overlay ─── */}
         {scanning && (
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 mb-6 shadow-2xl text-center">
-            <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mx-auto mb-4" />
-            <h3 className="text-lg font-black text-white mb-1">Uploading Receipt</h3>
-            <p className="text-xs text-indigo-300">Your payment proof is being processed securely. Please wait...</p>
+          <div className="bg-[#0f172a]/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-10 shadow-2xl text-center flex flex-col items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mb-4" />
+            <h3 className="text-lg font-black text-white mb-1">Scanning Receipt</h3>
+            <p className="text-xs text-indigo-300 max-w-sm mx-auto leading-relaxed">
+              Your payment proof is being analyzed securely by the AI engines. Please do not close this window.
+            </p>
           </div>
         )}
 
-        {/* ─── Result Display ─── */}
+        {/* ─── Result Display (Alerts Layout from Image 2) ─── */}
         {result && !scanning && (
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 mb-6 shadow-2xl">
+          <div className="space-y-6">
+            
+            {/* Dynamic Alert Banner (Sleek Horizontal Image 2 Style) */}
             {result.status === "matched" ? (
-              <div className="text-center space-y-4">
-                <div className="relative h-20 w-20 mx-auto">
-                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
-                  <div className="absolute inset-0 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center">
-                    <ShieldCheck className="h-10 w-10 text-emerald-400" />
+              <div className="bg-emerald-950/40 border border-emerald-500/20 rounded-2xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <ShieldCheck className="h-5 w-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-emerald-400">Receipt Verified Successfully!</h3>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      Your payment of <span className="font-bold text-emerald-400">{formatCurrency(result.extracted?.amount || 0)}</span> has been matched and reconciled immediately.
+                    </p>
+                    {result.extracted?.transaction_id && (
+                      <p className="text-[10px] font-mono text-slate-500 mt-1.5 uppercase tracking-wider">
+                        Transaction Ref: {result.extracted.transaction_id}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <h3 className="text-2xl font-black text-emerald-400">Payment Verified!</h3>
-                <p className="text-sm text-slate-300">
-                  Your payment of <span className="font-bold text-emerald-400">{formatCurrency(result.extracted?.amount || 0)}</span> has
-                  been matched and logged to your account.
-                </p>
-                {result.extracted?.transaction_id && (
-                  <p className="text-xs text-slate-500">
-                    Transaction ID: <span className="font-mono font-bold text-slate-400">{result.extracted.transaction_id}</span>
-                  </p>
-                )}
-              </div>
-            ) : result.status === "review_required" ? (
-              <div className="text-center space-y-4">
-                <div className="relative h-20 w-20 mx-auto">
-                  <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-pulse" />
-                  <div className="absolute inset-0 rounded-full bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center">
-                    <ShieldAlert className="h-10 w-10 text-amber-400" />
-                  </div>
-                </div>
-                <h3 className="text-2xl font-black text-amber-400">Receipt Submitted</h3>
-                <p className="text-sm text-slate-300 px-4">
-                  Your payment proof has been successfully uploaded. We will verify your payment within a day.
-                </p>
-              </div>
-            ) : (
-              <div className="text-center space-y-4">
-                <XCircle className="h-12 w-12 text-rose-400 mx-auto" />
-                <h3 className="text-xl font-black text-rose-400">Verification Error</h3>
-                <p className="text-sm text-slate-400">{result.message || "Something went wrong."}</p>
-              </div>
-            )}
-
-            {/* Reset button */}
-            {!isPaid && (
-              <div className="space-y-3 mt-6">
-                {result?.status !== "review_required" && (
-                  <button
-                    onClick={() => { setResult(null); setFile(null); setPreview(null); }}
-                    className="w-full py-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-sm transition-all"
-                  >
-                    Try Again
-                  </button>
-                )}
+                
                 {(preview || invoice?.receipt_url) && (
                   <a
                     href={preview || invoice?.receipt_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="block w-full py-3 rounded-full bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 text-indigo-300 font-bold text-sm text-center transition-all"
+                    className="py-2.5 px-4 rounded-xl bg-[#0f172a] hover:bg-slate-900 border border-white/[0.08] text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition-colors self-start md:self-auto shrink-0 shadow-md"
                   >
-                    View Uploaded Receipt
+                    <Eye className="h-4 w-4" />
+                    View Receipt
                   </a>
                 )}
               </div>
+            ) : result.status === "review_required" ? (
+              <div className="bg-amber-950/40 border border-amber-500/20 rounded-2xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <ShieldAlert className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-amber-400">Receipt Submitted for Review</h3>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      Your receipt has been logged. Our audit team will verify this within one business day and send a confirmation to your email.
+                    </p>
+                  </div>
+                </div>
+                
+                {(preview || invoice?.receipt_url) && (
+                  <a
+                    href={preview || invoice?.receipt_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="py-2.5 px-4 rounded-xl bg-[#0f172a] hover:bg-slate-900 border border-white/[0.08] text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition-colors self-start md:self-auto shrink-0 shadow-md"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View Receipt
+                  </a>
+                )}
+              </div>
+            ) : (
+              <div className="bg-rose-950/40 border border-rose-500/20 rounded-2xl p-5 shadow-2xl flex items-start gap-4">
+                <div className="h-10 w-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <XCircle className="h-5 w-5 text-rose-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-rose-400">Verification Error</h3>
+                  <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                    {result.message || "We could not extract invoice parameters from the uploaded receipt. Please make sure the text is clear."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Try Again controls */}
+            {!isPaid && result?.status !== "review_required" && (
+              <button
+                onClick={() => { setResult(null); setFile(null); setPreview(null); }}
+                className="w-full py-3.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.08] text-slate-200 font-bold text-sm transition-all"
+              >
+                Try Again / Choose Another File
+              </button>
             )}
           </div>
         )}
 
-        {/* Already Paid Banner */}
+        {/* Already Paid Banner (If landed on page already paid) */}
         {isPaid && !result && (
-          <div className="bg-emerald-500/5 backdrop-blur-xl border border-emerald-500/20 rounded-3xl p-6 sm:p-8 mb-6 text-center">
-            <ShieldCheck className="h-12 w-12 text-emerald-400 mx-auto mb-4" />
-            <h3 className="text-xl font-black text-emerald-400 mb-2">Invoice Fully Paid</h3>
-            <p className="text-sm text-slate-400">This invoice has been verified and marked as paid. No further action is required.</p>
+          <div className="bg-emerald-950/30 border border-emerald-500/20 rounded-2xl p-6 shadow-2xl flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-5 w-5 text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-emerald-400">Invoice Fully Paid</h3>
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                This invoice has already been successfully verified and logged as paid. No further action is required from your side.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* ─── Dev Simulation Bar ─── */}
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-3 flex items-center gap-3 shadow-2xl">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Dev Sandbox</span>
-          <button
-            onClick={() => setSimMode(simMode === "success" ? "none" : "success")}
-            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all ${
-              simMode === "success"
-                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                : "bg-white/5 text-slate-500 border border-white/10 hover:bg-white/10"
-            }`}
-          >
-            Force Match
-          </button>
-          <button
-            onClick={() => setSimMode(simMode === "fail" ? "none" : "fail")}
-            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all ${
-              simMode === "fail"
-                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                : "bg-white/5 text-slate-500 border border-white/10 hover:bg-white/10"
-            }`}
-          >
-            Force Mismatch
-          </button>
+        {/* ─── 3. What Happens Next Card (Image 2 Bottom Section) ─── */}
+        <div className="bg-indigo-950/20 border border-indigo-500/[0.15] rounded-2xl p-6 shadow-xl flex items-center justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
+          
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
+              <Info className="h-5 w-5 text-indigo-400" />
+            </div>
+            <div className="max-w-xl">
+              <h4 className="text-sm font-black text-white">What happens next?</h4>
+              <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                Our finance team will review your payment proof and update the status once verified. You'll receive a confirmation email instantly.
+              </p>
+            </div>
+          </div>
+          
+          <div className="hidden lg:flex h-16 w-16 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 items-center justify-center shrink-0">
+            <Mail className="h-6 w-6 text-indigo-400/40" />
+          </div>
         </div>
 
-        {/* Footer */}
-        <div className="text-center pt-8 pb-20">
-          <p className="text-[10px] text-slate-600">
-            Secured by <span className="font-bold text-indigo-400">PayVerify</span> • End-to-end encrypted
+      </main>
+
+      {/* ─── Dev Simulation Bar ─── */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#0d1321]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-5 py-3.5 flex items-center gap-4 shadow-2xl">
+        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Dev Sandbox</span>
+        <button
+          onClick={() => setSimMode(simMode === "success" ? "none" : "success")}
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+            simMode === "success"
+              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+              : "bg-white/5 text-slate-400 border-white/[0.05] hover:bg-white/10"
+          }`}
+        >
+          Force Match
+        </button>
+        <button
+          onClick={() => setSimMode(simMode === "fail" ? "none" : "fail")}
+          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+            simMode === "fail"
+              ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+              : "bg-white/5 text-slate-400 border-white/[0.05] hover:bg-white/10"
+          }`}
+        >
+          Force Mismatch
+        </button>
+      </div>
+
+      {/* Footer */}
+      <footer className="w-full relative z-10 border-t border-white/[0.04] py-6 px-4 bg-[#080b13] mt-auto">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <p className="text-[10px] text-slate-500">
+            © {new Date().getFullYear()} {orgName}. All rights reserved.
+          </p>
+          <p className="text-[10px] text-slate-600 flex items-center gap-1.5 justify-center">
+            <span>Secured by <span className="font-bold text-indigo-400/80">PayVerify</span></span>
+            <span>•</span>
+            <span>End-to-end encrypted</span>
           </p>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }
