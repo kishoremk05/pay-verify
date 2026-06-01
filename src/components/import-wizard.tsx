@@ -52,6 +52,7 @@ export function ImportWizard({ isOpen, onClose, title, headers, rawData, fields,
 
       // Pass 2: Synonym-aware matching for remaining fields
       const synonyms: Record<string, string[]> = {
+        name: ["name", "fullname", "full_name", "customer_name", "customername", "client_name", "clientname", "payee", "payer", "customer_full_name", "customerfullname"],
         transaction_id: ["transaction_id", "transactionid", "transaction", "txid", "txnid", "tx_id", "txn_id", "trx_id", "trxid", "payment_id", "paymentid", "id", "ref", "reference"],
         customer_code: ["customer_code", "customercode", "customer_id", "customerid", "cust_code", "custcode", "cust_id", "custid", "customer", "code"],
         amount_paid: ["amount_paid", "amountpaid", "amount_received", "amountreceived", "amount", "paid", "received", "value"],
@@ -61,7 +62,12 @@ export function ImportWizard({ isOpen, onClose, title, headers, rawData, fields,
         payment_date: ["payment_date", "paymentdate", "date", "created_at", "createdat", "time", "timestamp"],
         source: ["source", "origin", "channel", "payment_source", "paymentsource"],
         currency: ["currency", "curr", "monetary_unit", "monetaryunit"],
-        notes: ["notes", "note", "remarks", "remark", "description", "desc", "memo"]
+        notes: ["notes", "note", "remarks", "remark", "description", "desc", "memo"],
+        phone: ["phone", "phonenumber", "phone_number", "mobile", "mobile_number", "mobilenumber", "contact", "contact_number", "contactnumber", "tel", "telephone"],
+        email: ["email", "emailaddress", "email_address", "mail", "mailaddress", "mail_address"],
+        service: ["service", "subscribed_service", "subscribedservice", "assigned_service", "assignedservice", "plan", "product"],
+        due_amount: ["due_amount", "dueamount", "balance", "outstanding", "due", "amount_due", "amountdue"],
+        account_number: ["account_number", "accountnumber", "account_no", "accountno", "bank_account", "bankaccount", "acc_no", "accno"]
       };
 
       fields.forEach((f) => {

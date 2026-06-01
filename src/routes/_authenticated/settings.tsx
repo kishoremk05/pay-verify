@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, User, Building, Mail, ShieldCheck } from "lucide-react";
+import { Loader2, User, Building, Mail, ShieldCheck, Eye, EyeOff, KeyRound } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,6 +20,29 @@ function SettingsPage() {
   const [fullName, setFullName] = useState("");
   const [orgName, setOrgName] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Password Update States
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const changePassword = async () => {
+    if (newPassword.length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
+    if (newPassword !== confirmPassword) {
+      return toast.error("Passwords do not match");
+    }
+    setUpdatingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setUpdatingPassword(false);
+    if (error) return toast.error(error.message);
+    toast.success("Password updated successfully");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
 
   useEffect(() => {
     setFullName(profile?.full_name ?? "");
@@ -169,6 +192,82 @@ function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Security Settings */}
+      <Card className="border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-md max-w-2xl">
+        <CardHeader className="pb-4 pt-6 border-b border-border/40">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <KeyRound className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-bold tracking-tight">Security Settings</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Update your account login password</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 sm:p-8 space-y-6">
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="newPassword" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1 flex items-center gap-1.5">
+                New Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="rounded-full pl-5 pr-12 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all duration-200"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                >
+                  {showNewPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1 flex items-center gap-1.5">
+                Confirm Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="rounded-full pl-5 pr-12 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all duration-200"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <Button
+              onClick={changePassword}
+              disabled={updatingPassword || !newPassword}
+              shape="pill"
+              className="w-full sm:w-auto px-6 h-11 font-semibold shadow-md bg-primary hover:bg-primary/95 text-primary-foreground hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+            >
+              {updatingPassword ? <Loader2 className="h-4.5 w-4.5 animate-spin mr-2" /> : null}
+              Update Password
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

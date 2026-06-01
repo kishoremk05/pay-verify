@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       customers: {
         Row: {
+          account_number: string | null
           created_at: string
           customer_code: string | null
           due_amount: number
@@ -30,6 +31,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_number?: string | null
           created_at?: string
           customer_code?: string | null
           due_amount?: number
@@ -44,6 +46,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_number?: string | null
           created_at?: string
           customer_code?: string | null
           due_amount?: number

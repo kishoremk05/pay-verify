@@ -1,6 +1,17 @@
-export const formatCurrency = (n: number | null | undefined) => {
+export const formatCurrency = (n: number | null | undefined, currency = "NGN") => {
   const v = Number(n ?? 0);
-  return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(v);
+  // Hardcode the symbol to avoid locale rendering issues (e.g. ₦ showing as "N")
+  const symbols: Record<string, string> = {
+    NGN: "₦",
+    USD: "$",
+    EUR: "€",
+    GBP: "£",
+    GHS: "₵",
+    KES: "KSh",
+    ZAR: "R",
+  };
+  const symbol = symbols[currency] ?? currency + " ";
+  return symbol + v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 };
 
 export const formatDate = (d: string | Date | null | undefined) => {

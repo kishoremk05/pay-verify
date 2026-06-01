@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, CreditCard, BarChart3, Settings, ShieldCheck, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, BarChart3, Settings, ShieldCheck, LogOut, FileText, RotateCcw, History } from "lucide-react";
 
 import {
   Sidebar,
@@ -20,8 +20,12 @@ import { Button } from "@/components/ui/button";
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Customers", url: "/customers", icon: Users },
+  { title: "Invoices", url: "/invoices", icon: FileText },
   { title: "Payments", url: "/payments", icon: CreditCard },
+  { title: "Refunds", url: "/refunds", icon: RotateCcw },
   { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "Audit Logs", url: "/audit-logs", icon: History },
+  { title: "Staff Directory", url: "/staff-management", icon: ShieldCheck },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
@@ -29,7 +33,17 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { signOut, organization, profile } = useAuth();
+  const { signOut, organization, profile, role } = useAuth();
+
+  const allowedItems = items.filter((item) => {
+    if (item.url === "/staff-management") {
+      return role === "super_admin" || role === "admin";
+    }
+    if (item.url === "/invoices" || item.url === "/refunds") {
+      return role !== "viewer";
+    }
+    return true;
+  });
 
   return (
     <Sidebar collapsible="icon">
@@ -54,7 +68,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-sidebar-foreground/45 font-bold uppercase tracking-wider text-[10px]">Workspace</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {allowedItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
                     <Link to={item.url} className="flex items-center gap-2">
@@ -72,7 +86,7 @@ export function AppSidebar() {
         {!collapsed && profile && (
           <div className="px-2 py-1.5 text-xs text-sidebar-foreground">
             <p className="font-bold truncate text-[11px] uppercase tracking-wider text-sidebar-foreground/50 leading-none">User</p>
-            <p className="font-semibold truncate text-white mt-1">{profile.full_name}</p>
+            <p className="font-semibold truncate text-white mt-1">{profile.full_name} ({role})</p>
           </div>
         )}
         <Button 

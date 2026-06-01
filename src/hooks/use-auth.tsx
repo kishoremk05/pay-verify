@@ -19,10 +19,13 @@ interface AuthContextValue {
   session: Session | null;
   profile: Profile | null;
   organization: Organization | null;
-  role: "admin" | "member" | null;
+  role: "super_admin" | "admin" | "manager" | "finance_staff" | "viewer" | "member" | null;
   loading: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
+  isAdmin: boolean;
+  isFinance: boolean;
+  isViewer: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -32,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
-  const [role, setRole] = useState<"admin" | "member" | null>(null);
+  const [role, setRole] = useState<"super_admin" | "admin" | "manager" | "finance_staff" | "viewer" | "member" | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
@@ -48,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.from("user_roles").select("role").eq("user_id", uid).maybeSingle(),
       ]);
       setOrganization(org ?? null);
-      setRole((roleRow?.role as "admin" | "member" | undefined) ?? null);
+      setRole((roleRow?.role as any) ?? null);
     } else {
       setOrganization(null);
       setRole(null);
@@ -86,8 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) await loadProfile(user.id);
   };
 
+  const isAdmin = role === "super_admin" || role === "admin";
+  const isFinance = role === "super_admin" || role === "admin" || role === "manager" || role === "finance_staff";
+  const isViewer = role === "viewer";
+
   return (
-    <AuthContext.Provider value={{ user, session, profile, organization, role, loading, signOut, refresh }}>
+    <AuthContext.Provider value={{ user, session, profile, organization, role, loading, signOut, refresh, isAdmin, isFinance, isViewer }}>
       {children}
     </AuthContext.Provider>
   );

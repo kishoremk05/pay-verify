@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
+import { NotificationsBell } from "@/components/notifications-bell";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -55,6 +56,7 @@ function AuthenticatedLayout() {
             <SidebarTrigger className="hover:bg-muted" />
             <div className="flex-1" />
             <div className="flex items-center gap-4">
+              <NotificationsBell />
               <Button
                 variant="ghost"
                 size="icon"

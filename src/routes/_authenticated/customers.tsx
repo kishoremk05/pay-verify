@@ -44,6 +44,7 @@ const schema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   service: z.string().optional(),
   expected_amount: z.coerce.number().min(0),
+  account_number: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -57,16 +58,17 @@ interface Customer {
   expected_amount: number;
   due_amount: number;
   status: "paid" | "partial" | "unpaid" | "mismatch";
+  account_number: string | null;
 }
 
 /* ------------------------------------------------------------------ */
 /*  Excel Format Preview (matches the Payments screen pattern)        */
 /* ------------------------------------------------------------------ */
 function CustomerExcelPreview() {
-  const cols = ["A", "B", "C", "D", "E", "F"];
-  const headers = ["customer_code", "name", "phone", "email", "service", "expected_amount"];
-  const row1 = ["CUST-001", "John Doe", "+2348012345678", "john@example.com", "Web Development", 50000];
-  const row2 = ["CUST-002", "Jane Smith", "+2349087654321", "", "Consultation", 25000];
+  const cols = ["A", "B", "C", "D", "E", "F", "G"];
+  const headers = ["customer_code", "name", "phone", "email", "service", "expected_amount", "account_number"];
+  const row1 = ["CUST-001", "John Doe", "+2348012345678", "john@example.com", "Web Development", 50000, "1203948576"];
+  const row2 = ["CUST-002", "Jane Smith", "+2349087654321", "", "Consultation", 25000, "0987654321"];
 
   return (
     <div className="border border-border/60 rounded-2xl overflow-hidden bg-background shadow-[var(--shadow-card)] font-sans text-sm mt-4">
@@ -133,6 +135,7 @@ function CustomerExcelPreview() {
           <div className="space-y-1.5">
             <p><strong className="text-blue-600 dark:text-blue-400">customer_code</strong> (Col A): Optional. Unique identifier you assign (e.g. <code className="bg-muted px-1 py-0.5 rounded">CUST-001</code>).</p>
             <p><strong className="text-destructive">name</strong> (Col B): <span className="text-destructive font-bold uppercase tracking-wider text-[10px]">Required</span>. Customer full name.</p>
+            <p><strong>account_number</strong> (Col G): Optional banking identification field.</p>
           </div>
           <div className="space-y-1.5">
             <p><strong>expected_amount</strong> (Col F): Numeric value. Defaults to <code className="bg-muted px-1.5 py-0.5 rounded">0</code> if blank.</p>
@@ -148,9 +151,10 @@ function CustomerExcelPreview() {
 /*  Main Page Component                                                */
 /* ------------------------------------------------------------------ */
 function CustomersPage() {
-  const { organization } = useAuth();
+  const { organization, role } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const isReadOnly = role === "viewer";
   const [open, setOpen] = useState(false);
   const [formatPreviewOpen, setFormatPreviewOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
@@ -192,19 +196,19 @@ function CustomersPage() {
   });
 
   const filtered = (customers ?? []).filter((c) =>
-    [c.name, c.phone, c.email, c.service, c.customer_code].some((f) => f?.toLowerCase().includes(search.toLowerCase())),
+    [c.name, c.phone, c.email, c.service, c.customer_code, c.account_number].some((f) => f?.toLowerCase().includes(search.toLowerCase())),
   );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { customer_code: "", name: "", phone: "", email: "", service: "", expected_amount: 0 },
+    defaultValues: { customer_code: "", name: "", phone: "", email: "", service: "", expected_amount: 0, account_number: "" },
   });
 
   const openCreate = () => {
     setEditing(null);
     const existingCodes = (customers ?? []).map((c) => c.customer_code);
     const autoCode = generateCode(existingCodes);
-    form.reset({ customer_code: autoCode, name: "", phone: "", email: "", service: "", expected_amount: 0 });
+    form.reset({ customer_code: autoCode, name: "", phone: "", email: "", service: "", expected_amount: 0, account_number: "" });
     setOpen(true);
   };
   const openEdit = (c: Customer) => {
@@ -217,6 +221,7 @@ function CustomersPage() {
       email: c.email ?? "",
       service: c.service ?? "",
       expected_amount: Number(c.expected_amount),
+      account_number: c.account_number ?? "",
     });
     setOpen(true);
   };
@@ -252,6 +257,7 @@ function CustomersPage() {
       email: values.email || null,
       phone: values.phone || null,
       service: values.service || null,
+      account_number: values.account_number || null,
       organization_id: organization.id,
     };
     if (editing) {
@@ -286,6 +292,7 @@ function CustomersPage() {
     { key: "service", label: "Subscribed Service", required: false, type: "string" as const },
     { key: "expected_amount", label: "Expected Amount", required: true, type: "number" as const },
     { key: "due_amount", label: "Due Amount / Balance", required: false, type: "number" as const },
+    { key: "account_number", label: "Account Number", required: false, type: "string" as const },
   ];
 
   /* ---- Bulk Excel Import ---- */
@@ -341,6 +348,7 @@ function CustomersPage() {
         service: r.service || null,
         expected_amount: expAmt,
         due_amount: dueAmt,
+        account_number: r.account_number || null,
         status: (dueAmt === 0 ? "paid" : (dueAmt === expAmt ? "unpaid" : (dueAmt > expAmt ? "mismatch" : "partial"))) as "paid" | "partial" | "unpaid" | "mismatch",
       };
     });
@@ -372,7 +380,7 @@ function CustomersPage() {
           <p className="text-sm text-muted-foreground mt-1">Manage and track clients you collect payments from.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          {selectedIds.length > 0 && (
+          {selectedIds.length > 0 && !isReadOnly && (
             <Button
               variant="destructive"
               shape="pill"
@@ -386,8 +394,14 @@ function CustomersPage() {
             ref={fileRef}
             type="file"
             accept=".xlsx,.xls,.csv"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && onImportFile(e.target.files[0])}
+            className="absolute w-0 h-0 opacity-0 pointer-events-none"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                onImportFile(file);
+              }
+              e.target.value = "";
+            }}
           />
           <Dialog open={formatPreviewOpen} onOpenChange={setFormatPreviewOpen}>
             <DialogTrigger asChild>
@@ -409,15 +423,17 @@ function CustomersPage() {
             </DialogContent>
           </Dialog>
 
-          <Button variant="outline" shape="pill" className="h-9 text-xs font-semibold border-primary/40 text-primary hover:bg-primary/5" onClick={() => fileRef.current?.click()}>
-            <Upload className="h-4 w-4" /> Import Excel
-          </Button>
+          {!isReadOnly && (
+            <>
+              <Button variant="outline" shape="pill" className="h-9 text-xs font-semibold border-primary/40 text-primary hover:bg-primary/5" onClick={() => fileRef.current?.click()}>
+                <Upload className="h-4 w-4" /> Import Excel
+              </Button>
 
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openCreate} shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2"><Plus className="h-4 w-4" /> Add Customer</Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-3xl border-border/60 bg-card max-w-md p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button onClick={openCreate} shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2"><Plus className="h-4 w-4" /> Add Customer</Button>
+                </DialogTrigger>
+                <DialogContent className="rounded-3xl border-border/60 bg-card max-w-md p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
               <DialogHeader className="pb-4 border-b border-border/40">
                 <DialogTitle className="text-xl font-extrabold tracking-tight text-foreground font-sans">
                   {editing ? "Modify Customer Details" : "Register New Customer"}
@@ -469,15 +485,25 @@ function CustomersPage() {
                     {...form.register("service")}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Expected Amount</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                    placeholder="0.00"
-                    {...form.register("expected_amount")}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Expected Amount</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                      placeholder="0.00"
+                      {...form.register("expected_amount")}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Account Number</Label>
+                    <Input
+                      className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                      placeholder="e.g. 1203948576"
+                      {...form.register("account_number")}
+                    />
+                  </div>
                 </div>
                 <DialogFooter className="pt-4 border-t border-border/40 gap-2 sm:gap-0">
                   <Button type="button" variant="ghost" shape="pill" onClick={() => setOpen(false)} className="px-5 font-semibold text-muted-foreground hover:bg-muted">Cancel</Button>
@@ -489,6 +515,8 @@ function CustomersPage() {
               </form>
             </DialogContent>
           </Dialog>
+          </>
+        )}
         </div>
       </div>
 
@@ -511,32 +539,36 @@ function CustomersPage() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <EmptyState search={search} onAdd={openCreate} />
+            <EmptyState search={search} onAdd={openCreate} isReadOnly={isReadOnly} />
           ) : (
             <div className="overflow-x-auto rounded-xl border border-border/40">
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-12 py-4 pl-6">
-                      <Checkbox
-                        checked={filtered.length > 0 && selectedIds.length === filtered.length}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedIds(filtered.map((c) => c.id));
-                          } else {
-                            setSelectedIds([]);
-                          }
-                        }}
-                      />
-                    </TableHead>
+                    {!isReadOnly && (
+                      <TableHead className="w-12 py-4 pl-6">
+                        <Checkbox
+                          checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedIds(filtered.map((c) => c.id));
+                            } else {
+                              setSelectedIds([]);
+                            }
+                          }}
+                        />
+                      </TableHead>
+                    )}
                     <TableHead className="font-bold text-foreground py-4 pl-2">Client Info</TableHead>
                     <TableHead className="font-bold text-foreground py-4">Customer ID</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Contact Info</TableHead>
+                    <TableHead className="font-bold text-foreground py-4">Account Number</TableHead>
                     <TableHead className="font-bold text-foreground py-4">Subscribed Service</TableHead>
                     <TableHead className="font-bold text-foreground py-4 text-right">Expected Amount</TableHead>
                     <TableHead className="font-bold text-foreground py-4 text-right">Due Amount</TableHead>
                     <TableHead className="font-bold text-foreground py-4">Payment Status</TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right pr-6">Management</TableHead>
+                    {!isReadOnly && (
+                      <TableHead className="font-bold text-foreground py-4 text-right pr-6">Management</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -552,18 +584,20 @@ function CustomersPage() {
  
                     return (
                       <TableRow key={c.id} className="hover:bg-muted/20 transition-colors duration-150 border-b border-border/30 last:border-b-0">
-                        <TableCell className="py-4 pl-6">
-                          <Checkbox
-                            checked={selectedIds.includes(c.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedIds((prev) => [...prev, c.id]);
-                              } else {
-                                setSelectedIds((prev) => prev.filter((id) => id !== c.id));
-                              }
-                            }}
-                          />
-                        </TableCell>
+                        {!isReadOnly && (
+                          <TableCell className="py-4 pl-6">
+                            <Checkbox
+                              checked={selectedIds.includes(c.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedIds((prev) => [...prev, c.id]);
+                                } else {
+                                  setSelectedIds((prev) => prev.filter((id) => id !== c.id));
+                                }
+                              }}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell className="py-4 pl-2 font-bold text-foreground">
                           <div className="flex items-center gap-3">
                             <div className="h-9 w-9 rounded-full bg-primary/10 text-primary font-black text-xs flex items-center justify-center border border-primary/20 shrink-0">
@@ -584,7 +618,15 @@ function CustomersPage() {
                             <span className="text-xs text-muted-foreground/50 italic">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="py-4 font-medium">{c.phone ?? "—"}</TableCell>
+                        <TableCell className="py-4 font-mono font-bold text-xs">
+                          {c.account_number ? (
+                            <span className="text-foreground bg-secondary/50 dark:bg-secondary px-2.5 py-1 rounded-md border border-border/80">
+                              {c.account_number}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground/50 italic">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="py-4">
                           <span className="font-semibold px-2.5 py-1 rounded-md text-xs bg-muted/65 text-muted-foreground border border-border/30 uppercase tracking-wider">{c.service ?? "Custom Option"}</span>
                         </TableCell>
@@ -599,28 +641,30 @@ function CustomersPage() {
                             {c.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="py-4 text-right pr-6">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-9 w-9 rounded-full bg-muted/50 hover:bg-muted text-primary border border-border/50 transition-colors" 
-                              onClick={() => openEdit(c)}
-                              title="Edit customer"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors" 
-                              onClick={() => setDeleteId(c.id)}
-                              title="Delete customer"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                        {!isReadOnly && (
+                          <TableCell className="py-4 text-right pr-6">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-9 w-9 rounded-full bg-muted/50 hover:bg-muted text-primary border border-border/50 transition-colors" 
+                                onClick={() => openEdit(c)}
+                                title="Edit customer"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors" 
+                                onClick={() => setDeleteId(c.id)}
+                                title="Delete customer"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}
@@ -692,7 +736,7 @@ function CustomersPage() {
   );
 }
 
-function EmptyState({ search, onAdd }: { search: string; onAdd: () => void }) {
+function EmptyState({ search, onAdd, isReadOnly }: { search: string; onAdd: () => void; isReadOnly?: boolean }) {
   return (
     <div className="text-center py-16 border border-dashed border-border/80 rounded-2xl bg-muted/10">
       <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
@@ -702,7 +746,7 @@ function EmptyState({ search, onAdd }: { search: string; onAdd: () => void }) {
       <p className="mt-1.5 max-w-sm mx-auto text-sm text-muted-foreground">
         {search ? "Try refining your keywords or search spelling." : "Create your first customer profile to start matching payments."}
       </p>
-      {!search && (
+      {!search && !isReadOnly && (
         <Button onClick={onAdd} shape="pill" className="mt-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2">
           <Plus className="h-4 w-4" /> Add Customer
         </Button>

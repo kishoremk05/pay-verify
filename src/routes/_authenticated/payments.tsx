@@ -71,13 +71,13 @@ interface Payment {
   transaction_id: string | null;
   currency: string;
 }
-interface Customer { id: string; name: string; expected_amount: number; customer_code: string | null }
+interface Customer { id: string; name: string; expected_amount: number; customer_code: string | null; account_number: string | null }
 
 function ExcelPreview() {
-  const cols = ["A", "B", "C", "D", "E", "F", "G", "H"];
-  const headers = ["amount_paid", "payment_method", "reference", "payment_date", "notes", "status", "source", "customer_code"];
-  const row1 = [15000, "Transfer", "TRX123456", "2025-05-19", "May deposit", "paid", "bank", "CUST-001"];
-  const row2 = [25000, "Card", "PSP789012", "2025-05-18", "", "paid", "paystack", ""];
+  const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+  const headers = ["amount_paid", "payment_method", "customer_account_number", "customer_name", "payment_date", "notes", "status", "source", "customer_code"];
+  const row1 = [15000, "Transfer", "1203948576", "John Doe", "2025-05-19", "May deposit", "paid", "bank", "CUST-001"];
+  const row2 = [25000, "Card", "0987654321", "Sarah Will", "2025-05-18", "", "paid", "paystack", ""];
 
   return (
     <div className="border border-border/60 rounded-2xl overflow-hidden bg-background shadow-[var(--shadow-card)] font-sans text-sm mt-4">
@@ -143,12 +143,14 @@ function ExcelPreview() {
         <div className="grid gap-3 sm:grid-cols-2 text-[11px] text-muted-foreground">
           <div className="space-y-1.5">
             <p><strong className="text-emerald-600 dark:text-emerald-400">amount_paid</strong> (Col A): <span className="text-destructive font-bold uppercase tracking-wider text-[10px]">Required</span>. Numeric values greater than zero.</p>
-            <p><strong>payment_date</strong> (Col D): Format as <code className="bg-muted px-1 py-0.5 rounded">YYYY-MM-DD</code>. Defaults to current date if left blank.</p>
+            <p><strong>customer_account_number</strong> (Col C): Optional. Matches to Customer Account Number to auto-link payments.</p>
+            <p><strong>customer_name</strong> (Col D): Optional. Matches case-insensitively to Customer Name to auto-link payments.</p>
+            <p><strong>payment_date</strong> (Col E): Format as <code className="bg-muted px-1 py-0.5 rounded">YYYY-MM-DD</code>. Defaults to current date if left blank.</p>
           </div>
           <div className="space-y-1.5">
-            <p><strong>status</strong> (Col F): Options: <code className="bg-muted px-1.5 py-0.5 rounded">paid</code>, <code className="bg-muted px-1.5 py-0.5 rounded">partial</code>, <code className="bg-muted px-1.5 py-0.5 rounded">unpaid</code>, <code className="bg-muted px-1.5 py-0.5 rounded">duplicate</code>, <code className="bg-muted px-1.5 py-0.5 rounded">mismatch</code>.</p>
-            <p><strong>source</strong> (Col G): Options: <code className="bg-muted px-1.5 py-0.5 rounded">manual</code>, <code className="bg-muted px-1.5 py-0.5 rounded">bank</code>, <code className="bg-muted px-1.5 py-0.5 rounded">paystack</code>, <code className="bg-muted px-1.5 py-0.5 rounded">cash</code>.</p>
-            <p><strong>customer_code</strong> (Col H): Optional. Matches to Customer ID in the Customers tab to auto-link payments.</p>
+            <p><strong>status</strong> (Col G): Options: <code className="bg-muted px-1.5 py-0.5 rounded">paid</code>, <code className="bg-muted px-1.5 py-0.5 rounded">partial</code>, <code className="bg-muted px-1.5 py-0.5 rounded">unpaid</code>, <code className="bg-muted px-1.5 py-0.5 rounded">duplicate</code>, <code className="bg-muted px-1.5 py-0.5 rounded">mismatch</code>.</p>
+            <p><strong>source</strong> (Col H): Options: <code className="bg-muted px-1.5 py-0.5 rounded">manual</code>, <code className="bg-muted px-1.5 py-0.5 rounded">bank</code>, <code className="bg-muted px-1.5 py-0.5 rounded">paystack</code>, <code className="bg-muted px-1.5 py-0.5 rounded">cash</code>.</p>
+            <p><strong>customer_code</strong> (Col I): Optional. Matches to Customer ID to auto-link payments.</p>
           </div>
         </div>
       </div>
@@ -157,9 +159,10 @@ function ExcelPreview() {
 }
 
 function PaymentsPage() {
-  const { organization } = useAuth();
+  const { organization, role } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const isReadOnly = role === "viewer";
   const [open, setOpen] = useState(false);
   const [formatPreviewOpen, setFormatPreviewOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -203,15 +206,16 @@ function PaymentsPage() {
     queryKey: ["customers-mini", organization?.id],
     enabled: !!organization?.id,
     queryFn: async () => {
-      const { data } = await supabase.from("customers").select("id, name, expected_amount, customer_code");
+      const { data } = await supabase.from("customers").select("id, name, expected_amount, customer_code, account_number");
       return (data ?? []) as Customer[];
     },
   });
 
   const customerName = (id: string | null) => customers?.find((c) => c.id === id)?.name ?? "—";
+  const customerAccountNumber = (id: string | null) => customers?.find((c) => c.id === id)?.account_number ?? "—";
 
   const filtered = (payments ?? []).filter((p) =>
-    [p.reference, p.payment_method, customerName(p.customer_id)].some((f) => f?.toLowerCase().includes(search.toLowerCase())),
+    [p.reference, p.payment_method, customerName(p.customer_id), customerAccountNumber(p.customer_id)].some((f) => f?.toLowerCase().includes(search.toLowerCase())),
   );
 
   const form = useForm<FormValues>({
@@ -263,6 +267,8 @@ function PaymentsPage() {
   const PAYMENT_FIELDS = [
     { key: "transaction_id", label: "Transaction ID", required: false, type: "string" as const },
     { key: "customer_code", label: "Customer Code", required: false, type: "string" as const },
+    { key: "customer_account_number", label: "Customer Account Number", required: false, type: "string" as const },
+    { key: "customer_name", label: "Customer Name", required: false, type: "string" as const },
     { key: "amount_paid", label: "Amount Paid", required: true, type: "number" as const },
     { key: "payment_method", label: "Payment Method", required: false, type: "string" as const },
     { key: "reference", label: "Reference Code", required: false, type: "string" as const },
@@ -317,12 +323,24 @@ function PaymentsPage() {
             : String(rawDate).trim())
         : new Date().toISOString().slice(0, 10);
 
-      // Resolve customer_code to internal UUID
+      // Resolve customer by account number, customer code, or customer name
+      const customerAcc = r.customer_account_number ? String(r.customer_account_number).trim() : null;
       const customerCode = r.customer_code ? String(r.customer_code).trim() : null;
+      const custName = r.customer_name ? String(r.customer_name).trim() : null;
       let resolvedCustomerId: string | null = null;
-      if (customerCode && customers) {
-        const match = customers.find(c => c.customer_code === customerCode);
-        if (match) resolvedCustomerId = match.id;
+      if (customers) {
+        if (customerAcc) {
+          const match = customers.find(c => c.account_number === customerAcc);
+          if (match) resolvedCustomerId = match.id;
+        }
+        if (!resolvedCustomerId && customerCode) {
+          const match = customers.find(c => c.customer_code === customerCode);
+          if (match) resolvedCustomerId = match.id;
+        }
+        if (!resolvedCustomerId && custName) {
+          const match = customers.find(c => c.name.toLowerCase() === custName.toLowerCase());
+          if (match) resolvedCustomerId = match.id;
+        }
       }
 
       let cleanSource: "paystack" | "bank" | "cash" | "manual" = "bank";
@@ -367,7 +385,7 @@ function PaymentsPage() {
           <p className="text-sm text-muted-foreground mt-1">Record manual transactions or reconcile lists via bank/processor imports.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          {selectedIds.length > 0 && (
+          {selectedIds.length > 0 && !isReadOnly && (
             <Button
               variant="destructive"
               shape="pill"
@@ -381,8 +399,14 @@ function PaymentsPage() {
             ref={fileRef}
             type="file"
             accept=".xlsx,.xls,.csv"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && onImportFile(e.target.files[0])}
+            className="absolute w-0 h-0 opacity-0 pointer-events-none"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                onImportFile(file);
+              }
+              e.target.value = "";
+            }}
           />
           <Dialog open={formatPreviewOpen} onOpenChange={setFormatPreviewOpen}>
             <DialogTrigger asChild>
@@ -404,15 +428,17 @@ function PaymentsPage() {
             </DialogContent>
           </Dialog>
 
-          <Button variant="outline" shape="pill" className="h-9 text-xs font-semibold border-primary/40 text-primary hover:bg-primary/5" onClick={() => fileRef.current?.click()}>
-            <Upload className="h-4 w-4" /> Import Excel
-          </Button>
+          {!isReadOnly && (
+            <>
+              <Button variant="outline" shape="pill" className="h-9 text-xs font-semibold border-primary/40 text-primary hover:bg-primary/5" onClick={() => fileRef.current?.click()}>
+                <Upload className="h-4 w-4" /> Import Excel
+              </Button>
 
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2"><Plus className="h-4 w-4" /> Add Payment</Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-3xl border-border/60 bg-card max-w-lg p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2"><Plus className="h-4 w-4" /> Add Payment</Button>
+                </DialogTrigger>
+                <DialogContent className="rounded-3xl border-border/60 bg-card max-w-lg p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
               <DialogHeader className="pb-4 border-b border-border/40">
                 <DialogTitle className="text-xl font-extrabold tracking-tight text-foreground font-sans">Record Transaction</DialogTitle>
               </DialogHeader>
@@ -420,7 +446,16 @@ function PaymentsPage() {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Associated Customer</Label>
                   <Select
-                    onValueChange={(v) => form.setValue("customer_id", v === "_none" ? undefined : v)}
+                    onValueChange={(v) => {
+                      const selectedId = v === "_none" ? undefined : v;
+                      form.setValue("customer_id", selectedId);
+                      if (selectedId && customers) {
+                        const cust = customers.find(c => c.id === selectedId);
+                        if (cust?.account_number) {
+                          form.setValue("reference", cust.account_number);
+                        }
+                      }
+                    }}
                     defaultValue="_none"
                   >
                     <SelectTrigger className="rounded-full h-10 border-border/80 bg-background text-foreground transition-all px-4"><SelectValue placeholder="Select customer" /></SelectTrigger>
@@ -462,9 +497,9 @@ function PaymentsPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Reference Code</Label>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Account Number</Label>
                     <Input
-                      placeholder="e.g. TRX90123"
+                      placeholder="e.g. 1203948576"
                       className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
                       {...form.register("reference")}
                     />
@@ -521,6 +556,8 @@ function PaymentsPage() {
               </form>
             </DialogContent>
           </Dialog>
+          </>
+        )}
         </div>
       </div>
 
@@ -549,34 +586,40 @@ function PaymentsPage() {
               </div>
               <h3 className="mt-5 text-lg font-bold tracking-tight text-foreground font-sans">No payments found</h3>
               <p className="mt-1.5 max-w-sm mx-auto text-sm text-muted-foreground">Record your first transactional event manually, or upload spreadsheets from your processor.</p>
-              <Button onClick={() => setOpen(true)} shape="pill" className="mt-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2">
-                <Plus className="h-4 w-4" /> Add Payment
-              </Button>
+              {!isReadOnly && (
+                <Button onClick={() => setOpen(true)} shape="pill" className="mt-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2">
+                  <Plus className="h-4 w-4" /> Add Payment
+                </Button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-border/40">
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="w-12 py-4 pl-6">
-                      <Checkbox
-                        checked={filtered.length > 0 && selectedIds.length === filtered.length}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedIds(filtered.map((p) => p.id));
-                          } else {
-                            setSelectedIds([]);
-                          }
-                        }}
-                      />
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4 pl-2">Processed Date</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Transaction ID</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Payee Client</TableHead>
+                    {!isReadOnly && (
+                      <TableHead className="w-12 py-4 pl-6">
+                        <Checkbox
+                          checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedIds(filtered.map((p) => p.id));
+                            } else {
+                              setSelectedIds([]);
+                            }
+                          }}
+                        />
+                      </TableHead>
+                    )}
+                    <TableHead className="font-bold text-foreground py-4 pl-2">Customer Name</TableHead>
+                    <TableHead className="font-bold text-foreground py-4">Account Number</TableHead>
                     <TableHead className="font-bold text-foreground py-4">Origin Source</TableHead>
                     <TableHead className="font-bold text-foreground py-4 text-right">Amount Received</TableHead>
                     <TableHead className="font-bold text-foreground py-4">Match Status</TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right pr-6">Action</TableHead>
+                    <TableHead className="font-bold text-foreground py-4">Processed Date</TableHead>
+                    {!isReadOnly && (
+                      <TableHead className="font-bold text-foreground py-4 text-right pr-6">Action</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -597,31 +640,32 @@ function PaymentsPage() {
  
                     return (
                       <TableRow key={p.id} className="hover:bg-muted/20 transition-colors duration-150 border-b border-border/30 last:border-b-0">
-                        <TableCell className="py-4 pl-6">
-                          <Checkbox
-                            checked={selectedIds.includes(p.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedIds((prev) => [...prev, p.id]);
-                              } else {
-                                setSelectedIds((prev) => prev.filter((id) => id !== p.id));
-                              }
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell className="py-4 pl-2 font-semibold">{formatDate(p.payment_date)}</TableCell>
-                        <TableCell className="py-4">
-                          {p.transaction_id ? (
-                            <span className="font-mono font-bold text-xs bg-primary/5 text-primary px-2.5 py-1 rounded-md border border-primary/15 tracking-wide">
-                              {p.transaction_id}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground/50 italic">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-4 font-bold text-foreground">
+                        {!isReadOnly && (
+                          <TableCell className="py-4 pl-6">
+                            <Checkbox
+                              checked={selectedIds.includes(p.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedIds((prev) => [...prev, p.id]);
+                                } else {
+                                  setSelectedIds((prev) => prev.filter((id) => id !== p.id));
+                                }
+                              }}
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell className="py-4 pl-2 font-bold text-foreground">
                           {p.customer_id ? customerName(p.customer_id) : (
                             <span className="text-xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded border border-border/40 uppercase tracking-wider">Anonymous</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-4 font-mono font-bold text-xs">
+                          {p.customer_id && customerAccountNumber(p.customer_id) !== "—" ? (
+                            <span className="text-foreground bg-secondary/50 dark:bg-secondary px-2.5 py-1 rounded-md border border-border/80">
+                              {customerAccountNumber(p.customer_id)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground/50 italic">—</span>
                           )}
                         </TableCell>
                         <TableCell className="py-4">
@@ -637,17 +681,20 @@ function PaymentsPage() {
                             {p.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="py-4 text-right pr-6">
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors" 
-                            onClick={() => setDeleteId(p.id)}
-                            title="Delete payment"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+                        <TableCell className="py-4 font-semibold text-muted-foreground">{formatDate(p.payment_date)}</TableCell>
+                        {!isReadOnly && (
+                          <TableCell className="py-4 text-right pr-6">
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors" 
+                              onClick={() => setDeleteId(p.id)}
+                              title="Delete payment"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}

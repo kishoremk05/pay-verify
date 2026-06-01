@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Banknote, Clock, AlertTriangle, TrendingUp, Users, RefreshCw, Layers, ShieldAlert } from "lucide-react";
+import { Banknote, Clock, AlertTriangle, TrendingUp, Users, RefreshCw, Layers, ShieldAlert, CheckCircle, RotateCcw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -22,9 +22,10 @@ function DashboardPage() {
     queryKey: ["dashboard", organization?.id],
     enabled: !!organization?.id,
     queryFn: async () => {
-      const [{ data: customers }, { data: payments }] = await Promise.all([
+      const [{ data: customers }, { data: payments }, { data: refunds }] = await Promise.all([
         supabase.from("customers").select("id, expected_amount, due_amount, status"),
         supabase.from("payments").select("id, amount_paid, status, payment_date, customer_id, reference, payment_method, source").order("payment_date", { ascending: false }),
+        (supabase as any).from("refunds").select("id, refund_amount, status"),
       ]);
       const expected = (customers ?? []).reduce((s, c) => s + Number(c.expected_amount ?? 0), 0);
       const received = (payments ?? []).reduce((s, p) => s + Number(p.amount_paid ?? 0), 0);
@@ -34,6 +35,10 @@ function DashboardPage() {
       const unpaidCount = (customers ?? []).filter((c) => c.status === "unpaid").length;
       const duplicateCount = (payments ?? []).filter((p) => p.status === "duplicate").length;
       const mismatchCount = (payments ?? []).filter((p) => p.status === "mismatch").length;
+
+      const completedRefundsCount = (refunds as any[] ?? []).filter((r) => r.status === "completed").length;
+      const completedRefundsAmount = (refunds as any[] ?? []).filter((r) => r.status === "completed").reduce((s, r) => s + Number(r.refund_amount ?? 0), 0);
+      const pendingRefundsCount = (refunds as any[] ?? []).filter((r) => r.status === "pending").length;
 
       const byDay = new Map<string, number>();
       (payments ?? []).forEach((p) => {
@@ -53,6 +58,9 @@ function DashboardPage() {
         unpaidCount,
         duplicateCount,
         mismatchCount,
+        completedRefundsCount,
+        completedRefundsAmount,
+        pendingRefundsCount,
         recent: (payments ?? []).slice(0, 5),
         chart
       };
@@ -70,6 +78,12 @@ function DashboardPage() {
     { label: "Partial Payments", count: data?.partialCount ?? 0, icon: RefreshCw, tone: "text-amber-500 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-500/5 border-amber-100/60 dark:border-amber-500/15" },
     { label: "Duplicate Payments", count: data?.duplicateCount ?? 0, icon: Layers, tone: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20" },
     { label: "Mismatch Payments", count: data?.mismatchCount ?? 0, icon: ShieldAlert, tone: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20" },
+  ];
+
+  const refundKpis = [
+    { label: "Pending Refund Requests", count: data?.pendingRefundsCount ?? 0, icon: ShieldAlert, tone: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20" },
+    { label: "Completed Payouts", count: data?.completedRefundsCount ?? 0, icon: CheckCircle, tone: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" },
+    { label: "Total Refunded Payout Value", value: data?.completedRefundsAmount ?? 0, icon: RotateCcw, tone: "text-[#0070ba] dark:text-cyan-400 bg-[#0070ba]/5 dark:bg-[#0070ba]/10 border-sky-100 dark:border-sky-500/20", isCurrency: true },
   ];
 
   return (
@@ -123,6 +137,34 @@ function DashboardPage() {
                       <Skeleton className="h-8 w-16 mt-2 rounded-full" />
                     ) : (
                       <p className="text-2xl font-black text-foreground tracking-tight">{k.count}</p>
+                    )}
+                  </div>
+                  <div className={`h-11 w-11 rounded-full flex items-center justify-center border ${k.tone}`}>
+                    <k.icon className="h-5.5 w-5.5" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Refund and Payout Audits */}
+      <div className="space-y-4">
+        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground/80 pl-1">Refund &amp; Payout Audits</h3>
+        <div className="grid gap-5 sm:grid-cols-3">
+          {refundKpis.map((k) => (
+            <Card key={k.label} className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">{k.label}</p>
+                    {isLoading ? (
+                      <Skeleton className="h-8 w-28 mt-2 rounded-full" />
+                    ) : (
+                      <p className="text-2xl font-black text-foreground tracking-tight">
+                        {k.isCurrency ? formatCurrency(k.value ?? 0) : (k.count ?? 0)}
+                      </p>
                     )}
                   </div>
                   <div className={`h-11 w-11 rounded-full flex items-center justify-center border ${k.tone}`}>
