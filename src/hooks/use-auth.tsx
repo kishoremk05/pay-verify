@@ -12,6 +12,7 @@ interface Profile {
 interface Organization {
   id: string;
   name: string;
+  currency: string;
 }
 
 interface AuthContextValue {
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(p ?? null);
     if (p?.organization_id) {
       const [{ data: org }, { data: roleRow }] = await Promise.all([
-        supabase.from("organizations").select("id, name").eq("id", p.organization_id).maybeSingle(),
+        supabase.from("organizations").select("id, name, currency").eq("id", p.organization_id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", uid).maybeSingle(),
       ]);
       setOrganization(org ?? null);

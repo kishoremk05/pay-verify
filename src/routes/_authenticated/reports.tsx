@@ -26,6 +26,7 @@ const COLORS = [
 
 function ReportsPage() {
   const { organization } = useAuth();
+  const currency = organization?.currency ?? "NGN";
 
   const { data } = useQuery({
     queryKey: ["reports", organization?.id],
@@ -89,7 +90,7 @@ function ReportsPage() {
     if (!data?.all.length) return;
     
     const summaryRows = [
-      { "Reconciliation Summary": "METRIC TYPE", "Count": "COUNT", "Value Sum": "VALUE SUM (NGN)" },
+      { "Reconciliation Summary": "METRIC TYPE", "Count": "COUNT", "Value Sum": `VALUE SUM (${currency})` },
       { "Reconciliation Summary": "Fully Paid Customers", "Count": data.breakdowns.paid.count, "Value Sum": data.breakdowns.paid.sum },
       { "Reconciliation Summary": "Partially Paid Customers", "Count": data.breakdowns.partial.count, "Value Sum": `Expected: ${data.breakdowns.partial.expectedSum} (Due: ${data.breakdowns.partial.dueSum})` },
       { "Reconciliation Summary": "Unpaid Customers", "Count": data.breakdowns.unpaid.count, "Value Sum": data.breakdowns.unpaid.sum },
@@ -174,7 +175,7 @@ function ReportsPage() {
                 </div>
                 <div className="mt-3">
                   <p className="text-2xl font-black text-foreground tracking-tight">{data?.breakdowns.paid.count ?? 0}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Sum: <span className="font-semibold text-foreground">{formatCurrency(data?.breakdowns.paid.sum ?? 0)}</span></p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Sum: <span className="font-semibold text-foreground">{formatCurrency(data?.breakdowns.paid.sum ?? 0, currency)}</span></p>
                 </div>
               </CardContent>
             </Card>
@@ -188,7 +189,7 @@ function ReportsPage() {
                 </div>
                 <div className="mt-3">
                   <p className="text-2xl font-black text-foreground tracking-tight">{data?.breakdowns.partial.count ?? 0}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Due: <span className="font-semibold text-amber-600">{formatCurrency(data?.breakdowns.partial.dueSum ?? 0)}</span></p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Due: <span className="font-semibold text-amber-600">{formatCurrency(data?.breakdowns.partial.dueSum ?? 0, currency)}</span></p>
                 </div>
               </CardContent>
             </Card>
@@ -202,7 +203,7 @@ function ReportsPage() {
                 </div>
                 <div className="mt-3">
                   <p className="text-2xl font-black text-foreground tracking-tight">{data?.breakdowns.unpaid.count ?? 0}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Expected: <span className="font-semibold text-foreground">{formatCurrency(data?.breakdowns.unpaid.sum ?? 0)}</span></p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Expected: <span className="font-semibold text-foreground">{formatCurrency(data?.breakdowns.unpaid.sum ?? 0, currency)}</span></p>
                 </div>
               </CardContent>
             </Card>
@@ -216,7 +217,7 @@ function ReportsPage() {
                 </div>
                 <div className="mt-3">
                   <p className="text-2xl font-black text-foreground tracking-tight">{data?.breakdowns.duplicate.count ?? 0}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Sum: <span className="font-semibold text-foreground">{formatCurrency(data?.breakdowns.duplicate.sum ?? 0)}</span></p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Sum: <span className="font-semibold text-foreground">{formatCurrency(data?.breakdowns.duplicate.sum ?? 0, currency)}</span></p>
                 </div>
               </CardContent>
             </Card>
@@ -230,7 +231,7 @@ function ReportsPage() {
                 </div>
                 <div className="mt-3">
                   <p className="text-2xl font-black text-foreground tracking-tight">{data?.breakdowns.mismatch.count ?? 0}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Sum: <span className="font-semibold text-foreground">{formatCurrency(data?.breakdowns.mismatch.sum ?? 0)}</span></p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 font-medium">Sum: <span className="font-semibold text-foreground">{formatCurrency(data?.breakdowns.mismatch.sum ?? 0, currency)}</span></p>
                 </div>
               </CardContent>
             </Card>
@@ -258,7 +259,7 @@ function ReportsPage() {
                     }}
                     labelStyle={{ fontWeight: "bold", fontSize: "12px", color: "var(--color-foreground)" }}
                     itemStyle={{ fontSize: "12px", color: "var(--color-primary)" }}
-                    formatter={(v: number) => [formatCurrency(v), "Revenue"]}
+                    formatter={(v: number) => [formatCurrency(v, currency), "Revenue"]}
                   />
                   <Bar dataKey="amount" fill="var(--color-primary)" radius={[6, 6, 0, 0]} maxBarSize={45} />
                 </BarChart>
@@ -327,7 +328,7 @@ function ReportsPage() {
                     }}
                     labelStyle={{ fontWeight: "bold", fontSize: "12px", color: "var(--color-foreground)" }}
                     itemStyle={{ fontSize: "12px", color: "var(--color-chart-4)" }}
-                    formatter={(v: number) => [formatCurrency(v), "Total Amount"]}
+                    formatter={(v: number) => [formatCurrency(v, currency), "Total Amount"]}
                   />
                   <Bar dataKey="value" fill="var(--color-chart-4)" radius={[0, 6, 6, 0]} maxBarSize={30} />
                 </BarChart>

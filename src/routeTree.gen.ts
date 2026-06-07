@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as InvoiceInvoiceIdRouteImport } from './routes/invoice.$invoiceId'
 import { Route as AuthenticatedStaffManagementRouteImport } from './routes/_authenticated/staff-management'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedServicesRouteImport } from './routes/_authenticated/services'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedRefundsRouteImport } from './routes/_authenticated/refunds'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
@@ -78,6 +79,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedServicesRoute = AuthenticatedServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/refunds': typeof AuthenticatedRefundsRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/services': typeof AuthenticatedServicesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/staff-management': typeof AuthenticatedStaffManagementRoute
   '/invoice/$invoiceId': typeof InvoiceInvoiceIdRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/payments': typeof AuthenticatedPaymentsRoute
   '/refunds': typeof AuthenticatedRefundsRoute
   '/reports': typeof AuthenticatedReportsRoute
+  '/services': typeof AuthenticatedServicesRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/staff-management': typeof AuthenticatedStaffManagementRoute
   '/invoice/$invoiceId': typeof InvoiceInvoiceIdRoute
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/refunds': typeof AuthenticatedRefundsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/services': typeof AuthenticatedServicesRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/staff-management': typeof AuthenticatedStaffManagementRoute
   '/invoice/$invoiceId': typeof InvoiceInvoiceIdRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/refunds'
     | '/reports'
+    | '/services'
     | '/settings'
     | '/staff-management'
     | '/invoice/$invoiceId'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/payments'
     | '/refunds'
     | '/reports'
+    | '/services'
     | '/settings'
     | '/staff-management'
     | '/invoice/$invoiceId'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/_authenticated/payments'
     | '/_authenticated/refunds'
     | '/_authenticated/reports'
+    | '/_authenticated/services'
     | '/_authenticated/settings'
     | '/_authenticated/staff-management'
     | '/invoice/$invoiceId'
@@ -323,6 +335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/services': {
+      id: '/_authenticated/services'
+      path: '/services'
+      fullPath: '/services'
+      preLoaderRoute: typeof AuthenticatedServicesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/reports': {
       id: '/_authenticated/reports'
       path: '/reports'
@@ -391,6 +410,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedRefundsRoute: typeof AuthenticatedRefundsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedServicesRoute: typeof AuthenticatedServicesRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStaffManagementRoute: typeof AuthenticatedStaffManagementRoute
 }
@@ -404,6 +424,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedRefundsRoute: AuthenticatedRefundsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedServicesRoute: AuthenticatedServicesRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStaffManagementRoute: AuthenticatedStaffManagementRoute,
 }

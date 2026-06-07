@@ -38,7 +38,15 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    // 1. Insert invoice
+    // 1. Fetch org currency
+    const { data: orgData } = await supabaseAdmin
+      .from("organizations")
+      .select("currency")
+      .eq("id", organization_id)
+      .single();
+    const orgCurrency = orgData?.currency || "NGN";
+
+    // 2. Insert invoice with dynamic currency
     const { data: invoice, error: invError } = await supabaseAdmin
       .from("invoices")
       .insert({
@@ -49,6 +57,7 @@ router.post("/", async (req: Request, res: Response) => {
         due_date,
         status: "pending",
         generated_by: generated_by || null,
+        currency: orgCurrency,
       })
       .select()
       .single();
@@ -77,7 +86,7 @@ router.post("/", async (req: Request, res: Response) => {
     await supabaseAdmin.from("audit_logs").insert({
       organization_id,
       action_type: "invoice_creation",
-      action_description: `Invoice #${invoice_number} of ₦${parseFloat(amount).toLocaleString()} created for ${customer_name || "customer"}.`,
+      action_description: `Invoice #${invoice_number} of ${orgCurrency} ${parseFloat(amount).toLocaleString()} created for ${customer_name || "customer"}.`,
       performed_by: generated_by || null,
       related_record_id: invoice.id,
     });
@@ -95,7 +104,7 @@ router.post("/", async (req: Request, res: Response) => {
         invoiceNumber: invoice_number,
         amount: parseFloat(amount),
         dueDate: due_date,
-        currency: "NGN",
+        currency: orgCurrency,
         portalUrl,
         organizationName: organization_name || "PayVerify",
         subscribedService: customer?.service || undefined,

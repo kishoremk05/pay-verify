@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import * as XLSX from "xlsx";
-import { Plus, Upload, Search, Pencil, Trash2, Loader2, Users, Info } from "lucide-react";
+import { Plus, Upload, Search, Pencil, Trash2, Loader2, Users, Info, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -160,6 +161,7 @@ function CustomersPage() {
   const [editing, setEditing] = useState<Customer | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const currency = organization?.currency ?? "NGN";
   
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardHeaders, setWizardHeaders] = useState<string[]>([]);
@@ -167,6 +169,16 @@ function CustomersPage() {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
+
+  // Fetch services for dropdown
+  const { data: servicesList = [] } = useQuery({
+    queryKey: ["services-list", organization?.id],
+    enabled: !!organization?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("services").select("id, name, fee").order("name");
+      return data ?? [];
+    },
+  });
 
   const onBatchDeleteConfirm = async () => {
     if (selectedIds.length === 0) return;
@@ -380,6 +392,11 @@ function CustomersPage() {
           <p className="text-sm text-muted-foreground mt-1">Manage and track clients you collect payments from.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
+          <Link to="/services">
+            <Button variant="outline" shape="pill" className="h-9 text-xs font-semibold border-border/80 text-muted-foreground hover:text-foreground gap-2">
+              <ArrowLeft className="h-4 w-4" /> Back to Services
+            </Button>
+          </Link>
           {selectedIds.length > 0 && !isReadOnly && (
             <Button
               variant="destructive"
@@ -479,11 +496,27 @@ function CustomersPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Assigned Service</Label>
-                  <Input
-                    className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                    placeholder="Web Development, Consultation, etc."
-                    {...form.register("service")}
-                  />
+                  <Select
+                    value={form.watch("service") || ""}
+                    onValueChange={(val) => {
+                      form.setValue("service", val);
+                      const selectedService = servicesList.find((s) => s.name === val);
+                      if (selectedService) {
+                        form.setValue("expected_amount", Number(selectedService.fee));
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all">
+                      <SelectValue placeholder="Select a service..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {servicesList.map((s) => (
+                        <SelectItem key={s.id} value={s.name}>
+                          {s.name} — {formatCurrency(s.fee, currency)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -630,10 +663,10 @@ function CustomersPage() {
                         <TableCell className="py-4">
                           <span className="font-semibold px-2.5 py-1 rounded-md text-xs bg-muted/65 text-muted-foreground border border-border/30 uppercase tracking-wider">{c.service ?? "Custom Option"}</span>
                         </TableCell>
-                        <TableCell className="py-4 text-right font-extrabold text-foreground">{formatCurrency(c.expected_amount)}</TableCell>
+                        <TableCell className="py-4 text-right font-extrabold text-foreground">{formatCurrency(c.expected_amount, currency)}</TableCell>
                         <TableCell className="py-4 text-right font-extrabold">
                           <span className={c.due_amount <= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}>
-                            {formatCurrency(c.due_amount)}
+                            {formatCurrency(c.due_amount, currency)}
                           </span>
                         </TableCell>
                         <TableCell className="py-4">

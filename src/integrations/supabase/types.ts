@@ -73,18 +73,21 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
+          currency: string
           id: string
           name: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          currency?: string
           id?: string
           name: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          currency?: string
           id?: string
           name?: string
           updated_at?: string
@@ -185,6 +188,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          fee: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          fee?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          fee?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "services_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

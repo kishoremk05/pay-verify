@@ -83,6 +83,8 @@ function InvoicesPage() {
   const [dueDate, setDueDate] = useState("");
   const [selectedCustomerAccountNumber, setSelectedCustomerAccountNumber] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const currency = organization?.currency ?? "NGN";
 
   // Auto-generate and auto-populate invoice form based on customer select
   const handleCustomerChange = (val: string) => {
@@ -241,6 +243,29 @@ function InvoicesPage() {
       return data ?? [];
     },
   });
+
+  // Fetch services for multi-select
+  const { data: servicesList = [] } = useQuery({
+    queryKey: ["services-list-invoices", organization?.id],
+    enabled: !!organization?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("services").select("id, name, fee").order("name");
+      return data ?? [];
+    },
+  });
+
+  // Toggle a service, and recompute the amount total
+  const toggleService = (serviceId: string) => {
+    setSelectedServiceIds((prev) => {
+      const next = prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId];
+      const total = next.reduce((sum, id) => {
+        const svc = servicesList.find((s) => s.id === id);
+        return sum + (svc ? Number(svc.fee) : 0);
+      }, 0);
+      setAmount(total > 0 ? String(total) : "");
+      return next;
+    });
+  };
 
   // Handle invoice creation (using custom backend API to dispatch Brevo transaction email)
   const handleCreateInvoice = async (e: React.FormEvent) => {
@@ -481,6 +506,29 @@ function InvoicesPage() {
                   )}
                 </div>
 
+                {/* Multi-Select Services */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                    Select Services <span className="text-muted-foreground/50 font-normal">(optional — auto-sums amount)</span>
+                  </Label>
+                  {servicesList.length === 0 ? (
+                    <p className="text-xs text-muted-foreground pl-1">No services configured. <a href="/services" className="text-primary underline">Add services</a></p>
+                  ) : (
+                    <div className="grid gap-2 max-h-40 overflow-y-auto rounded-xl border border-border/50 p-3 bg-muted/10">
+                      {servicesList.map((svc) => (
+                        <label key={svc.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer">
+                          <Checkbox
+                            checked={selectedServiceIds.includes(svc.id)}
+                            onCheckedChange={() => toggleService(svc.id)}
+                          />
+                          <span className="text-xs font-semibold text-foreground flex-1">{svc.name}</span>
+                          <span className="text-xs font-bold text-muted-foreground">{formatCurrency(svc.fee, currency)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="invoice_num" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
@@ -497,7 +545,7 @@ function InvoicesPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
-                      Amount (NGN) <span className="text-rose-500">*</span>
+                      Amount ({currency}) <span className="text-rose-500">*</span>
                     </Label>
                     <Input
                       id="amount"
@@ -558,7 +606,7 @@ function InvoicesPage() {
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Invoiced</p>
-              <h3 className="text-2xl font-black text-foreground tracking-tight">{formatCurrency(totalInvoiced)}</h3>
+              <h3 className="text-2xl font-black text-foreground tracking-tight">{formatCurrency(totalInvoiced, currency)}</h3>
             </div>
             <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
               <FileText className="h-5 w-5" />
@@ -570,7 +618,7 @@ function InvoicesPage() {
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Collected Revenue</p>
-              <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{formatCurrency(collectedInvoiced)}</h3>
+              <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{formatCurrency(collectedInvoiced, currency)}</h3>
             </div>
             <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
               <CheckCircle className="h-5 w-5" />
@@ -582,7 +630,7 @@ function InvoicesPage() {
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Outstanding Invoices</p>
-              <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">{formatCurrency(outstandingInvoiced)}</h3>
+              <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">{formatCurrency(outstandingInvoiced, currency)}</h3>
             </div>
             <div className="h-10 w-10 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
               <AlertCircle className="h-5 w-5" />
@@ -694,7 +742,7 @@ function InvoicesPage() {
                       </div>
                     </td>
                     <td className="py-4.5 px-6 text-xs font-bold text-foreground">
-                      {formatCurrency(inv.amount)}
+                      {formatCurrency(inv.amount, currency)}
                     </td>
                     <td 
                       className="py-4.5 px-6 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"

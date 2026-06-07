@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, CreditCard, BarChart3, Settings, ShieldCheck, LogOut, FileText, RotateCcw, History } from "lucide-react";
+import { LayoutDashboard, ClipboardList, CreditCard, BarChart3, Settings, ShieldCheck, LogOut, FileText, RotateCcw, History } from "lucide-react";
 
 import {
   Sidebar,
@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Customers", url: "/customers", icon: Users },
+  { title: "Services", url: "/services", icon: ClipboardList },
   { title: "Invoices", url: "/invoices", icon: FileText },
   { title: "Payments", url: "/payments", icon: CreditCard },
   { title: "Refunds", url: "/refunds", icon: RotateCcw },

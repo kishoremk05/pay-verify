@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, User, Building, Mail, ShieldCheck, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Loader2, User, Building, Mail, ShieldCheck, Eye, EyeOff, KeyRound, Coins } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,6 +9,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const SUPPORTED_CURRENCIES = [
+  { code: "NGN", label: "Nigerian Naira (₦)" },
+  { code: "GHS", label: "Ghanaian Cedi (₵)" },
+  { code: "USD", label: "US Dollar ($)" },
+  { code: "INR", label: "Indian Rupee (₹)" },
+];
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — PayVerify" }] }),
@@ -19,6 +33,7 @@ function SettingsPage() {
   const { profile, organization, user, role, refresh } = useAuth();
   const [fullName, setFullName] = useState("");
   const [orgName, setOrgName] = useState("");
+  const [orgCurrency, setOrgCurrency] = useState("NGN");
   const [saving, setSaving] = useState(false);
 
   // Password Update States
@@ -47,6 +62,7 @@ function SettingsPage() {
   useEffect(() => {
     setFullName(profile?.full_name ?? "");
     setOrgName(organization?.name ?? "");
+    setOrgCurrency(organization?.currency ?? "NGN");
   }, [profile, organization]);
 
   const saveProfile = async () => {
@@ -62,7 +78,7 @@ function SettingsPage() {
   const saveOrg = async () => {
     if (!organization) return;
     setSaving(true);
-    const { error } = await supabase.from("organizations").update({ name: orgName }).eq("id", organization.id);
+    const { error } = await supabase.from("organizations").update({ name: orgName, currency: orgCurrency }).eq("id", organization.id);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Organization updated successfully");
@@ -176,6 +192,23 @@ function SettingsPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="orgCurrency" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1 flex items-center gap-1.5">
+                <Coins className="h-3.5 w-3.5" /> Default Currency
+              </Label>
+              <Select value={orgCurrency} onValueChange={setOrgCurrency} disabled={role !== "admin"}>
+                <SelectTrigger className="rounded-full px-5 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all duration-200 disabled:bg-muted/40 disabled:text-muted-foreground disabled:cursor-not-allowed">
+                  <SelectValue placeholder="Select currency..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORTED_CURRENCIES.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground pl-1">Used for invoices, payments, and dashboard displays.</p>
             </div>
 
             <div className="pt-2">

@@ -7,6 +7,7 @@ export const formatCurrency = (n: number | null | undefined, currency = "NGN") =
     EUR: "€",
     GBP: "£",
     GHS: "₵",
+    INR: "₹",
     KES: "KSh",
     ZAR: "R",
   };
