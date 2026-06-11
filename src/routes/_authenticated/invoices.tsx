@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -81,7 +82,9 @@ function InvoicesPage() {
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [selectedCustomerAccountNumber, setSelectedCustomerAccountNumber] = useState<string | null>(null);
+  const [selectedCustomerAccountNumber, setSelectedCustomerAccountNumber] = useState<string | null>(
+    null,
+  );
   const [creating, setCreating] = useState(false);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const currency = organization?.currency ?? "NGN";
@@ -95,9 +98,19 @@ function InvoicesPage() {
       const randomId = Math.floor(1000 + Math.random() * 9000);
       setInvoiceNumber(`INV-${randomId}`);
 
-      // 2. Auto populate customer's expected amount
+      // 2. Auto populate customer's expected amount taking discounts into account
       if (selected.expected_amount) {
-        setAmount(String(selected.expected_amount));
+        let finalFee = Number(selected.expected_amount);
+        if (selected.discount_eligible) {
+          if (selected.discount_type === "percentage") {
+            finalFee = finalFee - (finalFee * (Number(selected.discount_value) || 0)) / 100;
+          } else if (selected.discount_type === "fixed") {
+            finalFee = finalFee - (Number(selected.discount_value) || 0);
+          } else if (selected.discount_type === "scholarship") {
+            finalFee = 0;
+          }
+        }
+        setAmount(String(Math.max(0, finalFee)));
       } else {
         setAmount("");
       }
@@ -161,15 +174,18 @@ function InvoicesPage() {
 
     setReconciling(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/invoices/${selectedInvoice.id}/manual-reconcile`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          actual_amount: amt,
-          receipt_base64: reconcileReceiptBase64,
-          reconciled_by: user?.id,
-        }),
-      });
+      const res = await fetch(
+        `${BACKEND_URL}/api/invoices/${selectedInvoice.id}/manual-reconcile`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            actual_amount: amt,
+            receipt_base64: reconcileReceiptBase64,
+            reconciled_by: user?.id,
+          }),
+        },
+      );
 
       if (!res.ok) {
         throw new Error("Manual reconciliation failed");
@@ -190,20 +206,6 @@ function InvoicesPage() {
 
   const isReadOnly = role === "finance_staff";
 
-  if ((role as any) === "viewer") {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 text-center animate-fade-in">
-        <div className="h-16 w-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-6">
-          <Lock className="h-6 w-6" />
-        </div>
-        <h2 className="text-2xl font-black text-foreground">Access Restricted</h2>
-        <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
-          Invoice management and records are restricted for your role. Contact your workspace admin for details.
-        </p>
-      </div>
-    );
-  }
-
   // Fetch invoices
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ["invoices", organization?.id],
@@ -211,7 +213,8 @@ function InvoicesPage() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("invoices")
-        .select(`
+        .select(
+          `
           *,
           customers!customer_id (
             id,
@@ -223,7 +226,8 @@ function InvoicesPage() {
             due_amount,
             account_number
           )
-        `)
+        `,
+        )
         .eq("organization_id", organization!.id)
         .order("created_at", { ascending: false });
       return (data as any[]) ?? [];
@@ -237,7 +241,9 @@ function InvoicesPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("customers")
-        .select("id, name, email, customer_code, expected_amount, due_amount, account_number")
+        .select(
+          "id, name, email, customer_code, expected_amount, due_amount, account_number, discount_eligible, discount_type, discount_value",
+        )
         .eq("organization_id", organization!.id)
         .order("name", { ascending: true });
       return data ?? [];
@@ -254,10 +260,27 @@ function InvoicesPage() {
     },
   });
 
+  if ((role as any) === "viewer") {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center animate-fade-in">
+        <div className="h-16 w-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-6">
+          <Lock className="h-6 w-6" />
+        </div>
+        <h2 className="text-2xl font-black text-foreground">Access Restricted</h2>
+        <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
+          Invoice management and records are restricted for your role. Contact your workspace admin
+          for details.
+        </p>
+      </div>
+    );
+  }
+
   // Toggle a service, and recompute the amount total
   const toggleService = (serviceId: string) => {
     setSelectedServiceIds((prev) => {
-      const next = prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId];
+      const next = prev.includes(serviceId)
+        ? prev.filter((id) => id !== serviceId)
+        : [...prev, serviceId];
       const total = next.reduce((sum, id) => {
         const svc = servicesList.find((s) => s.id === id);
         return sum + (svc ? Number(svc.fee) : 0);
@@ -312,18 +335,18 @@ function InvoicesPage() {
       toast.success(
         resultData.emailSent
           ? "Invoice created & payment link sent!"
-          : "Invoice created successfully (email skipped/failed)."
+          : "Invoice created successfully (email skipped/failed).",
       );
 
       setIsCreateOpen(false);
-      
+
       // Reset form
       setCustomerId("");
       setInvoiceNumber("");
       setAmount("");
       setDueDate("");
       setSelectedCustomerAccountNumber(null);
-      
+
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["invoices", organization.id] });
       queryClient.invalidateQueries({ queryKey: ["customers", organization.id] });
@@ -407,9 +430,7 @@ function InvoicesPage() {
     const search = searchTerm.toLowerCase();
 
     const matchesSearch =
-      custName.includes(search) ||
-      custCode.includes(search) ||
-      invNum.includes(search);
+      custName.includes(search) || custCode.includes(search) || invNum.includes(search);
 
     const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
 
@@ -427,25 +448,37 @@ function InvoicesPage() {
     switch (status) {
       case "paid":
         return (
-          <Badge variant="outline" className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20 text-[10px] font-black uppercase tracking-wider">
+          <Badge
+            variant="outline"
+            className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20 text-[10px] font-black uppercase tracking-wider"
+          >
             Paid
           </Badge>
         );
       case "review_required":
         return (
-          <Badge variant="outline" className="rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20 text-[10px] font-black uppercase tracking-wider animate-pulse">
+          <Badge
+            variant="outline"
+            className="rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20 text-[10px] font-black uppercase tracking-wider animate-pulse"
+          >
             Review Required
           </Badge>
         );
       case "partial":
         return (
-          <Badge variant="outline" className="rounded-full bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-100 dark:border-cyan-500/20 text-[10px] font-black uppercase tracking-wider">
+          <Badge
+            variant="outline"
+            className="rounded-full bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-100 dark:border-cyan-500/20 text-[10px] font-black uppercase tracking-wider"
+          >
             Partial
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20 text-[10px] font-black uppercase tracking-wider">
+          <Badge
+            variant="outline"
+            className="rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20 text-[10px] font-black uppercase tracking-wider"
+          >
             Pending
           </Badge>
         );
@@ -454,35 +487,44 @@ function InvoicesPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-        <div className="flex flex-wrap items-center gap-2.5">
-          {selectedIds.length > 0 && !isReadOnly && (
-            <Button
-              variant="destructive"
-              shape="pill"
-              className="h-9 text-xs font-bold gap-2 animate-fade-in bg-rose-600 hover:bg-rose-700 text-white shadow-md px-5"
-              onClick={() => setBatchDeleteOpen(true)}
-            >
-              <Trash2 className="h-4 w-4" /> Delete Selected ({selectedIds.length})
-            </Button>
-          )}
+      <div className="flex flex-wrap items-center gap-2.5">
+        {selectedIds.length > 0 && !isReadOnly && (
+          <Button
+            variant="destructive"
+            shape="pill"
+            className="h-9 text-xs font-bold gap-2 animate-fade-in bg-rose-600 hover:bg-rose-700 text-white shadow-md px-5"
+            onClick={() => setBatchDeleteOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" /> Delete Selected ({selectedIds.length})
+          </Button>
+        )}
 
-          {!isReadOnly && (
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 px-6">
-                  <Plus className="h-4.5 w-4.5" /> Create Invoice
-                </Button>
-              </DialogTrigger>
+        {!isReadOnly && (
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button
+                shape="pill"
+                className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 px-6"
+              >
+                <Plus className="h-4.5 w-4.5" /> Create Invoice
+              </Button>
+            </DialogTrigger>
             <DialogContent className="border border-border/60 bg-card shadow-[var(--shadow-elegant)] rounded-3xl p-6 sm:p-8">
               <DialogHeader>
-                <DialogTitle className="text-lg font-bold text-foreground">Create New Invoice</DialogTitle>
+                <DialogTitle className="text-lg font-bold text-foreground">
+                  Create New Invoice
+                </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
-                  Draft a formal payment request. Submitting updates the linked client expected total balance and dispatches a secure check out email.
+                  Draft a formal payment request. Submitting updates the linked client expected
+                  total balance and dispatches a secure check out email.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateInvoice} className="space-y-5 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="customer" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                  <Label
+                    htmlFor="customer"
+                    className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                  >
                     Select Customer <span className="text-rose-500">*</span>
                   </Label>
                   <Select value={customerId} onValueChange={handleCustomerChange}>
@@ -499,9 +541,25 @@ function InvoicesPage() {
                   </Select>
                   {selectedCustomerAccountNumber && (
                     <div className="flex items-center gap-2 mt-1.5 px-4 py-2.5 bg-primary/5 border border-primary/15 rounded-2xl">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-primary shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Account Number</span>
-                      <span className="ml-auto font-mono font-black text-xs text-primary tracking-widest">{selectedCustomerAccountNumber}</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-3.5 w-3.5 text-primary shrink-0"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect width="20" height="14" x="2" y="5" rx="2" />
+                        <path d="M2 10h20" />
+                      </svg>
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                        Account Number
+                      </span>
+                      <span className="ml-auto font-mono font-black text-xs text-primary tracking-widest">
+                        {selectedCustomerAccountNumber}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -509,20 +567,35 @@ function InvoicesPage() {
                 {/* Multi-Select Services */}
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
-                    Select Services <span className="text-muted-foreground/50 font-normal">(optional — auto-sums amount)</span>
+                    Select Services{" "}
+                    <span className="text-muted-foreground/50 font-normal">
+                      (optional — auto-sums amount)
+                    </span>
                   </Label>
                   {servicesList.length === 0 ? (
-                    <p className="text-xs text-muted-foreground pl-1">No services configured. <a href="/services" className="text-primary underline">Add services</a></p>
+                    <p className="text-xs text-muted-foreground pl-1">
+                      No services configured.{" "}
+                      <a href="/services" className="text-primary underline">
+                        Add services
+                      </a>
+                    </p>
                   ) : (
                     <div className="grid gap-2 max-h-40 overflow-y-auto rounded-xl border border-border/50 p-3 bg-muted/10">
                       {servicesList.map((svc) => (
-                        <label key={svc.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer">
+                        <label
+                          key={svc.id}
+                          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+                        >
                           <Checkbox
                             checked={selectedServiceIds.includes(svc.id)}
                             onCheckedChange={() => toggleService(svc.id)}
                           />
-                          <span className="text-xs font-semibold text-foreground flex-1">{svc.name}</span>
-                          <span className="text-xs font-bold text-muted-foreground">{formatCurrency(svc.fee, currency)}</span>
+                          <span className="text-xs font-semibold text-foreground flex-1">
+                            {svc.name}
+                          </span>
+                          <span className="text-xs font-bold text-muted-foreground">
+                            {formatCurrency(svc.fee, currency)}
+                          </span>
                         </label>
                       ))}
                     </div>
@@ -531,7 +604,10 @@ function InvoicesPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="invoice_num" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                    <Label
+                      htmlFor="invoice_num"
+                      className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                    >
                       Invoice Number <span className="text-rose-500">*</span>
                     </Label>
                     <Input
@@ -544,7 +620,10 @@ function InvoicesPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="amount" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                    <Label
+                      htmlFor="amount"
+                      className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                    >
                       Amount ({currency}) <span className="text-rose-500">*</span>
                     </Label>
                     <Input
@@ -561,7 +640,10 @@ function InvoicesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="due_date" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                  <Label
+                    htmlFor="due_date"
+                    className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                  >
                     Due Date <span className="text-rose-500">*</span>
                   </Label>
                   <Input
@@ -605,8 +687,12 @@ function InvoicesPage() {
         <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Invoiced</p>
-              <h3 className="text-2xl font-black text-foreground tracking-tight">{formatCurrency(totalInvoiced, currency)}</h3>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Total Invoiced
+              </p>
+              <h3 className="text-2xl font-black text-foreground tracking-tight">
+                {formatCurrency(totalInvoiced, currency)}
+              </h3>
             </div>
             <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
               <FileText className="h-5 w-5" />
@@ -617,8 +703,12 @@ function InvoicesPage() {
         <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Collected Revenue</p>
-              <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{formatCurrency(collectedInvoiced, currency)}</h3>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Collected Revenue
+              </p>
+              <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                {formatCurrency(collectedInvoiced, currency)}
+              </h3>
             </div>
             <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
               <CheckCircle className="h-5 w-5" />
@@ -629,8 +719,12 @@ function InvoicesPage() {
         <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Outstanding Invoices</p>
-              <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">{formatCurrency(outstandingInvoiced, currency)}</h3>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Outstanding Invoices
+              </p>
+              <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 tracking-tight">
+                {formatCurrency(outstandingInvoiced, currency)}
+              </h3>
             </div>
             <div className="h-10 w-10 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
               <AlertCircle className="h-5 w-5" />
@@ -678,7 +772,9 @@ function InvoicesPage() {
                 <FileText className="h-5 w-5" />
               </div>
               <h3 className="mt-4 text-sm font-bold text-foreground">No invoices found</h3>
-              <p className="mt-1 text-xs text-muted-foreground">Draft billing entries to launch formal records.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Draft billing entries to launch formal records.
+              </p>
             </div>
           ) : (
             <table className="w-full text-left border-collapse min-w-[800px]">
@@ -687,7 +783,10 @@ function InvoicesPage() {
                   {!isReadOnly && (
                     <th className="py-4.5 pl-6 pr-2 w-12 font-black">
                       <Checkbox
-                        checked={filteredInvoices.length > 0 && selectedIds.length === filteredInvoices.length}
+                        checked={
+                          filteredInvoices.length > 0 &&
+                          selectedIds.length === filteredInvoices.length
+                        }
                         onCheckedChange={(checked) => {
                           if (checked) {
                             setSelectedIds(filteredInvoices.map((inv) => inv.id));
@@ -709,7 +808,10 @@ function InvoicesPage() {
               </thead>
               <tbody className="divide-y divide-border/30">
                 {filteredInvoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-muted/10 transition-colors duration-150 border-b border-border/30 last:border-b-0">
+                  <tr
+                    key={inv.id}
+                    className="hover:bg-muted/10 transition-colors duration-150 border-b border-border/30 last:border-b-0"
+                  >
                     {!isReadOnly && (
                       <td className="py-4.5 pl-6 pr-2">
                         <Checkbox
@@ -731,8 +833,15 @@ function InvoicesPage() {
                       </div>
                     </td>
                     <td className="py-4.5 px-6 text-xs font-medium text-foreground">
-                      <div className="font-bold text-foreground">{inv.customers?.name || "Deleted Customer"}</div>
+                      <div className="font-bold text-foreground">
+                        {inv.customers?.name || "Deleted Customer"}
+                      </div>
                       <div className="text-[10px] text-muted-foreground mt-0.5 flex flex-col gap-0.5">
+                        {inv.customers?.customer_code && (
+                          <span className="text-[10px] font-semibold text-primary font-mono">
+                            ID: {inv.customers.customer_code}
+                          </span>
+                        )}
                         <span>{inv.customers?.email || "—"}</span>
                         {inv.customers?.account_number && (
                           <span className="font-mono text-[9px] font-bold text-primary bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10 w-fit">
@@ -744,7 +853,7 @@ function InvoicesPage() {
                     <td className="py-4.5 px-6 text-xs font-bold text-foreground">
                       {formatCurrency(inv.amount, currency)}
                     </td>
-                    <td 
+                    <td
                       className="py-4.5 px-6 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => {
                         if (inv.status === "review_required") {
@@ -816,7 +925,10 @@ function InvoicesPage() {
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 bg-card border border-border/80 rounded-2xl shadow-xl p-1.5 z-50">
+                            <DropdownMenuContent
+                              align="end"
+                              className="w-48 bg-card border border-border/80 rounded-2xl shadow-xl p-1.5 z-50"
+                            >
                               <DropdownMenuItem
                                 onClick={() => setOutboxInvoice(inv)}
                                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-accent cursor-pointer transition-colors"
@@ -860,24 +972,30 @@ function InvoicesPage() {
           </DialogHeader>
           {outboxInvoice && (
             <div className="space-y-4 py-4">
-               <div className="bg-muted/10 border border-border/60 rounded-2xl p-4 text-xs space-y-2">
+              <div className="bg-muted/10 border border-border/60 rounded-2xl p-4 text-xs space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-semibold">Recipient Name</span>
                   <span className="font-bold">{outboxInvoice.customers?.name || "Customer"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-semibold">Destination Address</span>
-                  <span className="font-bold text-primary">{outboxInvoice.customers?.email || "No Email"}</span>
+                  <span className="font-bold text-primary">
+                    {outboxInvoice.customers?.email || "No Email"}
+                  </span>
                 </div>
                 {outboxInvoice.customers?.account_number && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground font-semibold">Account Number</span>
-                    <span className="font-bold font-mono text-foreground">{outboxInvoice.customers.account_number}</span>
+                    <span className="font-bold font-mono text-foreground">
+                      {outboxInvoice.customers.account_number}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-semibold">API Delivery Endpoint</span>
-                  <span className="font-mono text-emerald-600 font-bold">https://api.resend.com/emails</span>
+                  <span className="font-mono text-emerald-600 font-bold">
+                    https://api.resend.com/emails
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-semibold">Secure Checkout Link</span>
@@ -903,7 +1021,11 @@ function InvoicesPage() {
             </div>
           )}
           <DialogFooter>
-            <Button shape="pill" onClick={() => setOutboxInvoice(null)} className="rounded-full font-bold px-6">
+            <Button
+              shape="pill"
+              onClick={() => setOutboxInvoice(null)}
+              className="rounded-full font-bold px-6"
+            >
               Close Logs
             </Button>
           </DialogFooter>
@@ -925,10 +1047,14 @@ function InvoicesPage() {
             <div className="space-y-5 py-4">
               {/* Customer Details Card */}
               <div className="bg-muted/10 border border-border/60 rounded-2xl p-4 text-xs space-y-3">
-                <h4 className="font-black uppercase tracking-wider text-muted-foreground text-[10px]">Customer Details</h4>
+                <h4 className="font-black uppercase tracking-wider text-muted-foreground text-[10px]">
+                  Customer Details
+                </h4>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground font-semibold">Customer Name</span>
-                  <span className="font-bold text-foreground">{selectedInvoice.customers?.name || "—"}</span>
+                  <span className="font-bold text-foreground">
+                    {selectedInvoice.customers?.name || "—"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground font-semibold">Account Number</span>
@@ -938,14 +1064,18 @@ function InvoicesPage() {
                 </div>
                 <div className="flex justify-between items-center border-t border-border/40 pt-3">
                   <span className="text-muted-foreground font-semibold">Invoice Amount</span>
-                  <span className="font-bold text-emerald-600 text-sm">{formatCurrency(selectedInvoice.amount)}</span>
+                  <span className="font-bold text-emerald-600 text-sm">
+                    {formatCurrency(selectedInvoice.amount)}
+                  </span>
                 </div>
               </div>
 
               {/* Uploaded receipt preview */}
               {selectedInvoice.receipt_url && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Uploaded Receipt Proof</Label>
+                  <Label className="text-xs font-bold text-muted-foreground">
+                    Uploaded Receipt Proof
+                  </Label>
                   <div className="bg-black/10 border border-border/60 rounded-2xl p-4 flex justify-center max-h-64 overflow-hidden">
                     <img
                       src={selectedInvoice.receipt_url}
@@ -995,7 +1125,9 @@ function InvoicesPage() {
               <DollarSign className="h-5 w-5 text-primary" /> Staff Invoice Reconciliation
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Manually record payment receipt and verify balance. If the amount exceeds the invoice expected value, the system will automatically log an overpayment alert and initiate a refund request.
+              Manually record payment receipt and verify balance. If the amount exceeds the invoice
+              expected value, the system will automatically log an overpayment alert and initiate a
+              refund request.
             </DialogDescription>
           </DialogHeader>
           {selectedInvoice && (
@@ -1016,7 +1148,10 @@ function InvoicesPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="actual_amount" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                <Label
+                  htmlFor="actual_amount"
+                  className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                >
                   Actual Amount Paid (NGN) <span className="text-rose-500">*</span>
                 </Label>
                 <Input
@@ -1032,7 +1167,9 @@ function InvoicesPage() {
 
               {selectedInvoice.receipt_url && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground">Existing Uploaded Receipt</Label>
+                  <Label className="text-xs font-bold text-muted-foreground">
+                    Existing Uploaded Receipt
+                  </Label>
                   <div className="bg-black/10 border border-border/60 rounded-2xl p-3 flex justify-center max-h-48 overflow-hidden">
                     <img
                       src={selectedInvoice.receipt_url}
@@ -1075,7 +1212,8 @@ function InvoicesPage() {
               Delete Invoice
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-muted-foreground mt-2">
-              Are you sure you want to delete this invoice? This action is permanent and cannot be undone. All linked history and payment matching records will be lost.
+              Are you sure you want to delete this invoice? This action is permanent and cannot be
+              undone. All linked history and payment matching records will be lost.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-4 border-t border-border/40 gap-2 mt-4">
@@ -1099,7 +1237,8 @@ function InvoicesPage() {
               Delete Selected Invoices
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-muted-foreground mt-2">
-              Are you sure you want to delete the {selectedIds.length} selected invoice{selectedIds.length > 1 ? "s" : ""}? This action is permanent and cannot be undone.
+              Are you sure you want to delete the {selectedIds.length} selected invoice
+              {selectedIds.length > 1 ? "s" : ""}? This action is permanent and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-4 border-t border-border/40 gap-2 mt-4">

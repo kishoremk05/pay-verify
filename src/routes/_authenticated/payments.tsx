@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
@@ -17,18 +18,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,13 +87,50 @@ interface Payment {
   transaction_id: string | null;
   currency: string;
 }
-interface Customer { id: string; name: string; expected_amount: number; customer_code: string | null; account_number: string | null }
+interface Customer {
+  id: string;
+  name: string;
+  expected_amount: number;
+  due_amount: number;
+  customer_code: string | null;
+  account_number: string | null;
+}
 
 function ExcelPreview() {
   const cols = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
-  const headers = ["amount_paid", "payment_method", "customer_account_number", "customer_name", "payment_date", "notes", "status", "source", "customer_code"];
-  const row1 = [15000, "Transfer", "1203948576", "John Doe", "2025-05-19", "May deposit", "paid", "bank", "CUST-001"];
-  const row2 = [25000, "Card", "0987654321", "Sarah Will", "2025-05-18", "", "paid", "paystack", ""];
+  const headers = [
+    "amount_paid",
+    "payment_method",
+    "customer_account_number",
+    "customer_name",
+    "payment_date",
+    "notes",
+    "status",
+    "source",
+    "customer_code",
+  ];
+  const row1 = [
+    15000,
+    "Transfer",
+    "1203948576",
+    "John Doe",
+    "2025-05-19",
+    "May deposit",
+    "paid",
+    "bank",
+    "CUST-001",
+  ];
+  const row2 = [
+    25000,
+    "Card",
+    "0987654321",
+    "Sarah Will",
+    "2025-05-18",
+    "",
+    "paid",
+    "paystack",
+    "",
+  ];
 
   return (
     <div className="border border-border/60 rounded-2xl overflow-hidden bg-background shadow-[var(--shadow-card)] font-sans text-sm mt-4">
@@ -97,7 +150,10 @@ function ExcelPreview() {
             <tr className="bg-muted/20 text-center font-bold divide-x divide-border border-b border-border/60">
               <th className="w-10 bg-muted/40 py-2 text-[10px] text-muted-foreground text-center font-mono font-medium"></th>
               {cols.map((col, idx) => (
-                <th key={idx} className="py-2 text-[11px] text-muted-foreground font-mono font-black w-24 text-center">
+                <th
+                  key={idx}
+                  className="py-2 text-[11px] text-muted-foreground font-mono font-black w-24 text-center"
+                >
                   {col}
                 </th>
               ))}
@@ -107,7 +163,10 @@ function ExcelPreview() {
                 1
               </td>
               {headers.map((h, idx) => (
-                <td key={idx} className="p-2.5 font-bold text-emerald-700 dark:text-emerald-400 font-mono text-center">
+                <td
+                  key={idx}
+                  className="p-2.5 font-bold text-emerald-700 dark:text-emerald-400 font-mono text-center"
+                >
                   {h}
                 </td>
               ))}
@@ -120,7 +179,11 @@ function ExcelPreview() {
               </td>
               {row1.map((val, idx) => (
                 <td key={idx} className="p-2.5 font-mono text-foreground/80 text-center">
-                  {val === "" ? <span className="text-muted-foreground/30 italic">empty</span> : String(val)}
+                  {val === "" ? (
+                    <span className="text-muted-foreground/30 italic">empty</span>
+                  ) : (
+                    String(val)
+                  )}
                 </td>
               ))}
             </tr>
@@ -130,27 +193,64 @@ function ExcelPreview() {
               </td>
               {row2.map((val, idx) => (
                 <td key={idx} className="p-2.5 font-mono text-foreground/80 text-center">
-                  {val === "" ? <span className="text-muted-foreground/30 italic">empty</span> : String(val)}
+                  {val === "" ? (
+                    <span className="text-muted-foreground/30 italic">empty</span>
+                  ) : (
+                    String(val)
+                  )}
                 </td>
               ))}
             </tr>
           </tbody>
         </table>
       </div>
-      
+
       <div className="p-5 bg-muted/10 border-t border-border/60 space-y-3 text-xs">
         <p className="font-bold text-foreground">Import Specifications & Details:</p>
         <div className="grid gap-3 sm:grid-cols-2 text-[11px] text-muted-foreground">
           <div className="space-y-1.5">
-            <p><strong className="text-emerald-600 dark:text-emerald-400">amount_paid</strong> (Col A): <span className="text-destructive font-bold uppercase tracking-wider text-[10px]">Required</span>. Numeric values greater than zero.</p>
-            <p><strong>customer_account_number</strong> (Col C): Optional. Matches to Customer Account Number to auto-link payments.</p>
-            <p><strong>customer_name</strong> (Col D): Optional. Matches case-insensitively to Customer Name to auto-link payments.</p>
-            <p><strong>payment_date</strong> (Col E): Format as <code className="bg-muted px-1 py-0.5 rounded">YYYY-MM-DD</code>. Defaults to current date if left blank.</p>
+            <p>
+              <strong className="text-emerald-600 dark:text-emerald-400">amount_paid</strong> (Col
+              A):{" "}
+              <span className="text-destructive font-bold uppercase tracking-wider text-[10px]">
+                Required
+              </span>
+              . Numeric values greater than zero.
+            </p>
+            <p>
+              <strong>customer_account_number</strong> (Col C): Optional. Matches to Customer
+              Account Number to auto-link payments.
+            </p>
+            <p>
+              <strong>customer_name</strong> (Col D): Optional. Matches case-insensitively to
+              Customer Name to auto-link payments.
+            </p>
+            <p>
+              <strong>payment_date</strong> (Col E): Format as{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">YYYY-MM-DD</code>. Defaults to current
+              date if left blank.
+            </p>
           </div>
           <div className="space-y-1.5">
-            <p><strong>status</strong> (Col G): Options: <code className="bg-muted px-1.5 py-0.5 rounded">paid</code>, <code className="bg-muted px-1.5 py-0.5 rounded">partial</code>, <code className="bg-muted px-1.5 py-0.5 rounded">unpaid</code>, <code className="bg-muted px-1.5 py-0.5 rounded">duplicate</code>, <code className="bg-muted px-1.5 py-0.5 rounded">mismatch</code>.</p>
-            <p><strong>source</strong> (Col H): Options: <code className="bg-muted px-1.5 py-0.5 rounded">manual</code>, <code className="bg-muted px-1.5 py-0.5 rounded">bank</code>, <code className="bg-muted px-1.5 py-0.5 rounded">paystack</code>, <code className="bg-muted px-1.5 py-0.5 rounded">cash</code>.</p>
-            <p><strong>customer_code</strong> (Col I): Optional. Matches to Customer ID to auto-link payments.</p>
+            <p>
+              <strong>status</strong> (Col G): Options:{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded">paid</code>,{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded">partial</code>,{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded">unpaid</code>,{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded">duplicate</code>,{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded">mismatch</code>.
+            </p>
+            <p>
+              <strong>source</strong> (Col H): Options:{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded">manual</code>,{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded">bank</code>,{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded">paystack</code>,{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded">cash</code>.
+            </p>
+            <p>
+              <strong>customer_code</strong> (Col I): Optional. Matches to Customer ID to auto-link
+              payments.
+            </p>
           </div>
         </div>
       </div>
@@ -206,16 +306,25 @@ function PaymentsPage() {
     queryKey: ["customers-mini", organization?.id],
     enabled: !!organization?.id,
     queryFn: async () => {
-      const { data } = await supabase.from("customers").select("id, name, expected_amount, customer_code, account_number");
+      const { data } = await supabase
+        .from("customers")
+        .select("id, name, expected_amount, due_amount, customer_code, account_number");
       return (data ?? []) as Customer[];
     },
   });
 
   const customerName = (id: string | null) => customers?.find((c) => c.id === id)?.name ?? "—";
-  const customerAccountNumber = (id: string | null) => customers?.find((c) => c.id === id)?.account_number ?? "—";
+  const customerAccountNumber = (id: string | null) =>
+    customers?.find((c) => c.id === id)?.account_number ?? "—";
+  const getCustomer = (id: string | null) => customers?.find((c) => c.id === id);
 
   const filtered = (payments ?? []).filter((p) =>
-    [p.reference, p.payment_method, customerName(p.customer_id), customerAccountNumber(p.customer_id)].some((f) => f?.toLowerCase().includes(search.toLowerCase())),
+    [
+      p.reference,
+      p.payment_method,
+      customerName(p.customer_id),
+      customerAccountNumber(p.customer_id),
+    ].some((f) => f?.toLowerCase().includes(search.toLowerCase())),
   );
 
   const form = useForm<FormValues>({
@@ -267,7 +376,12 @@ function PaymentsPage() {
   const PAYMENT_FIELDS = [
     { key: "transaction_id", label: "Transaction ID", required: false, type: "string" as const },
     { key: "customer_code", label: "Customer Code", required: false, type: "string" as const },
-    { key: "customer_account_number", label: "Customer Account Number", required: false, type: "string" as const },
+    {
+      key: "customer_account_number",
+      label: "Customer Account Number",
+      required: false,
+      type: "string" as const,
+    },
     { key: "customer_name", label: "Customer Name", required: false, type: "string" as const },
     { key: "amount_paid", label: "Amount Paid", required: true, type: "number" as const },
     { key: "payment_method", label: "Payment Method", required: false, type: "string" as const },
@@ -295,7 +409,7 @@ function PaymentsPage() {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json<Record<string, any>>(sheet);
-        
+
         if (parsedData.length === 0) {
           return toast.error("The spreadsheet is empty.");
         }
@@ -318,33 +432,37 @@ function PaymentsPage() {
     const rows = mappedRows.map((r) => {
       const rawDate = r.payment_date;
       const parsedDate = rawDate
-        ? (rawDate instanceof Date
-            ? rawDate.toISOString().slice(0, 10)
-            : String(rawDate).trim())
+        ? rawDate instanceof Date
+          ? rawDate.toISOString().slice(0, 10)
+          : String(rawDate).trim()
         : new Date().toISOString().slice(0, 10);
 
       // Resolve customer by account number, customer code, or customer name
-      const customerAcc = r.customer_account_number ? String(r.customer_account_number).trim() : null;
+      const customerAcc = r.customer_account_number
+        ? String(r.customer_account_number).trim()
+        : null;
       const customerCode = r.customer_code ? String(r.customer_code).trim() : null;
       const custName = r.customer_name ? String(r.customer_name).trim() : null;
       let resolvedCustomerId: string | null = null;
       if (customers) {
         if (customerAcc) {
-          const match = customers.find(c => c.account_number === customerAcc);
+          const match = customers.find((c) => c.account_number === customerAcc);
           if (match) resolvedCustomerId = match.id;
         }
         if (!resolvedCustomerId && customerCode) {
-          const match = customers.find(c => c.customer_code === customerCode);
+          const match = customers.find((c) => c.customer_code === customerCode);
           if (match) resolvedCustomerId = match.id;
         }
         if (!resolvedCustomerId && custName) {
-          const match = customers.find(c => c.name.toLowerCase() === custName.toLowerCase());
+          const match = customers.find((c) => c.name.toLowerCase() === custName.toLowerCase());
           if (match) resolvedCustomerId = match.id;
         }
       }
 
       let cleanSource: "paystack" | "bank" | "cash" | "manual" = "bank";
-      const rawSource = String(r.source ?? "").trim().toLowerCase();
+      const rawSource = String(r.source ?? "")
+        .trim()
+        .toLowerCase();
       if (rawSource.includes("paystack")) {
         cleanSource = "paystack";
       } else if (rawSource.includes("cash")) {
@@ -381,8 +499,12 @@ function PaymentsPage() {
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-sans">Payments</h1>
-          <p className="text-sm text-muted-foreground mt-1">Record manual transactions or reconcile lists via bank/processor imports.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-sans">
+            Payments
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Record manual transactions or reconcile lists via bank/processor imports.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           {selectedIds.length > 0 && !isReadOnly && (
@@ -410,7 +532,11 @@ function PaymentsPage() {
           />
           <Dialog open={formatPreviewOpen} onOpenChange={setFormatPreviewOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" shape="pill" className="h-9 text-xs font-semibold text-muted-foreground border-border/80 hover:text-foreground">
+              <Button
+                variant="outline"
+                shape="pill"
+                className="h-9 text-xs font-semibold text-muted-foreground border-border/80 hover:text-foreground"
+              >
                 <Info className="h-4 w-4 text-primary" /> View Excel Format
               </Button>
             </DialogTrigger>
@@ -421,7 +547,8 @@ function PaymentsPage() {
                   Excel Import Guide
                 </DialogTitle>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Reconcile dozens of records at once. Format your spreadsheets with the exact headers shown below.
+                  Reconcile dozens of records at once. Format your spreadsheets with the exact
+                  headers shown below.
                 </p>
               </DialogHeader>
               <ExcelPreview />
@@ -430,134 +557,190 @@ function PaymentsPage() {
 
           {!isReadOnly && (
             <>
-              <Button variant="outline" shape="pill" className="h-9 text-xs font-semibold border-primary/40 text-primary hover:bg-primary/5" onClick={() => fileRef.current?.click()}>
+              <Button
+                variant="outline"
+                shape="pill"
+                className="h-9 text-xs font-semibold border-primary/40 text-primary hover:bg-primary/5"
+                onClick={() => fileRef.current?.click()}
+              >
                 <Upload className="h-4 w-4" /> Import Excel
               </Button>
 
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2"><Plus className="h-4 w-4" /> Add Payment</Button>
+                  <Button
+                    shape="pill"
+                    className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2"
+                  >
+                    <Plus className="h-4 w-4" /> Add Payment
+                  </Button>
                 </DialogTrigger>
                 <DialogContent className="rounded-3xl border-border/60 bg-card max-w-lg p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
-              <DialogHeader className="pb-4 border-b border-border/40">
-                <DialogTitle className="text-xl font-extrabold tracking-tight text-foreground font-sans">Record Transaction</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Associated Customer</Label>
-                  <Select
-                    onValueChange={(v) => {
-                      const selectedId = v === "_none" ? undefined : v;
-                      form.setValue("customer_id", selectedId);
-                      if (selectedId && customers) {
-                        const cust = customers.find(c => c.id === selectedId);
-                        if (cust?.account_number) {
-                          form.setValue("reference", cust.account_number);
-                        }
-                      }
-                    }}
-                    defaultValue="_none"
-                  >
-                    <SelectTrigger className="rounded-full h-10 border-border/80 bg-background text-foreground transition-all px-4"><SelectValue placeholder="Select customer" /></SelectTrigger>
-                    <SelectContent className="rounded-2xl border-border/60 bg-card">
-                      <SelectItem value="_none">— Unassigned (Anonymous) —</SelectItem>
-                      {customers?.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.customer_code ? `${c.customer_code} — ${c.name}` : c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Amount Paid</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                      {...form.register("amount_paid")}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Payment Date</Label>
-                    <Input
-                      type="date"
-                      className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                      {...form.register("payment_date")}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Method / Channel</Label>
-                    <Input
-                      placeholder="Transfer, Card, Cash..."
-                      className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                      {...form.register("payment_method")}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Account Number</Label>
-                    <Input
-                      placeholder="e.g. 1203948576"
-                      className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                      {...form.register("reference")}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Transaction ID</Label>
-                    <Input
-                      placeholder="e.g. TX123456"
-                      className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                      {...form.register("transaction_id")}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Origin Source</Label>
-                    <Select defaultValue="manual" onValueChange={(v) => form.setValue("source", v as any)}>
-                      <SelectTrigger className="rounded-full h-10 border-border/80 bg-background text-foreground px-4"><SelectValue /></SelectTrigger>
-                      <SelectContent className="rounded-2xl border-border/60 bg-card">
-                        {["manual", "bank", "paystack", "cash"].map((s) => (
-                          <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Currency</Label>
-                    <Input
-                      placeholder="NGN"
-                      className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                      {...form.register("currency")}
-                    />
-                  </div>
-                  <div className="space-y-1.5" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Internal Notes</Label>
-                  <Textarea
-                    rows={2}
-                    placeholder="Enter special reconciliation notes..."
-                    className="rounded-2xl px-5 py-3 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                    {...form.register("notes")}
-                  />
-                </div>
-                <DialogFooter className="pt-4 border-t border-border/40 gap-2 sm:gap-0">
-                  <Button type="button" variant="ghost" shape="pill" onClick={() => setOpen(false)} className="px-5 font-semibold text-muted-foreground hover:bg-muted">Cancel</Button>
-                  <Button type="submit" shape="pill" className="px-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                    Save Payment
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-          </>
-        )}
+                  <DialogHeader className="pb-4 border-b border-border/40">
+                    <DialogTitle className="text-xl font-extrabold tracking-tight text-foreground font-sans">
+                      Record Transaction
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                        Associated Customer
+                      </Label>
+                      <Select
+                        onValueChange={(v) => {
+                          const selectedId = v === "_none" ? undefined : v;
+                          form.setValue("customer_id", selectedId);
+                          if (selectedId && customers) {
+                            const cust = customers.find((c) => c.id === selectedId);
+                            if (cust?.account_number) {
+                              form.setValue("reference", cust.account_number);
+                            }
+                          }
+                        }}
+                        defaultValue="_none"
+                      >
+                        <SelectTrigger className="rounded-full h-10 border-border/80 bg-background text-foreground transition-all px-4">
+                          <SelectValue placeholder="Select customer" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-border/60 bg-card">
+                          <SelectItem value="_none">— Unassigned (Anonymous) —</SelectItem>
+                          {customers?.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.customer_code ? `${c.customer_code} — ${c.name}` : c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Amount Paid
+                        </Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                          {...form.register("amount_paid")}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Payment Date
+                        </Label>
+                        <Input
+                          type="date"
+                          className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                          {...form.register("payment_date")}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Method / Channel
+                        </Label>
+                        <Input
+                          placeholder="Transfer, Card, Cash..."
+                          className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                          {...form.register("payment_method")}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Account Number
+                        </Label>
+                        <Input
+                          placeholder="e.g. 1203948576"
+                          className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                          {...form.register("reference")}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Transaction ID
+                        </Label>
+                        <Input
+                          placeholder="e.g. TX123456"
+                          className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                          {...form.register("transaction_id")}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Origin Source
+                        </Label>
+                        <Select
+                          defaultValue="manual"
+                          onValueChange={(v) => form.setValue("source", v as any)}
+                        >
+                          <SelectTrigger className="rounded-full h-10 border-border/80 bg-background text-foreground px-4">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-2xl border-border/60 bg-card">
+                            {["manual", "bank", "paystack", "cash"].map((s) => (
+                              <SelectItem key={s} value={s} className="capitalize">
+                                {s}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Currency
+                        </Label>
+                        <Input
+                          placeholder="NGN"
+                          className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                          {...form.register("currency")}
+                        />
+                      </div>
+                      <div className="space-y-1.5" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                        Internal Notes
+                      </Label>
+                      <Textarea
+                        rows={2}
+                        placeholder="Enter special reconciliation notes..."
+                        className="rounded-2xl px-5 py-3 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                        {...form.register("notes")}
+                      />
+                    </div>
+                    <DialogFooter className="pt-4 border-t border-border/40 gap-2 sm:gap-0">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        shape="pill"
+                        onClick={() => setOpen(false)}
+                        className="px-5 font-semibold text-muted-foreground hover:bg-muted"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        shape="pill"
+                        className="px-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white"
+                        disabled={form.formState.isSubmitting}
+                      >
+                        {form.formState.isSubmitting && (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        )}
+                        Save Payment
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
         </div>
       </div>
 
@@ -584,10 +767,19 @@ function PaymentsPage() {
               <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
                 <CreditCard className="h-6 w-6" />
               </div>
-              <h3 className="mt-5 text-lg font-bold tracking-tight text-foreground font-sans">No payments found</h3>
-              <p className="mt-1.5 max-w-sm mx-auto text-sm text-muted-foreground">Record your first transactional event manually, or upload spreadsheets from your processor.</p>
+              <h3 className="mt-5 text-lg font-bold tracking-tight text-foreground font-sans">
+                No payments found
+              </h3>
+              <p className="mt-1.5 max-w-sm mx-auto text-sm text-muted-foreground">
+                Record your first transactional event manually, or upload spreadsheets from your
+                processor.
+              </p>
               {!isReadOnly && (
-                <Button onClick={() => setOpen(true)} shape="pill" className="mt-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2">
+                <Button
+                  onClick={() => setOpen(true)}
+                  shape="pill"
+                  className="mt-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2"
+                >
                   <Plus className="h-4 w-4" /> Add Payment
                 </Button>
               )}
@@ -611,14 +803,26 @@ function PaymentsPage() {
                         />
                       </TableHead>
                     )}
-                    <TableHead className="font-bold text-foreground py-4 pl-2">Customer Name</TableHead>
+                    <TableHead className="font-bold text-foreground py-4 pl-2">
+                      Customer Name
+                    </TableHead>
                     <TableHead className="font-bold text-foreground py-4">Account Number</TableHead>
                     <TableHead className="font-bold text-foreground py-4">Origin Source</TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right">Amount Received</TableHead>
+                    <TableHead className="font-bold text-foreground py-4 text-right">
+                      Expected Amount
+                    </TableHead>
+                    <TableHead className="font-bold text-foreground py-4 text-right">
+                      Paid Amount
+                    </TableHead>
+                    <TableHead className="font-bold text-foreground py-4 text-right">
+                      Balance Due
+                    </TableHead>
                     <TableHead className="font-bold text-foreground py-4">Match Status</TableHead>
                     <TableHead className="font-bold text-foreground py-4">Processed Date</TableHead>
                     {!isReadOnly && (
-                      <TableHead className="font-bold text-foreground py-4 text-right pr-6">Action</TableHead>
+                      <TableHead className="font-bold text-foreground py-4 text-right pr-6">
+                        Action
+                      </TableHead>
                     )}
                   </TableRow>
                 </TableHeader>
@@ -627,19 +831,36 @@ function PaymentsPage() {
                     const isSuccess = p.status === "paid";
                     const isFail = p.status === "mismatch" || p.status === "duplicate";
                     const isPartial = p.status === "partial";
-                    
-                    let badgeClass = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
-                    if (isSuccess) badgeClass = "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20";
-                    if (isFail) badgeClass = "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20";
-                    if (isPartial) badgeClass = "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
- 
-                    let sourceBadge = "bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-border/80";
-                    if (p.source === "paystack") sourceBadge = "bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-500/20";
-                    if (p.source === "bank") sourceBadge = "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-100 dark:border-sky-500/20";
-                    if (p.source === "cash") sourceBadge = "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
- 
+
+                    let badgeClass =
+                      "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+                    if (isSuccess)
+                      badgeClass =
+                        "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20";
+                    if (isFail)
+                      badgeClass =
+                        "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20";
+                    if (isPartial)
+                      badgeClass =
+                        "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
+
+                    let sourceBadge =
+                      "bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-border/80";
+                    if (p.source === "paystack")
+                      sourceBadge =
+                        "bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-500/20";
+                    if (p.source === "bank")
+                      sourceBadge =
+                        "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-100 dark:border-sky-500/20";
+                    if (p.source === "cash")
+                      sourceBadge =
+                        "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
+
                     return (
-                      <TableRow key={p.id} className="hover:bg-muted/20 transition-colors duration-150 border-b border-border/30 last:border-b-0">
+                      <TableRow
+                        key={p.id}
+                        className="hover:bg-muted/20 transition-colors duration-150 border-b border-border/30 last:border-b-0"
+                      >
                         {!isReadOnly && (
                           <TableCell className="py-4 pl-6">
                             <Checkbox
@@ -655,8 +876,12 @@ function PaymentsPage() {
                           </TableCell>
                         )}
                         <TableCell className="py-4 pl-2 font-bold text-foreground">
-                          {p.customer_id ? customerName(p.customer_id) : (
-                            <span className="text-xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded border border-border/40 uppercase tracking-wider">Anonymous</span>
+                          {p.customer_id ? (
+                            customerName(p.customer_id)
+                          ) : (
+                            <span className="text-xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded border border-border/40 uppercase tracking-wider">
+                              Anonymous
+                            </span>
                           )}
                         </TableCell>
                         <TableCell className="py-4 font-mono font-bold text-xs">
@@ -669,25 +894,67 @@ function PaymentsPage() {
                           )}
                         </TableCell>
                         <TableCell className="py-4">
-                          <Badge variant="outline" className={`rounded-full px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider border ${sourceBadge}`}>
+                          <Badge
+                            variant="outline"
+                            className={`rounded-full px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider border ${sourceBadge}`}
+                          >
                             {p.source}
                           </Badge>
                         </TableCell>
                         <TableCell className="py-4 text-right font-extrabold text-foreground">
-                          {p.currency || "NGN"} {p.amount_paid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {(() => {
+                            const cust = getCustomer(p.customer_id);
+                            return cust
+                              ? `${p.currency || "NGN"} ${cust.expected_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              : "—";
+                          })()}
+                        </TableCell>
+                        <TableCell className="py-4 text-right font-extrabold text-foreground">
+                          {p.currency || "NGN"}{" "}
+                          {p.amount_paid.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </TableCell>
+                        <TableCell className="py-4 text-right font-extrabold">
+                          {(() => {
+                            const cust = getCustomer(p.customer_id);
+                            return cust ? (
+                              <span
+                                className={
+                                  cust.due_amount <= 0
+                                    ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
+                                    : "text-amber-600 dark:text-amber-400 font-extrabold"
+                                }
+                              >
+                                {p.currency || "NGN"}{" "}
+                                {cust.due_amount.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                            ) : (
+                              "—"
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="py-4">
-                          <Badge variant="outline" className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${badgeClass}`}>
+                          <Badge
+                            variant="outline"
+                            className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${badgeClass}`}
+                          >
                             {p.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="py-4 font-semibold text-muted-foreground">{formatDate(p.payment_date)}</TableCell>
+                        <TableCell className="py-4 font-semibold text-muted-foreground">
+                          {formatDate(p.payment_date)}
+                        </TableCell>
                         {!isReadOnly && (
                           <TableCell className="py-4 text-right pr-6">
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors" 
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors"
                               onClick={() => setDeleteId(p.id)}
                               title="Delete payment"
                             >
@@ -712,14 +979,15 @@ function PaymentsPage() {
               Delete Payment
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-muted-foreground mt-2">
-              Are you sure you want to delete this payment? This action is permanent and cannot be undone. All linked metrics and balance calculations will be updated.
+              Are you sure you want to delete this payment? This action is permanent and cannot be
+              undone. All linked metrics and balance calculations will be updated.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-4 border-t border-border/40 gap-2 mt-4">
             <AlertDialogCancel className="px-5 font-semibold text-muted-foreground hover:bg-muted border-0 bg-transparent">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={onDeleteConfirm}
               className="px-6 font-semibold shadow-md bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0"
             >
@@ -736,14 +1004,16 @@ function PaymentsPage() {
               Delete Selected Payments
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-muted-foreground mt-2">
-              Are you sure you want to delete the {selectedIds.length} selected payment{selectedIds.length > 1 ? "s" : ""}? This action is permanent and cannot be undone. All linked metrics and balance calculations will be updated.
+              Are you sure you want to delete the {selectedIds.length} selected payment
+              {selectedIds.length > 1 ? "s" : ""}? This action is permanent and cannot be undone.
+              All linked metrics and balance calculations will be updated.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="pt-4 border-t border-border/40 gap-2 mt-4">
             <AlertDialogCancel className="px-5 font-semibold text-muted-foreground hover:bg-muted border-0 bg-transparent">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={onBatchDeleteConfirm}
               className="px-6 font-semibold shadow-md bg-destructive hover:bg-destructive/90 text-destructive-foreground border-0"
             >

@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   FileText,
   Upload,
@@ -38,11 +40,19 @@ export const Route = createFileRoute("/invoice/$invoiceId")({
 const API_URL = (import.meta as any).env?.VITE_BACKEND_URL || "http://localhost:5000";
 
 const formatCurrency = (n: number) =>
-  new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(n);
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 const formatDate = (d: string | null | undefined) => {
   if (!d) return "—";
-  return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(d));
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(d));
 };
 
 // ─── Scanning Animation Messages ───
@@ -85,6 +95,34 @@ function InvoicePortalPage() {
 
   // Copy feedback state
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // User role check client-side
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function checkUserRole() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        if (roleRow) {
+          setUserRole(roleRow.role);
+        }
+      }
+    }
+    checkUserRole();
+  }, []);
+
+  const isStaff =
+    userRole === "super_admin" ||
+    userRole === "admin" ||
+    userRole === "manager" ||
+    userRole === "finance_staff";
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -137,7 +175,7 @@ function InvoicePortalPage() {
       setDragOver(false);
       if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
     },
-    [handleFile]
+    [handleFile],
   );
 
   // Submit & verify receipt
@@ -205,7 +243,9 @@ function InvoicePortalPage() {
             <XCircle className="h-8 w-8 text-rose-400" />
           </div>
           <h1 className="text-2xl font-black text-white mb-2">Invoice Not Found</h1>
-          <p className="text-slate-400 text-sm">{error || "This invoice link may be invalid or expired."}</p>
+          <p className="text-slate-400 text-sm">
+            {error || "This invoice link may be invalid or expired."}
+          </p>
         </div>
       </div>
     );
@@ -214,12 +254,13 @@ function InvoicePortalPage() {
   const isPaid = invoice.status === "paid";
   const isReview = invoice.status === "review_required";
   const orgName = invoice.organizations?.name || "PayVerify";
-  const initials = invoice.customers?.name
-    ?.split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase() || "PV";
+  const initials =
+    invoice.customers?.name
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "PV";
 
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 font-sans relative overflow-hidden flex flex-col">
@@ -238,19 +279,26 @@ function InvoicePortalPage() {
               <span className="text-xl font-bold text-white">❖</span>
             </div>
             <div>
-              <h1 className="text-base font-black text-white tracking-tight leading-tight">{orgName}</h1>
-              <p className="text-[10px] text-slate-400 font-medium tracking-wide">Invoice Payment & Verification</p>
+              <h1 className="text-base font-black text-white tracking-tight leading-tight">
+                {orgName}
+              </h1>
+              <p className="text-[10px] text-slate-400 font-medium tracking-wide">
+                Invoice Payment & Verification
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-5">
-            <a href="mailto:support@payverify.com" className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors font-medium">
+            <a
+              href="mailto:support@payverify.com"
+              className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors font-medium"
+            >
               <HelpCircle className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Need Help?</span>
             </a>
-            
+
             <div className="h-px w-4 bg-white/10 hidden sm:block" />
-            
+
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center border border-white/10 text-white font-bold text-xs shadow-md">
                 {initials}
@@ -266,20 +314,25 @@ function InvoicePortalPage() {
 
       {/* Main Container */}
       <main className="relative z-10 flex-1 max-w-5xl w-full mx-auto px-4 py-8 sm:py-12 flex flex-col gap-8">
-        
         {/* ─── Hero / Title Area (Image 2 Style) ─── */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Upload Payment Proof</h2>
-            <p className="text-sm text-slate-400 mt-1">Please upload your payment receipt to help us verify your payment.</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Upload Payment Proof
+            </h2>
+            <p className="text-sm text-slate-400 mt-1">
+              Please upload your payment receipt to help us verify your payment.
+            </p>
           </div>
-          
+
           <div className="inline-flex items-center gap-3 bg-white/[0.02] border border-white/[0.06] backdrop-blur-md rounded-2xl p-4 shadow-xl self-start md:self-auto">
             <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
               <Lock className="h-4 w-4 text-indigo-400" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-white tracking-wide uppercase">Secure &amp; Encrypted</h4>
+              <h4 className="text-xs font-bold text-white tracking-wide uppercase">
+                Secure &amp; Encrypted
+              </h4>
               <p className="text-[10px] text-slate-500 font-medium">Your data is safe with us</p>
             </div>
           </div>
@@ -288,11 +341,13 @@ function InvoicePortalPage() {
         {/* ─── 1. Invoice Details Card (Image 2 Grid Layout) ─── */}
         <div className="bg-[#0f172a]/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500/0" />
-          
+
           <div className="flex items-center justify-between pb-5 border-b border-white/[0.05] mb-6">
             <div className="flex items-center gap-2.5">
               <FileText className="h-4.5 w-4.5 text-indigo-400" />
-              <h3 className="text-sm font-bold text-slate-300 tracking-wider uppercase">Invoice Details</h3>
+              <h3 className="text-sm font-bold text-slate-300 tracking-wider uppercase">
+                Invoice Details
+              </h3>
             </div>
             <span
               className={`px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm ${
@@ -308,14 +363,15 @@ function InvoicePortalPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            
             {/* Invoice ID */}
             <div className="flex items-start gap-3 bg-white/[0.02] hover:bg-white/[0.03] border border-white/[0.04] rounded-xl p-4 transition-colors">
               <div className="h-9 w-9 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 mt-0.5">
                 <FileText className="h-4 w-4 text-indigo-400" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Invoice ID</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  Invoice ID
+                </p>
                 <h4 className="text-sm font-bold text-white mt-1">{invoice.invoice_number}</h4>
               </div>
             </div>
@@ -326,8 +382,12 @@ function InvoicePortalPage() {
                 <User className="h-4 w-4 text-indigo-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">Customer Name</p>
-                <h4 className="text-sm font-bold text-white mt-1 truncate">{invoice.customers?.name || "—"}</h4>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">
+                  Customer Name
+                </p>
+                <h4 className="text-sm font-bold text-white mt-1 truncate">
+                  {invoice.customers?.name || "—"}
+                </h4>
               </div>
             </div>
 
@@ -337,8 +397,12 @@ function InvoicePortalPage() {
                 <DollarSign className="h-4 w-4 text-emerald-400" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Amount Due</p>
-                <h4 className="text-base font-black text-emerald-400 mt-0.5">{formatCurrency(Number(invoice.amount))}</h4>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  Amount Due
+                </p>
+                <h4 className="text-base font-black text-emerald-400 mt-0.5">
+                  {formatCurrency(Number(invoice.amount))}
+                </h4>
               </div>
             </div>
 
@@ -348,8 +412,12 @@ function InvoicePortalPage() {
                 <Calendar className="h-4 w-4 text-indigo-400" />
               </div>
               <div className="flex-1">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Due Date</p>
-                <h4 className="text-sm font-bold text-white mt-1">{formatDate(invoice.due_date)}</h4>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  Due Date
+                </p>
+                <h4 className="text-sm font-bold text-white mt-1">
+                  {formatDate(invoice.due_date)}
+                </h4>
               </div>
             </div>
 
@@ -359,7 +427,9 @@ function InvoicePortalPage() {
                 <CreditCard className="h-4 w-4 text-indigo-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Account Number</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  Account Number
+                </p>
                 {invoice.customers?.account_number ? (
                   <button
                     onClick={() => copyToClipboard(invoice.customers.account_number, "account")}
@@ -386,73 +456,28 @@ function InvoicePortalPage() {
                 <Building2 className="h-4 w-4 text-indigo-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">Organization</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider truncate">
+                  Organization
+                </p>
                 <h4 className="text-sm font-bold text-white mt-1 truncate">{orgName}</h4>
               </div>
             </div>
-
           </div>
         </div>
-
-        {/* Bank Payment Instructions (Only visible when pending) */}
-        {!isPaid && (
-          <div className="bg-[#0f172a]/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 sm:p-8 shadow-2xl relative">
-            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2.5">
-              <Building2 className="h-4.5 w-4.5 text-indigo-400" />
-              Bank Transfer Instructions
-            </h3>
-            <div className="space-y-4 text-sm mt-2">
-              <div className="flex items-center justify-between py-3 border-b border-white/[0.04]">
-                <span className="text-slate-400 text-xs font-semibold">Beneficiary Name</span>
-                <div className="flex items-center gap-2.5">
-                  <span className="font-bold text-white">{invoice.customers?.name || "—"}</span>
-                  <button
-                    onClick={() => copyToClipboard(invoice.customers?.name || "", "customer")}
-                    className="h-6 w-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors relative"
-                  >
-                    {copiedField === "customer" ? (
-                      <Check className="h-3.5 w-3.5 text-emerald-400" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5 text-slate-400" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between py-3">
-                <span className="text-slate-400 text-xs font-semibold">Account Number</span>
-                {invoice.customers?.account_number ? (
-                  <div className="flex items-center gap-2.5">
-                    <span className="font-mono font-black text-white tracking-widest">{invoice.customers.account_number}</span>
-                    <button
-                      onClick={() => copyToClipboard(invoice.customers.account_number, "account")}
-                      className="h-6 w-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-                    >
-                      {copiedField === "account" ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-400" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5 text-slate-400" />
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <span className="text-slate-500 italic text-xs">No account number recorded</span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ─── 2. Upload Payment Receipt Card (Image 2 Style) ─── */}
         {!isPaid && !scanning && !result && (
           <div className="bg-[#0f172a]/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-6 sm:p-8 shadow-2xl relative">
             <div className="flex items-center gap-2.5 pb-4 border-b border-white/[0.05] mb-5">
               <Upload className="h-4.5 w-4.5 text-indigo-400" />
-              <h3 className="text-sm font-bold text-slate-300 tracking-wider uppercase">Upload Payment Receipt</h3>
+              <h3 className="text-sm font-bold text-slate-300 tracking-wider uppercase">
+                Upload Payment Receipt
+              </h3>
             </div>
-            
+
             <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-              Upload a clear image or PDF of your payment receipt or bank transfer confirmation below. Our system will scan and verify it.
+              Upload a clear image or PDF of your payment receipt or bank transfer confirmation
+              below. Our system will scan and verify it.
             </p>
 
             <input
@@ -465,7 +490,10 @@ function InvoicePortalPage() {
 
             {/* Premium Dashed Dropzone */}
             <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               onClick={() => fileRef.current?.click()}
@@ -493,8 +521,12 @@ function InvoicePortalPage() {
                         <FileText className="h-4 w-4 text-indigo-400" />
                       </div>
                       <div className="text-left min-w-0">
-                        <p className="text-xs font-bold text-slate-200 truncate pr-1">{file.name}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">{(file.size / 1024).toFixed(1)} KB</p>
+                        <p className="text-xs font-bold text-slate-200 truncate pr-1">
+                          {file.name}
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </p>
                       </div>
                     </div>
                     <div className="h-6 w-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
@@ -511,10 +543,14 @@ function InvoicePortalPage() {
                     <Upload className="h-6 w-6 text-indigo-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-200">Drag &amp; drop your file here</p>
+                    <p className="text-sm font-bold text-slate-200">
+                      Drag &amp; drop your file here
+                    </p>
                     <p className="text-xs text-indigo-400/80 font-bold mt-1">or click to browse</p>
                   </div>
-                  <p className="text-[10px] text-slate-500 font-medium">Supported formats: JPG, PNG, PDF • Max size: 5MB</p>
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    Supported formats: JPG, PNG, PDF • Max size: 5MB
+                  </p>
                 </div>
               )}
             </div>
@@ -538,7 +574,8 @@ function InvoicePortalPage() {
             <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mb-4" />
             <h3 className="text-lg font-black text-white mb-1">Scanning Receipt</h3>
             <p className="text-xs text-indigo-300 max-w-sm mx-auto leading-relaxed">
-              Your payment proof is being analyzed securely by the AI engines. Please do not close this window.
+              Your payment proof is being analyzed securely by the AI engines. Please do not close
+              this window.
             </p>
           </div>
         )}
@@ -546,7 +583,6 @@ function InvoicePortalPage() {
         {/* ─── Result Display (Alerts Layout from Image 2) ─── */}
         {result && !scanning && (
           <div className="space-y-6">
-            
             {/* Dynamic Alert Banner (Sleek Horizontal Image 2 Style) */}
             {result.status === "matched" ? (
               <div className="bg-emerald-950/40 border border-emerald-500/20 rounded-2xl p-5 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -555,9 +591,15 @@ function InvoicePortalPage() {
                     <ShieldCheck className="h-5 w-5 text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-emerald-400">Receipt Verified Successfully!</h3>
+                    <h3 className="text-base font-black text-emerald-400">
+                      Receipt Verified Successfully!
+                    </h3>
                     <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                      Your payment of <span className="font-bold text-emerald-400">{formatCurrency(result.extracted?.amount || 0)}</span> has been matched and reconciled immediately.
+                      Your payment of{" "}
+                      <span className="font-bold text-emerald-400">
+                        {formatCurrency(result.extracted?.amount || 0)}
+                      </span>{" "}
+                      has been matched and reconciled immediately.
                     </p>
                     {result.extracted?.transaction_id && (
                       <p className="text-[10px] font-mono text-slate-500 mt-1.5 uppercase tracking-wider">
@@ -566,7 +608,7 @@ function InvoicePortalPage() {
                     )}
                   </div>
                 </div>
-                
+
                 {(preview || invoice?.receipt_url) && (
                   <a
                     href={preview || invoice?.receipt_url}
@@ -586,13 +628,16 @@ function InvoicePortalPage() {
                     <ShieldAlert className="h-5 w-5 text-amber-400" />
                   </div>
                   <div>
-                    <h3 className="text-base font-black text-amber-400">Receipt Submitted for Review</h3>
+                    <h3 className="text-base font-black text-amber-400">
+                      Receipt Submitted for Review
+                    </h3>
                     <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                      Your receipt has been logged. Our audit team will verify this within one business day and send a confirmation to your email.
+                      Your receipt has been logged. Our audit team will verify this within one
+                      business day and send a confirmation to your email.
                     </p>
                   </div>
                 </div>
-                
+
                 {(preview || invoice?.receipt_url) && (
                   <a
                     href={preview || invoice?.receipt_url}
@@ -613,7 +658,8 @@ function InvoicePortalPage() {
                 <div>
                   <h3 className="text-base font-black text-rose-400">Verification Error</h3>
                   <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                    {result.message || "We could not extract invoice parameters from the uploaded receipt. Please make sure the text is clear."}
+                    {result.message ||
+                      "We could not extract invoice parameters from the uploaded receipt. Please make sure the text is clear."}
                   </p>
                 </div>
               </div>
@@ -622,7 +668,11 @@ function InvoicePortalPage() {
             {/* Try Again controls */}
             {!isPaid && result?.status !== "review_required" && (
               <button
-                onClick={() => { setResult(null); setFile(null); setPreview(null); }}
+                onClick={() => {
+                  setResult(null);
+                  setFile(null);
+                  setPreview(null);
+                }}
                 className="w-full py-3.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.08] text-slate-200 font-bold text-sm transition-all"
               >
                 Try Again / Choose Another File
@@ -640,7 +690,8 @@ function InvoicePortalPage() {
             <div>
               <h3 className="text-base font-black text-emerald-400">Invoice Fully Paid</h3>
               <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                This invoice has already been successfully verified and logged as paid. No further action is required from your side.
+                This invoice has already been successfully verified and logged as paid. No further
+                action is required from your side.
               </p>
             </div>
           </div>
@@ -649,7 +700,7 @@ function InvoicePortalPage() {
         {/* ─── 3. What Happens Next Card (Image 2 Bottom Section) ─── */}
         <div className="bg-indigo-950/20 border border-indigo-500/[0.15] rounded-2xl p-6 shadow-xl flex items-center justify-between relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
-          
+
           <div className="flex items-start gap-4">
             <div className="h-10 w-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
               <Info className="h-5 w-5 text-indigo-400" />
@@ -657,42 +708,46 @@ function InvoicePortalPage() {
             <div className="max-w-xl">
               <h4 className="text-sm font-black text-white">What happens next?</h4>
               <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-                Our finance team will review your payment proof and update the status once verified. You'll receive a confirmation email instantly.
+                Our finance team will review your payment proof and update the status once verified.
+                You'll receive a confirmation email instantly.
               </p>
             </div>
           </div>
-          
+
           <div className="hidden lg:flex h-16 w-16 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 items-center justify-center shrink-0">
             <Mail className="h-6 w-6 text-indigo-400/40" />
           </div>
         </div>
-
       </main>
 
       {/* ─── Dev Simulation Bar ─── */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#0d1321]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-5 py-3.5 flex items-center gap-4 shadow-2xl">
-        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Dev Sandbox</span>
-        <button
-          onClick={() => setSimMode(simMode === "success" ? "none" : "success")}
-          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
-            simMode === "success"
-              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-              : "bg-white/5 text-slate-400 border-white/[0.05] hover:bg-white/10"
-          }`}
-        >
-          Force Match
-        </button>
-        <button
-          onClick={() => setSimMode(simMode === "fail" ? "none" : "fail")}
-          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
-            simMode === "fail"
-              ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-              : "bg-white/5 text-slate-400 border-white/[0.05] hover:bg-white/10"
-          }`}
-        >
-          Force Mismatch
-        </button>
-      </div>
+      {isStaff && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-[#0d1321]/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl px-5 py-3.5 flex items-center gap-4 shadow-2xl">
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+            Dev Sandbox
+          </span>
+          <button
+            onClick={() => setSimMode(simMode === "success" ? "none" : "success")}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+              simMode === "success"
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                : "bg-white/5 text-slate-400 border-white/[0.05] hover:bg-white/10"
+            }`}
+          >
+            Force Match
+          </button>
+          <button
+            onClick={() => setSimMode(simMode === "fail" ? "none" : "fail")}
+            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+              simMode === "fail"
+                ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                : "bg-white/5 text-slate-400 border-white/[0.05] hover:bg-white/10"
+            }`}
+          >
+            Force Mismatch
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="w-full relative z-10 border-t border-white/[0.04] py-6 px-4 bg-[#080b13] mt-auto">
@@ -701,7 +756,9 @@ function InvoicePortalPage() {
             © {new Date().getFullYear()} {orgName}. All rights reserved.
           </p>
           <p className="text-[10px] text-slate-600 flex items-center gap-1.5 justify-center">
-            <span>Secured by <span className="font-bold text-indigo-400/80">PayVerify</span></span>
+            <span>
+              Secured by <span className="font-bold text-indigo-400/80">PayVerify</span>
+            </span>
             <span>•</span>
             <span>End-to-end encrypted</span>
           </p>

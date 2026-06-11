@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -17,7 +18,13 @@ const schema = z.object({
   full_name: z.string().min(2, "Enter your full name"),
   organization_name: z.string().min(2, "Enter an organization name"),
   email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "Min 6 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Must contain at least one number")
+    .regex(/[^A-Za-z0-9]/, "Must contain at least one special character"),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -53,53 +60,56 @@ function SignupPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const token = new URLSearchParams(window.location.search).get("invite");
+
+    const verifyInvitation = async (tok: string) => {
+      setFetchingInvite(true);
+      try {
+        const { data: invite, error } = await (supabase as any)
+          .from("invitations")
+          .select(
+            `
+            id,
+            email,
+            role,
+            organization_id,
+            organizations:organization_id (
+              name
+            )
+          `,
+          )
+          .eq("token", tok)
+          .is("accepted_at", null)
+          .single();
+
+        if (error || !invite) {
+          setInviteError("This invitation link is invalid, expired, or has already been accepted.");
+        } else {
+          const orgName = invite.organizations?.name || "Invited Workspace";
+          setInviteDetails({
+            id: invite.id,
+            email: invite.email,
+            role: invite.role,
+            organization_id: invite.organization_id,
+            organization_name: orgName,
+          });
+
+          // Pre-fill email and organization name
+          form.setValue("email", invite.email);
+          form.setValue("organization_name", orgName);
+          toast.info(`Onboarding invite verified for ${orgName}!`);
+        }
+      } catch (err) {
+        setInviteError("Could not verify the invitation token.");
+      } finally {
+        setFetchingInvite(false);
+      }
+    };
+
     if (token) {
       setInviteToken(token);
       verifyInvitation(token);
     }
-  }, []);
-
-  const verifyInvitation = async (token: string) => {
-    setFetchingInvite(true);
-    try {
-      const { data: invite, error } = await (supabase as any)
-        .from("invitations")
-        .select(`
-          id,
-          email,
-          role,
-          organization_id,
-          organizations:organization_id (
-            name
-          )
-        `)
-        .eq("token", token)
-        .is("accepted_at", null)
-        .single();
-
-      if (error || !invite) {
-        setInviteError("This invitation link is invalid, expired, or has already been accepted.");
-      } else {
-        const orgName = invite.organizations?.name || "Invited Workspace";
-        setInviteDetails({
-          id: invite.id,
-          email: invite.email,
-          role: invite.role,
-          organization_id: invite.organization_id,
-          organization_name: orgName,
-        });
-
-        // Pre-fill email and organization name
-        form.setValue("email", invite.email);
-        form.setValue("organization_name", orgName);
-        toast.info(`Onboarding invite verified for ${orgName}!`);
-      }
-    } catch (err) {
-      setInviteError("Could not verify the invitation token.");
-    } finally {
-      setFetchingInvite(false);
-    }
-  };
+  }, [form]);
 
   useEffect(() => {
     if (!authLoading && user) navigate({ to: "/dashboard" });
@@ -157,7 +167,11 @@ function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f5f7fa] via-white to-[#e4e8f0] dark:from-[#080b11] dark:via-[#0c101b] dark:to-[#0f1422] px-4 py-12 transition-colors duration-200 relative">
       {/* Floating Back to Home button */}
       <div className="absolute top-6 left-6 sm:top-8 sm:left-8 z-10">
-        <Button variant="ghost" className="rounded-full gap-2 border border-slate-200 bg-white/80 hover:bg-slate-50 text-slate-700 hover:text-slate-900 shadow-sm transition-all text-xs font-semibold backdrop-blur-sm px-4 py-2" asChild>
+        <Button
+          variant="ghost"
+          className="rounded-full gap-2 border border-slate-200 bg-white/80 hover:bg-slate-50 text-slate-700 hover:text-slate-900 shadow-sm transition-all text-xs font-semibold backdrop-blur-sm px-4 py-2"
+          asChild
+        >
           <Link to="/">
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Home</span>
@@ -169,8 +183,18 @@ function SignupPage() {
         <div className="flex justify-center mb-8">
           <Link to="/" className="flex items-center gap-3 select-none">
             <div className="relative h-12 w-12 flex items-center justify-center font-sans text-4xl font-black italic shrink-0">
-              <span className="absolute text-[#003087] dark:text-blue-400 select-none" style={{ transform: "translate(-5px, -4px)" }}>P</span>
-              <span className="absolute text-[#0070ba] dark:text-cyan-400 opacity-85 select-none" style={{ transform: "translate(5px, 4px)" }}>V</span>
+              <span
+                className="absolute text-[#003087] dark:text-blue-400 select-none"
+                style={{ transform: "translate(-5px, -4px)" }}
+              >
+                P
+              </span>
+              <span
+                className="absolute text-[#0070ba] dark:text-cyan-400 opacity-85 select-none"
+                style={{ transform: "translate(5px, 4px)" }}
+              >
+                V
+              </span>
             </div>
             <div className="leading-tight text-left">
               <div className="text-2xl font-black tracking-tight text-[#003087] dark:text-white leading-none">
@@ -205,7 +229,12 @@ function SignupPage() {
                 <div className="text-rose-500 font-semibold text-xs bg-rose-500/10 border border-rose-500/20 p-4.5 rounded-2xl leading-relaxed">
                   {inviteError}
                 </div>
-                <Button variant="outline" shape="pill" className="w-full h-11 text-sm font-semibold rounded-full border-border/80" asChild>
+                <Button
+                  variant="outline"
+                  shape="pill"
+                  className="w-full h-11 text-sm font-semibold rounded-full border-border/80"
+                  asChild
+                >
                   <Link to="/signup">Standard Registration</Link>
                 </Button>
               </div>
@@ -219,7 +248,12 @@ function SignupPage() {
                 )}
 
                 <div className="space-y-1">
-                  <Label htmlFor="full_name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Full Name</Label>
+                  <Label
+                    htmlFor="full_name"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1"
+                  >
+                    Full Name
+                  </Label>
                   <Input
                     id="full_name"
                     placeholder="John Doe"
@@ -227,50 +261,75 @@ function SignupPage() {
                     {...form.register("full_name")}
                   />
                   {form.formState.errors.full_name && (
-                    <p className="text-xs text-destructive pl-1">{form.formState.errors.full_name.message}</p>
+                    <p className="text-xs text-destructive pl-1">
+                      {form.formState.errors.full_name.message}
+                    </p>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="organization_name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Organization</Label>
+                  <Label
+                    htmlFor="organization_name"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1"
+                  >
+                    Organization
+                  </Label>
                   <Input
                     id="organization_name"
                     placeholder="Acme Inc."
                     readOnly={!!inviteDetails}
                     className={`rounded-full px-5 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all ${
-                      inviteDetails ? "bg-muted/40 text-muted-foreground select-none opacity-80" : ""
+                      inviteDetails
+                        ? "bg-muted/40 text-muted-foreground select-none opacity-80"
+                        : ""
                     }`}
                     {...form.register("organization_name")}
                   />
                   {form.formState.errors.organization_name && (
-                    <p className="text-xs text-destructive pl-1">{form.formState.errors.organization_name.message}</p>
+                    <p className="text-xs text-destructive pl-1">
+                      {form.formState.errors.organization_name.message}
+                    </p>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Email Address</Label>
+                  <Label
+                    htmlFor="email"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1"
+                  >
+                    Email Address
+                  </Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="name@example.com"
                     readOnly={!!inviteDetails}
                     className={`rounded-full px-5 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all ${
-                      inviteDetails ? "bg-muted/40 text-muted-foreground select-none opacity-85 cursor-not-allowed" : ""
+                      inviteDetails
+                        ? "bg-muted/40 text-muted-foreground select-none opacity-85 cursor-not-allowed"
+                        : ""
                     }`}
                     {...form.register("email")}
                   />
                   {form.formState.errors.email && (
-                    <p className="text-xs text-destructive pl-1">{form.formState.errors.email.message}</p>
+                    <p className="text-xs text-destructive pl-1">
+                      {form.formState.errors.email.message}
+                    </p>
                   )}
                 </div>
 
-                 <div className="space-y-1">
-                  <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Password</Label>
+                <div className="space-y-1">
+                  <Label
+                    htmlFor="password"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1"
+                  >
+                    Password
+                  </Label>
                   <div className="relative">
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="•••••••• (Min. 6 chars)"
+                      placeholder="Password@123 (Min. 8 chars, mixed cases, symbol)"
                       className="rounded-full pl-5 pr-12 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all"
                       {...form.register("password")}
                     />
@@ -279,15 +338,26 @@ function SignupPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
                     >
-                      {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                      {showPassword ? (
+                        <EyeOff className="h-4.5 w-4.5" />
+                      ) : (
+                        <Eye className="h-4.5 w-4.5" />
+                      )}
                     </button>
                   </div>
                   {form.formState.errors.password && (
-                    <p className="text-xs text-destructive pl-1">{form.formState.errors.password.message}</p>
+                    <p className="text-xs text-destructive pl-1">
+                      {form.formState.errors.password.message}
+                    </p>
                   )}
                 </div>
 
-                <Button type="submit" size="lg" className="w-full h-11 text-base font-semibold shadow-md cursor-pointer bg-primary hover:bg-primary/95 text-primary-foreground hover:scale-[1.01] active:scale-[0.99] transition-all rounded-full mt-4" disabled={loading}>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full h-11 text-base font-semibold shadow-md cursor-pointer bg-primary hover:bg-primary/95 text-primary-foreground hover:scale-[1.01] active:scale-[0.99] transition-all rounded-full mt-4"
+                  disabled={loading}
+                >
                   {loading ? <Loader2 className="h-4.5 w-4.5 animate-spin mr-2" /> : null}
                   {inviteDetails ? "Complete Workspace Registration" : "Create Free Account"}
                 </Button>
@@ -300,9 +370,16 @@ function SignupPage() {
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-border/60"></div>
                   </div>
-                  <span className="relative bg-card px-3 text-xs text-muted-foreground uppercase font-semibold">Already registered?</span>
+                  <span className="relative bg-card px-3 text-xs text-muted-foreground uppercase font-semibold">
+                    Already registered?
+                  </span>
                 </div>
-                <Button variant="outline" shape="pill" className="w-full h-11 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/5 rounded-full" asChild>
+                <Button
+                  variant="outline"
+                  shape="pill"
+                  className="w-full h-11 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/5 rounded-full"
+                  asChild
+                >
                   <Link to="/login">Sign in to your account</Link>
                 </Button>
               </>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -14,6 +15,7 @@ import {
   Loader2,
   Sparkles,
   Search,
+  Pencil,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +57,11 @@ function StaffManagementPage() {
   const [inviting, setInviting] = useState(false);
   const [generatedLink, setGeneratedLink] = useState("");
 
+  // Role Edit States
+  const [editingMember, setEditingMember] = useState<any | null>(null);
+  const [newRole, setNewRole] = useState<string>("");
+  const [updatingRole, setUpdatingRole] = useState(false);
+
   const isAuthorized = role === "super_admin" || role === "admin";
 
   // Fetch current team members
@@ -74,9 +81,6 @@ function StaffManagementPage() {
         .from("profiles")
         .select("id, full_name, avatar_url, created_at")
         .in("id", uids);
-
-      const { data: authUsers } = await supabase.from("profiles").select("id"); 
-      // Note: auth.users can only be fetched via admin SDK, so we show profiles metadata
 
       return (profiles ?? []).map((p) => {
         const r = roles?.find((roleRow) => roleRow.user_id === p.id);
@@ -114,7 +118,7 @@ function StaffManagementPage() {
 
     try {
       const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || "http://localhost:5000";
-      
+
       const response = await fetch(`${BACKEND_URL}/api/invites`, {
         method: "POST",
         headers: {
@@ -142,15 +146,38 @@ function StaffManagementPage() {
       toast.success(
         result.emailSent
           ? "Invitation sent & registration link dispatched!"
-          : "Invitation saved, but email dispatch failed."
+          : "Invitation saved, but email dispatch failed.",
       );
       setInviteEmail("");
-      
+
       queryClient.invalidateQueries({ queryKey: ["invitations", organization.id] });
     } catch (error: any) {
       toast.error(error.message || "Failed to send invite");
     } finally {
       setInviting(false);
+    }
+  };
+
+  // Handle role updates
+  const handleUpdateRole = async () => {
+    if (!organization?.id || !editingMember) return;
+    setUpdatingRole(true);
+    try {
+      const { error } = await supabase
+        .from("user_roles")
+        .update({ role: newRole as any })
+        .eq("user_id", editingMember.id)
+        .eq("organization_id", organization.id);
+
+      if (error) throw error;
+
+      toast.success(`Role updated successfully for ${editingMember.full_name}!`);
+      setEditingMember(null);
+      queryClient.invalidateQueries({ queryKey: ["staff", organization.id] });
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update role");
+    } finally {
+      setUpdatingRole(false);
     }
   };
 
@@ -183,29 +210,54 @@ function StaffManagementPage() {
         </div>
         <h2 className="text-2xl font-black text-foreground">Access Restricted</h2>
         <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
-          Staff Recruitment & Access directories are strictly limited to workspace administrators. Contact your workspace admin for details.
+          Staff Recruitment & Access directories are strictly limited to workspace administrators.
+          Contact your workspace admin for details.
         </p>
       </div>
     );
   }
 
-  const filteredStaff = staff.filter((m) =>
-    m.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.role.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredStaff = staff.filter(
+    (m) =>
+      m.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      m.role.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const getRoleBadge = (r: string) => {
     switch (r) {
       case "super_admin":
-        return <Badge className="rounded-full bg-blue-500/10 text-blue-500 border-blue-500/20 font-black text-[9px] uppercase tracking-wider">Super Admin</Badge>;
+        return (
+          <Badge className="rounded-full bg-blue-500/10 text-blue-500 border-blue-500/20 font-black text-[9px] uppercase tracking-wider">
+            Super Admin
+          </Badge>
+        );
       case "admin":
-        return <Badge className="rounded-full bg-purple-500/10 text-purple-500 border-purple-500/20 font-black text-[9px] uppercase tracking-wider">Admin</Badge>;
+        return (
+          <Badge className="rounded-full bg-purple-500/10 text-purple-500 border-purple-500/20 font-black text-[9px] uppercase tracking-wider">
+            Admin
+          </Badge>
+        );
       case "manager":
-        return <Badge className="rounded-full bg-amber-500/10 text-amber-500 border-amber-500/20 font-black text-[9px] uppercase tracking-wider">Manager</Badge>;
+        return (
+          <Badge className="rounded-full bg-amber-500/10 text-amber-500 border-amber-500/20 font-black text-[9px] uppercase tracking-wider">
+            Manager
+          </Badge>
+        );
       case "finance_staff":
-        return <Badge className="rounded-full bg-cyan-500/10 text-cyan-500 border-cyan-500/20 font-black text-[9px] uppercase tracking-wider">Finance</Badge>;
+        return (
+          <Badge className="rounded-full bg-cyan-500/10 text-cyan-500 border-cyan-500/20 font-black text-[9px] uppercase tracking-wider">
+            Finance
+          </Badge>
+        );
       default:
-        return <Badge variant="secondary" className="rounded-full font-black text-[9px] uppercase tracking-wider">Viewer</Badge>;
+        return (
+          <Badge
+            variant="secondary"
+            className="rounded-full font-black text-[9px] uppercase tracking-wider"
+          >
+            Viewer
+          </Badge>
+        );
     }
   };
 
@@ -213,10 +265,22 @@ function StaffManagementPage() {
     <div className="space-y-8 animate-fade-in max-w-5xl">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-sans">Staff Directory</h1>
-          <p className="text-sm text-muted-foreground mt-1">Recruit and coordinate team members, assign workspace permission hierarchies, and review invites.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-sans">
+            Staff Directory
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Recruit and coordinate team members, assign workspace permission hierarchies, and review
+            invites.
+          </p>
         </div>
-        <Button shape="pill" onClick={() => { setGeneratedLink(""); setIsInviteOpen(true); }} className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 px-6">
+        <Button
+          shape="pill"
+          onClick={() => {
+            setGeneratedLink("");
+            setIsInviteOpen(true);
+          }}
+          className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 px-6"
+        >
           <Plus className="h-4.5 w-4.5" /> Invite Staff
         </Button>
       </div>
@@ -224,7 +288,9 @@ function StaffManagementPage() {
       <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
         <DialogContent className="border border-border/60 bg-card shadow-[var(--shadow-elegant)] rounded-3xl p-6 sm:p-8 max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-foreground">Invite Workspace Member</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">
+              Invite Workspace Member
+            </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
               Send a secure invitation registration link to recruit new workspace members.
             </DialogDescription>
@@ -235,20 +301,36 @@ function StaffManagementPage() {
               <div className="rounded-2xl bg-emerald-500/10 p-4 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-400 font-semibold leading-relaxed flex items-start gap-2.5">
                 <Sparkles className="h-5 w-5 shrink-0 mt-0.5" />
                 <div>
-                  Invitation successfully sent! An email invitation with the onboarding registration link has been dispatched to your team member.
+                  Invitation successfully sent! An email invitation with the onboarding registration
+                  link has been dispatched to your team member.
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">Backup Onboarding Link</Label>
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider pl-1">
+                  Backup Onboarding Link
+                </Label>
                 <div className="flex gap-2">
-                  <Input value={generatedLink} readOnly className="rounded-full px-5 h-11 border-border/80 text-xs font-semibold bg-muted/40 select-all" />
-                  <Button variant="outline" size="icon" onClick={() => copyToClipboard(generatedLink)} className="rounded-full h-11 w-11 shrink-0 border-border/80 bg-card">
+                  <Input
+                    value={generatedLink}
+                    readOnly
+                    className="rounded-full px-5 h-11 border-border/80 text-xs font-semibold bg-muted/40 select-all"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyToClipboard(generatedLink)}
+                    className="rounded-full h-11 w-11 shrink-0 border-border/80 bg-card"
+                  >
                     <Copy className="h-4.5 w-4.5" />
                   </Button>
                 </div>
               </div>
               <DialogFooter className="pt-2">
-                <Button shape="pill" onClick={() => setIsInviteOpen(false)} className="w-full font-semibold rounded-full bg-primary text-white">
+                <Button
+                  shape="pill"
+                  onClick={() => setIsInviteOpen(false)}
+                  className="w-full font-semibold rounded-full bg-primary text-white"
+                >
                   Done
                 </Button>
               </DialogFooter>
@@ -256,7 +338,10 @@ function StaffManagementPage() {
           ) : (
             <form onSubmit={handleInviteStaff} className="space-y-5 py-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                <Label
+                  htmlFor="email"
+                  className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                >
                   Staff Email Address <span className="text-rose-500">*</span>
                 </Label>
                 <Input
@@ -271,7 +356,10 @@ function StaffManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                <Label
+                  htmlFor="role"
+                  className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                >
                   Permission Access Role <span className="text-rose-500">*</span>
                 </Label>
                 <Select value={inviteRole} onValueChange={setInviteRole}>
@@ -280,8 +368,12 @@ function StaffManagementPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="viewer">Viewer (Read-Only Dashboards)</SelectItem>
-                    <SelectItem value="finance_staff">Finance Staff (Manage Ledgers & Payouts)</SelectItem>
-                    <SelectItem value="manager">Manager (Create Invoices & Coordinate Staff)</SelectItem>
+                    <SelectItem value="finance_staff">
+                      Finance Staff (Manage Ledgers & Payouts)
+                    </SelectItem>
+                    <SelectItem value="manager">
+                      Manager (Create Invoices & Coordinate Staff)
+                    </SelectItem>
                     <SelectItem value="admin">Administrator (Full System Settings)</SelectItem>
                   </SelectContent>
                 </Select>
@@ -312,12 +404,77 @@ function StaffManagementPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
+        <DialogContent className="border border-border/60 bg-card shadow-[var(--shadow-elegant)] rounded-3xl p-6 sm:p-8 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-foreground">
+              Edit Staff Access Role
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Modify the permissions and access level for{" "}
+              <strong className="text-foreground">{editingMember?.full_name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label
+                htmlFor="edit-role"
+                className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+              >
+                Permission Access Role <span className="text-rose-500">*</span>
+              </Label>
+              <Select value={newRole} onValueChange={setNewRole}>
+                <SelectTrigger className="rounded-full px-5 h-11 border-border/80">
+                  <SelectValue placeholder="Access Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">Viewer (Read-Only Dashboards)</SelectItem>
+                  <SelectItem value="finance_staff">
+                    Finance Staff (Manage Ledgers & Payouts)
+                  </SelectItem>
+                  <SelectItem value="manager">
+                    Manager (Create Invoices & Coordinate Staff)
+                  </SelectItem>
+                  <SelectItem value="admin">Administrator (Full System Settings)</SelectItem>
+                  <SelectItem value="super_admin">Super Administrator (All Access)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="pt-4 gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="ghost"
+              shape="pill"
+              onClick={() => setEditingMember(null)}
+              className="font-semibold px-5 rounded-full"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleUpdateRole}
+              disabled={updatingRole}
+              shape="pill"
+              className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white px-6 rounded-full"
+            >
+              {updatingRole ? <Loader2 className="h-4.5 w-4.5 animate-spin mr-2" /> : null}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Active Staff List */}
         <Card className="lg:col-span-2 border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden min-h-[400px]">
           <CardHeader className="pb-4 pt-6 border-b border-border/40 px-6 sm:px-8 bg-muted/10">
-            <CardTitle className="text-lg font-bold tracking-tight">Active Staff Directory</CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">List of users currently authorized in this organization.</CardDescription>
+            <CardTitle className="text-lg font-bold tracking-tight">
+              Active Staff Directory
+            </CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">
+              List of users currently authorized in this organization.
+            </CardDescription>
           </CardHeader>
           <div className="p-4 border-b border-border/40 bg-muted/5 flex items-center px-6">
             <div className="relative flex-1">
@@ -338,23 +495,46 @@ function StaffManagementPage() {
               </div>
             ) : filteredStaff.length === 0 ? (
               <div className="py-20 text-center">
-                <span className="text-xs text-muted-foreground font-semibold">No team members cataloged.</span>
+                <span className="text-xs text-muted-foreground font-semibold">
+                  No team members cataloged.
+                </span>
               </div>
             ) : (
               <div className="divide-y divide-border/30">
                 {filteredStaff.map((member) => (
-                  <div key={member.id} className="p-6 flex items-center justify-between hover:bg-muted/10 transition-colors">
+                  <div
+                    key={member.id}
+                    className="p-6 flex items-center justify-between hover:bg-muted/10 transition-colors"
+                  >
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div className="h-10 w-10 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-sm uppercase shrink-0">
                         {member.full_name.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-xs font-extrabold text-foreground truncate">{member.full_name}</h4>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Joined: {formatDate(member.joined_at)}</p>
+                        <h4 className="text-xs font-extrabold text-foreground truncate">
+                          {member.full_name}
+                        </h4>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Joined: {formatDate(member.joined_at)}
+                        </p>
                       </div>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-3">
                       {getRoleBadge(member.role)}
+                      {member.id !== user?.id && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
+                          onClick={() => {
+                            setEditingMember(member);
+                            setNewRole(member.role);
+                          }}
+                          title="Edit Access Role"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -366,8 +546,12 @@ function StaffManagementPage() {
         {/* Pending Invites list */}
         <Card className="lg:col-span-1 border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden min-h-[400px]">
           <CardHeader className="pb-4 pt-6 border-b border-border/40 px-6 bg-muted/10">
-            <CardTitle className="text-sm font-black text-foreground uppercase tracking-wider">Pending Onboardings</CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">Tokens generated but not yet redeemed.</CardDescription>
+            <CardTitle className="text-sm font-black text-foreground uppercase tracking-wider">
+              Pending Onboardings
+            </CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">
+              Tokens generated but not yet redeemed.
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0 overflow-y-auto max-h-[450px]">
             {invitesLoading ? (
@@ -385,10 +569,18 @@ function StaffManagementPage() {
             ) : (
               <div className="divide-y divide-border/30">
                 {invitations.map((invite) => (
-                  <div key={invite.id} className="p-5 space-y-3.5 hover:bg-muted/10 transition-colors">
+                  <div
+                    key={invite.id}
+                    className="p-5 space-y-3.5 hover:bg-muted/10 transition-colors"
+                  >
                     <div className="flex justify-between items-start">
                       <div className="min-w-0 pr-2">
-                        <p className="text-xs font-bold text-foreground truncate" title={invite.email}>{invite.email}</p>
+                        <p
+                          className="text-xs font-bold text-foreground truncate"
+                          title={invite.email}
+                        >
+                          {invite.email}
+                        </p>
                         <div className="mt-1.5 flex items-center gap-1.5 text-[9px] text-muted-foreground font-semibold">
                           <Calendar className="h-3 w-3" />
                           <span>Generated: {formatDate(invite.created_at)}</span>
@@ -409,7 +601,9 @@ function StaffManagementPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(`${window.location.origin}/signup?invite=${invite.token}`)}
+                        onClick={() =>
+                          copyToClipboard(`${window.location.origin}/signup?invite=${invite.token}`)
+                        }
                         className="h-7 text-[10px] font-black text-primary hover:bg-primary/5 rounded-full px-2 gap-1 cursor-pointer"
                       >
                         <Copy className="h-3 w-3" /> Copy URL

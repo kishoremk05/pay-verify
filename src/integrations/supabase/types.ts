@@ -29,6 +29,12 @@ export type Database = {
           service: string | null
           status: Database["public"]["Enums"]["customer_status"]
           updated_at: string
+          customer_status: string
+          created_by: string | null
+          discount_eligible: boolean
+          discount_type: "percentage" | "fixed" | "scholarship" | null
+          discount_value: number | null
+          discount_ref: string | null
         }
         Insert: {
           account_number?: string | null
@@ -44,6 +50,12 @@ export type Database = {
           service?: string | null
           status?: Database["public"]["Enums"]["customer_status"]
           updated_at?: string
+          customer_status?: string
+          created_by?: string | null
+          discount_eligible?: boolean
+          discount_type?: "percentage" | "fixed" | "scholarship" | null
+          discount_value?: number | null
+          discount_ref?: string | null
         }
         Update: {
           account_number?: string | null
@@ -59,6 +71,12 @@ export type Database = {
           service?: string | null
           status?: Database["public"]["Enums"]["customer_status"]
           updated_at?: string
+          customer_status?: string
+          created_by?: string | null
+          discount_eligible?: boolean
+          discount_type?: "percentage" | "fixed" | "scholarship" | null
+          discount_value?: number | null
+          discount_ref?: string | null
         }
         Relationships: [
           {
@@ -66,6 +84,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -277,7 +302,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "member"
+      app_role: "super_admin" | "admin" | "manager" | "finance_staff" | "viewer" | "member"
       customer_status: "paid" | "partial" | "unpaid" | "mismatch"
       payment_source: "paystack" | "bank" | "cash" | "manual"
       payment_status: "paid" | "partial" | "unpaid" | "duplicate" | "mismatch"
@@ -408,7 +433,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "member"],
+      app_role: ["super_admin", "admin", "manager", "finance_staff", "viewer", "member"],
       customer_status: ["paid", "partial", "unpaid", "mismatch"],
       payment_source: ["paystack", "bank", "cash", "manual"],
       payment_status: ["paid", "partial", "unpaid", "duplicate", "mismatch"],

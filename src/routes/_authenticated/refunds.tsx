@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -58,7 +59,9 @@ function RefundsPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isProcessOpen, setIsProcessOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"all" | "pending" | "approved" | "completed" | "rejected">("all");
+  const [activeTab, setActiveTab] = useState<
+    "all" | "pending" | "approved" | "completed" | "rejected"
+  >("all");
 
   // Form states
   const [customerId, setCustomerId] = useState("");
@@ -71,20 +74,6 @@ function RefundsPage() {
   const [selectedRefund, setSelectedRefund] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  if ((role as any) === "viewer") {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 text-center animate-fade-in">
-        <div className="h-16 w-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-6">
-          <Lock className="h-6 w-6" />
-        </div>
-        <h2 className="text-2xl font-black text-foreground">Access Restricted</h2>
-        <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
-          Refund auditing and processed payouts ledger are restricted for your role. Contact your workspace admin for details.
-        </p>
-      </div>
-    );
-  }
-
   // Fetch refunds with rich joins (including custom alias fields)
   const { data: refunds = [], isLoading: refundsLoading } = useQuery({
     queryKey: ["refunds", organization?.id],
@@ -92,11 +81,13 @@ function RefundsPage() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("refunds")
-        .select(`
+        .select(
+          `
           *,
           customers!customer_id (id, name, customer_code),
-          payments!payment_id (id, reference, amount_paid, payment_date)
-        `)
+          payments!payment_id (id, reference, amount_paid, payment_date, transaction_id)
+        `,
+        )
         .eq("organization_id", organization!.id)
         .order("created_at", { ascending: false });
       return (data as any[]) ?? [];
@@ -110,11 +101,13 @@ function RefundsPage() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("alerts")
-        .select(`
+        .select(
+          `
           *,
           invoices (id, invoice_number, amount),
           payments (id, reference, amount_paid, payment_date, customers (id, name, customer_code))
-        `)
+        `,
+        )
         .eq("organization_id", organization!.id)
         .eq("is_resolved", false)
         .order("created_at", { ascending: false });
@@ -143,12 +136,27 @@ function RefundsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("payments")
-        .select("id, amount_paid, reference, status, payment_date")
+        .select("id, amount_paid, reference, status, payment_date, transaction_id")
         .eq("customer_id", customerId)
         .order("payment_date", { ascending: false });
       return data ?? [];
     },
   });
+
+  if ((role as any) === "viewer") {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 text-center animate-fade-in">
+        <div className="h-16 w-16 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 mb-6">
+          <Lock className="h-6 w-6" />
+        </div>
+        <h2 className="text-2xl font-black text-foreground">Access Restricted</h2>
+        <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto leading-relaxed">
+          Refund auditing and processed payouts ledger are restricted for your role. Contact your
+          workspace admin for details.
+        </p>
+      </div>
+    );
+  }
 
   // Manual create refund payout request
   const handleProcessRefund = async (e: React.FormEvent) => {
@@ -185,7 +193,7 @@ function RefundsPage() {
 
       toast.success("Refund request created in PENDING status.");
       setIsProcessOpen(false);
-      
+
       // Reset form
       setCustomerId("");
       setPaymentId("");
@@ -269,6 +277,8 @@ function RefundsPage() {
     const custName = ref.customers?.name?.toLowerCase() ?? "";
     const custCode = ref.customers?.customer_code?.toLowerCase() ?? "";
     const pRef = ref.payments?.reference?.toLowerCase() ?? "";
+    const pTxId = ref.payments?.transaction_id?.toLowerCase() ?? "";
+    const pId = ref.payments?.id?.toLowerCase() ?? "";
     const reas = ref.reason.toLowerCase();
     const search = searchTerm.toLowerCase();
 
@@ -276,6 +286,8 @@ function RefundsPage() {
       custName.includes(search) ||
       custCode.includes(search) ||
       pRef.includes(search) ||
+      pTxId.includes(search) ||
+      pId.includes(search) ||
       reas.includes(search);
 
     // 2. Tab filter
@@ -302,25 +314,37 @@ function RefundsPage() {
     switch (status) {
       case "completed":
         return (
-          <Badge variant="outline" className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20 text-[10px] font-black uppercase tracking-wider">
+          <Badge
+            variant="outline"
+            className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20 text-[10px] font-black uppercase tracking-wider"
+          >
             Completed
           </Badge>
         );
       case "approved":
         return (
-          <Badge variant="outline" className="rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20 text-[10px] font-black uppercase tracking-wider animate-pulse">
+          <Badge
+            variant="outline"
+            className="rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20 text-[10px] font-black uppercase tracking-wider animate-pulse"
+          >
             Approved (Awaiting Payout)
           </Badge>
         );
       case "rejected":
         return (
-          <Badge variant="outline" className="rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20 text-[10px] font-black uppercase tracking-wider">
+          <Badge
+            variant="outline"
+            className="rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20 text-[10px] font-black uppercase tracking-wider"
+          >
             Rejected
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20 text-[10px] font-black uppercase tracking-wider">
+          <Badge
+            variant="outline"
+            className="rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20 text-[10px] font-black uppercase tracking-wider"
+          >
             Pending Approval
           </Badge>
         );
@@ -331,13 +355,20 @@ function RefundsPage() {
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-sans">Refund Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">Audit overpayments, resolve receipts mismatch, and manage financial payouts.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-sans">
+            Refund Management
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Audit overpayments, resolve receipts mismatch, and manage financial payouts.
+          </p>
         </div>
-        
+
         <Dialog open={isProcessOpen} onOpenChange={setIsProcessOpen}>
           <DialogTrigger asChild>
-            <Button shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 px-6">
+            <Button
+              shape="pill"
+              className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 px-6"
+            >
               <Plus className="h-4.5 w-4.5" /> Request Payout / Refund
             </Button>
           </DialogTrigger>
@@ -347,12 +378,16 @@ function RefundsPage() {
                 <RotateCcw className="h-5 w-5 text-indigo-500" /> Initiate Payout Request
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Record a custom manual refund payout request. Requires manager verification prior to execution.
+                Record a custom manual refund payout request. Requires manager verification prior to
+                execution.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleProcessRefund} className="space-y-5 py-2">
               <div className="space-y-2">
-                <Label htmlFor="customer" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                <Label
+                  htmlFor="customer"
+                  className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                >
                   Select Customer <span className="text-rose-500">*</span>
                 </Label>
                 <Select value={customerId} onValueChange={setCustomerId}>
@@ -371,7 +406,10 @@ function RefundsPage() {
 
               {customerId && (
                 <div className="space-y-2">
-                  <Label htmlFor="payment" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                  <Label
+                    htmlFor="payment"
+                    className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                  >
                     Linked Payment Transaction (Optional)
                   </Label>
                   <Select value={paymentId} onValueChange={setPaymentId}>
@@ -380,18 +418,28 @@ function RefundsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No Linked Payment (Manual Ledger Entry)</SelectItem>
-                      {selectedCustomerPayments.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          Ref: {p.reference || "N/A"} ({formatCurrency(p.amount_paid)}) - Date: {p.payment_date}
-                        </SelectItem>
-                      ))}
+                      {selectedCustomerPayments.map((p) => {
+                        const displayRef = p.reference
+                          ? `Ref: ${p.reference}`
+                          : p.transaction_id
+                            ? `TxID: ${p.transaction_id}`
+                            : `PayID: ${p.id.slice(0, 8)}`;
+                        return (
+                          <SelectItem key={p.id} value={p.id}>
+                            {displayRef} ({formatCurrency(p.amount_paid)}) - Date: {p.payment_date}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="amount" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                <Label
+                  htmlFor="amount"
+                  className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                >
                   Refund Amount (NGN) <span className="text-rose-500">*</span>
                 </Label>
                 <Input
@@ -407,7 +455,10 @@ function RefundsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="reason" className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                <Label
+                  htmlFor="reason"
+                  className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
+                >
                   Justification / Reason <span className="text-rose-500">*</span>
                 </Label>
                 <Textarea
@@ -452,8 +503,12 @@ function RefundsPage() {
           <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Refund Payouts</p>
-                <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">{formatCurrency(totalCompletedRefunded)}</h3>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Total Refund Payouts
+                </p>
+                <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
+                  {formatCurrency(totalCompletedRefunded)}
+                </h3>
               </div>
               <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
                 <CheckCircle className="h-5 w-5" />
@@ -464,8 +519,12 @@ function RefundsPage() {
           <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pending Approvals</p>
-                <h3 className="text-2xl font-black text-amber-500 tracking-tight">{formatCurrency(totalPendingRefund)}</h3>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Pending Approvals
+                </p>
+                <h3 className="text-2xl font-black text-amber-500 tracking-tight">
+                  {formatCurrency(totalPendingRefund)}
+                </h3>
               </div>
               <div className="h-10 w-10 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20">
                 <AlertTriangle className="h-5 w-5" />
@@ -476,8 +535,12 @@ function RefundsPage() {
           <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Approved (Awaiting Payout)</p>
-                <h3 className="text-2xl font-black text-indigo-500 tracking-tight">{formatCurrency(totalApprovedRefund)}</h3>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Approved (Awaiting Payout)
+                </p>
+                <h3 className="text-2xl font-black text-indigo-500 tracking-tight">
+                  {formatCurrency(totalApprovedRefund)}
+                </h3>
               </div>
               <div className="h-10 w-10 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center border border-indigo-500/20">
                 <RotateCcw className="h-5 w-5" />
@@ -490,8 +553,12 @@ function RefundsPage() {
         <Card className="lg:col-span-1 border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
           <CardContent className="p-6 flex items-center justify-between h-full">
             <div className="space-y-1">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Discrepancy Alerts</p>
-              <h3 className="text-2xl font-black text-rose-500 tracking-tight">{alerts.length} Unresolved</h3>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Discrepancy Alerts
+              </p>
+              <h3 className="text-2xl font-black text-rose-500 tracking-tight">
+                {alerts.length} Unresolved
+              </h3>
             </div>
             <div className="h-10 w-10 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20">
               <AlertTriangle className="h-5 w-5 animate-bounce" />
@@ -508,7 +575,8 @@ function RefundsPage() {
               <AlertTriangle className="h-4 w-4 animate-pulse" /> Urgent Overpayments Action Center
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground/80 mt-0.5">
-              These client payments exceed invoice requirements. Click "Create Refund Request" to pre-fill an automated payout refund request.
+              These client payments exceed invoice requirements. Click "Create Refund Request" to
+              pre-fill an automated payout refund request.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0 overflow-y-auto max-h-[220px]">
@@ -520,7 +588,10 @@ function RefundsPage() {
                 const excess = paymentAmount - invoiceAmount;
 
                 return (
-                  <div key={a.id} className="px-6 py-4.5 flex flex-wrap gap-4 justify-between items-center bg-rose-500/[0.01] hover:bg-rose-500/[0.04] transition-colors">
+                  <div
+                    key={a.id}
+                    className="px-6 py-4.5 flex flex-wrap gap-4 justify-between items-center bg-rose-500/[0.01] hover:bg-rose-500/[0.04] transition-colors"
+                  >
                     <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-bold text-foreground font-sans">
@@ -531,7 +602,8 @@ function RefundsPage() {
                         </Badge>
                       </div>
                       <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                        Invoice Expectation: ₦{invoiceAmount.toLocaleString()} | Client Paid: ₦{paymentAmount.toLocaleString()}
+                        Invoice Expectation: ₦{invoiceAmount.toLocaleString()} | Client Paid: ₦
+                        {paymentAmount.toLocaleString()}
                       </p>
                     </div>
                     <Button
@@ -541,7 +613,9 @@ function RefundsPage() {
                         setCustomerId(customer?.id || "");
                         setPaymentId(a.payments?.id || "");
                         setRefundAmount(String(excess));
-                        setReason(`Automated refund request for overpayment. Invoice Expectation: ₦${invoiceAmount.toLocaleString()} vs Paid: ₦${paymentAmount.toLocaleString()}.`);
+                        setReason(
+                          `Automated refund request for overpayment. Invoice Expectation: ₦${invoiceAmount.toLocaleString()} vs Paid: ₦${paymentAmount.toLocaleString()}.`,
+                        );
                         setIsProcessOpen(true);
                       }}
                       className="rounded-full h-8 px-4 text-xs font-bold border-rose-500/25 bg-card hover:bg-rose-500/10 text-rose-600 shadow-sm shrink-0"
@@ -637,7 +711,9 @@ function RefundsPage() {
                 <RotateCcw className="h-5 w-5" />
               </div>
               <h3 className="mt-4 text-sm font-bold text-foreground">No refund records found</h3>
-              <p className="mt-1 text-xs text-muted-foreground font-medium">Draft refund billing payouts to launch records here.</p>
+              <p className="mt-1 text-xs text-muted-foreground font-medium">
+                Draft refund billing payouts to launch records here.
+              </p>
             </div>
           ) : (
             <table className="w-full text-left border-collapse min-w-[900px]">
@@ -654,30 +730,48 @@ function RefundsPage() {
               </thead>
               <tbody className="divide-y divide-border/30">
                 {filteredRefunds.map((ref) => (
-                  <tr key={ref.id} className="hover:bg-muted/10 transition-colors duration-150 border-b border-border/30 last:border-b-0">
+                  <tr
+                    key={ref.id}
+                    className="hover:bg-muted/10 transition-colors duration-150 border-b border-border/30 last:border-b-0"
+                  >
                     <td className="py-4.5 px-6 text-xs font-bold text-foreground">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground/60" />
                         <div>
-                          <div className="font-bold">{ref.customers?.name || "Deleted Customer"}</div>
-                          <div className="text-[10px] text-muted-foreground mt-0.5">{ref.customers?.customer_code || "—"}</div>
+                          <div className="font-bold">
+                            {ref.customers?.name || "Deleted Customer"}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            {ref.customers?.customer_code || "—"}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="py-4.5 px-6 text-xs font-medium text-foreground">
-                      {ref.payments?.reference ? (
+                      {ref.payments ? (
                         <div className="flex items-center gap-1">
                           <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="font-mono">Ref: {ref.payments.reference}</span>
+                          <span className="font-mono">
+                            {ref.payments.reference
+                              ? `Ref: ${ref.payments.reference}`
+                              : ref.payments.transaction_id
+                                ? `TxID: ${ref.payments.transaction_id}`
+                                : `PayID: ${ref.payments.id.slice(0, 8)}`}
+                          </span>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-[10px] italic">No linked payment</span>
+                        <span className="text-muted-foreground text-[10px] italic">
+                          No linked payment
+                        </span>
                       )}
                     </td>
                     <td className="py-4.5 px-6 text-xs font-bold text-indigo-500">
                       -{formatCurrency(ref.refund_amount)}
                     </td>
-                    <td className="py-4.5 px-6 text-xs font-medium text-muted-foreground max-w-[200px] truncate" title={ref.reason}>
+                    <td
+                      className="py-4.5 px-6 text-xs font-medium text-muted-foreground max-w-[200px] truncate"
+                      title={ref.reason}
+                    >
                       {ref.reason}
                     </td>
                     <td className="py-4.5 px-6 text-xs font-medium">
@@ -761,29 +855,42 @@ function RefundsPage() {
               Review transaction, history, and status change validations for this request.
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedRefund && (
             <div className="space-y-5 py-3">
               {/* Financial Ledger Section */}
               <div className="bg-muted/10 border border-border/60 rounded-2xl p-4 text-xs space-y-2">
-                <h4 className="font-black uppercase tracking-wider text-muted-foreground text-[10px]">Financial Ledger</h4>
+                <h4 className="font-black uppercase tracking-wider text-muted-foreground text-[10px]">
+                  Financial Ledger
+                </h4>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Customer Name</span>
                   <span className="font-bold">{selectedRefund.customers?.name || "Deleted"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Refund Value</span>
-                  <span className="font-black text-rose-500">{formatCurrency(selectedRefund.refund_amount)}</span>
+                  <span className="font-black text-rose-500">
+                    {formatCurrency(selectedRefund.refund_amount)}
+                  </span>
                 </div>
                 {selectedRefund.payments && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Original Payment Ref</span>
-                    <span className="font-mono font-semibold">{selectedRefund.payments.reference}</span>
+                    <span className="text-muted-foreground">Original Payment</span>
+                    <span className="font-mono font-semibold">
+                      {selectedRefund.payments.reference
+                        ? `Ref: ${selectedRefund.payments.reference}`
+                        : selectedRefund.payments.transaction_id
+                          ? `TxID: ${selectedRefund.payments.transaction_id}`
+                          : `PayID: ${selectedRefund.payments.id.slice(0, 8)}`}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Reason / Purpose</span>
-                  <span className="font-medium text-right max-w-[200px] truncate" title={selectedRefund.reason}>
+                  <span
+                    className="font-medium text-right max-w-[200px] truncate"
+                    title={selectedRefund.reason}
+                  >
                     {selectedRefund.reason}
                   </span>
                 </div>
@@ -791,8 +898,10 @@ function RefundsPage() {
 
               {/* Status Audit Trail Timeline */}
               <div className="space-y-3.5 pl-2">
-                <h4 className="font-black uppercase tracking-wider text-muted-foreground text-[10px]">Lifecycle Timeline</h4>
-                
+                <h4 className="font-black uppercase tracking-wider text-muted-foreground text-[10px]">
+                  Lifecycle Timeline
+                </h4>
+
                 <div className="relative border-l border-border/60 ml-3.5 space-y-5 pl-5 py-1">
                   {/* Step 1: Requested */}
                   <div className="relative">
@@ -802,7 +911,11 @@ function RefundsPage() {
                     <div>
                       <h5 className="text-xs font-bold text-foreground">Refund Request Created</h5>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Initiated by staff: <strong className="text-foreground">{selectedRefund.profiles?.full_name || "System automated"}</strong> on {formatDate(selectedRefund.created_at)}
+                        Initiated by staff:{" "}
+                        <strong className="text-foreground">
+                          {selectedRefund.profiles?.full_name || "System automated"}
+                        </strong>{" "}
+                        on {formatDate(selectedRefund.created_at)}
                       </p>
                     </div>
                   </div>
@@ -810,9 +923,13 @@ function RefundsPage() {
                   {/* Step 2: Approved */}
                   {(selectedRefund.approved_at || selectedRefund.status === "pending") && (
                     <div className="relative">
-                      <span className={`absolute -left-[27px] top-0 rounded-full h-4.5 w-4.5 flex items-center justify-center text-[9px] font-bold ${
-                        selectedRefund.approved_at ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground border border-border/80"
-                      }`}>
+                      <span
+                        className={`absolute -left-[27px] top-0 rounded-full h-4.5 w-4.5 flex items-center justify-center text-[9px] font-bold ${
+                          selectedRefund.approved_at
+                            ? "bg-emerald-500 text-white"
+                            : "bg-muted text-muted-foreground border border-border/80"
+                        }`}
+                      >
                         2
                       </span>
                       <div>
@@ -839,15 +956,20 @@ function RefundsPage() {
                       <div>
                         <h5 className="text-xs font-bold text-rose-500">Refund Payout Rejected</h5>
                         <p className="text-[10px] text-muted-foreground mt-0.5">
-                          Rejected by staff on {formatDate(selectedRefund.rejected_at || selectedRefund.updated_at)}
+                          Rejected by staff on{" "}
+                          {formatDate(selectedRefund.rejected_at || selectedRefund.updated_at)}
                         </p>
                       </div>
                     </div>
                   ) : (
                     <div className="relative">
-                      <span className={`absolute -left-[27px] top-0 rounded-full h-4.5 w-4.5 flex items-center justify-center text-[9px] font-bold ${
-                        selectedRefund.completed_at ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground border border-border/80"
-                      }`}>
+                      <span
+                        className={`absolute -left-[27px] top-0 rounded-full h-4.5 w-4.5 flex items-center justify-center text-[9px] font-bold ${
+                          selectedRefund.completed_at
+                            ? "bg-emerald-600 text-white"
+                            : "bg-muted text-muted-foreground border border-border/80"
+                        }`}
+                      >
                         3
                       </span>
                       <div>
