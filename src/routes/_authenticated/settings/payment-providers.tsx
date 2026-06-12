@@ -16,6 +16,9 @@ import {
   PowerOff,
   Shield,
   RefreshCw,
+  HelpCircle,
+  X,
+  Info,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -87,6 +90,24 @@ function PaymentProvidersPage() {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
+  // Onboarding Guide state
+  const [guideDismissed, setGuideDismissed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("payment_provider_guide_dismissed") === "true";
+    }
+    return false;
+  });
+
+  const dismissGuide = () => {
+    localStorage.setItem("payment_provider_guide_dismissed", "true");
+    setGuideDismissed(true);
+  };
+
+  const showGuide = () => {
+    localStorage.setItem("payment_provider_guide_dismissed", "false");
+    setGuideDismissed(false);
+  };
+
   // Form state for new provider
   const [providerType, setProviderType] = useState("");
   const [providerName, setProviderName] = useState("");
@@ -98,7 +119,6 @@ function PaymentProvidersPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [mobileName, setMobileName] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
-  const [referenceFormat, setReferenceFormat] = useState("");
   const [providerCurrency, setProviderCurrency] = useState("GHS");
 
   // Visibility toggles
@@ -119,6 +139,24 @@ function PaymentProvidersPage() {
     },
   });
 
+  // Query last sync time for Paystack
+  const { data: lastSyncTime } = useQuery({
+    queryKey: ["paystack-last-sync", organization?.id],
+    enabled: !!organization?.id && providers.some((p) => p.provider_type === "paystack"),
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("audit_logs")
+        .select("created_at")
+        .eq("organization_id", organization!.id)
+        .eq("action_type", "paystack_sync")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.created_at ? new Date(data.created_at).toLocaleString() : "Never synced";
+    },
+  });
+
   const resetForm = () => {
     setProviderType("");
     setProviderName("");
@@ -130,7 +168,6 @@ function PaymentProvidersPage() {
     setAccountNumber("");
     setMobileName("");
     setMobileNumber("");
-    setReferenceFormat("");
     setProviderCurrency("GHS");
     setShowSecretKey(false);
     setShowWebhookSecret(false);
@@ -170,7 +207,6 @@ function PaymentProvidersPage() {
       credentials = {
         account_name: mobileName,
         mobile_number: mobileNumber,
-        reference_format: referenceFormat || null,
       };
     }
 
@@ -244,26 +280,43 @@ function PaymentProvidersPage() {
     const creds = provider.credentials_json;
     if (provider.provider_type === "paystack") {
       return (
-        <div className="text-[11px] text-muted-foreground space-y-0.5 mt-2">
+        <div className="text-[11px] text-muted-foreground space-y-1 mt-2">
           <p>Public Key: <span className="font-mono text-foreground/70">{String(creds.public_key || "").substring(0, 20)}••••</span></p>
           <p>Secret Key: <span className="font-mono text-foreground/70">sk_••••••••</span></p>
+          <p className="pt-1 flex items-center gap-1.5 border-t border-border/40 mt-1.5">
+            <span>Last Sync:</span>
+            <span className="font-semibold text-foreground/85">{lastSyncTime ?? "Never synced"}</span>
+          </p>
+          {provider.active && isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              shape="pill"
+              onClick={handlePaystackSync}
+              disabled={syncing}
+              className="w-full mt-3 h-8 text-[11px] font-semibold border-teal-300 dark:border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 cursor-pointer"
+            >
+              {syncing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+              Sync Transactions
+            </Button>
+          )}
         </div>
       );
     }
     if (provider.provider_type === "bank_transfer") {
       return (
         <div className="text-[11px] text-muted-foreground space-y-0.5 mt-2">
-          <p>Bank: <span className="font-semibold text-foreground/80">{creds.bank_name}</span></p>
-          <p>Account: <span className="font-mono text-foreground/70">{creds.account_number}</span></p>
-          <p>Name: <span className="text-foreground/70">{creds.account_name}</span></p>
+          <p>Bank Name: <span className="font-semibold text-foreground/80">{creds.bank_name}</span></p>
+          <p>Account Name: <span className="text-foreground/75">{creds.account_name}</span></p>
+          <p>Account Number: <span className="font-mono text-foreground/75">{creds.account_number}</span></p>
+          <p>Currency: <span className="font-semibold text-foreground/80">{creds.currency || "NGN"}</span></p>
         </div>
       );
     }
     return (
       <div className="text-[11px] text-muted-foreground space-y-0.5 mt-2">
-        <p>Account: <span className="font-semibold text-foreground/80">{creds.account_name}</span></p>
-        <p>Number: <span className="font-mono text-foreground/70">{creds.mobile_number}</span></p>
-        {creds.reference_format && <p>Format: <span className="text-foreground/70">{creds.reference_format}</span></p>}
+        <p>Account Name: <span className="font-semibold text-foreground/85">{creds.account_name}</span></p>
+        <p>Mobile Number: <span className="font-mono text-foreground/75">{creds.mobile_number}</span></p>
       </div>
     );
   };
@@ -339,10 +392,6 @@ function PaymentProvidersPage() {
           <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Mobile Number <span className="text-rose-500">*</span></Label>
           <Input value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} placeholder="e.g. 0241234567" className="rounded-full px-5 h-10 border-border/80 font-mono" />
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Reference Format</Label>
-          <Input value={referenceFormat} onChange={(e) => setReferenceFormat(e.target.value)} placeholder="e.g. MOMO-{date}-{id}" className="rounded-full px-5 h-10 border-border/80 font-mono text-xs" />
-        </div>
       </>
     );
   };
@@ -359,13 +408,24 @@ function PaymentProvidersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2.5">
+          {guideDismissed && (
+            <Button
+              variant="outline"
+              shape="pill"
+              onClick={showGuide}
+              className="h-9 text-xs font-semibold gap-1.5 cursor-pointer"
+            >
+              <HelpCircle className="h-4 w-4" />
+              Setup Guide
+            </Button>
+          )}
           {providers.some((p) => p.provider_type === "paystack" && p.active) && (
             <Button
               variant="outline"
               shape="pill"
               onClick={handlePaystackSync}
               disabled={syncing}
-              className="h-9 text-xs font-semibold border-teal-300 dark:border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10"
+              className="h-9 text-xs font-semibold border-teal-300 dark:border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10 cursor-pointer"
             >
               {syncing ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <RefreshCw className="h-4 w-4 mr-1.5" />}
               Sync Paystack
@@ -374,7 +434,7 @@ function PaymentProvidersPage() {
           {isAdmin && (
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild>
-                <Button shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2">
+                <Button shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 cursor-pointer">
                   <Plus className="h-4 w-4" /> Add Provider
                 </Button>
               </DialogTrigger>
@@ -410,8 +470,8 @@ function PaymentProvidersPage() {
                   {providerType && renderAddFormFields()}
                 </div>
                 <DialogFooter className="pt-4 border-t border-border/40 gap-2 sm:gap-0">
-                  <Button type="button" variant="ghost" shape="pill" onClick={() => { resetForm(); setAddOpen(false); }} className="px-5 font-semibold text-muted-foreground">Cancel</Button>
-                  <Button shape="pill" className="px-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white" onClick={handleAdd} disabled={saving}>
+                  <Button type="button" variant="ghost" shape="pill" onClick={() => { resetForm(); setAddOpen(false); }} className="px-5 font-semibold text-muted-foreground cursor-pointer">Cancel</Button>
+                  <Button shape="pill" className="px-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white cursor-pointer" onClick={handleAdd} disabled={saving}>
                     {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                     Save Provider
                   </Button>
@@ -421,6 +481,86 @@ function PaymentProvidersPage() {
           )}
         </div>
       </div>
+
+      {/* Dismissible Help Guide */}
+      {!guideDismissed && (
+        <Card className="border-border/60 bg-gradient-to-br from-primary/5 via-transparent to-transparent backdrop-blur-xl rounded-[2rem] overflow-hidden p-6 sm:p-8 relative shadow-sm border border-primary/10 animate-fade-in">
+          <button 
+            onClick={dismissGuide} 
+            className="absolute right-6 top-6 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted cursor-pointer"
+            title="Dismiss guide"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0 border border-primary/20">
+              <Info className="h-5 w-5" />
+            </div>
+            <div className="space-y-6 flex-1 min-w-0">
+              <div>
+                <h2 className="text-lg font-bold tracking-tight text-foreground">Getting Started With Payment Providers</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Configure your payment providers to enable automatic reconciliation and payment tracking.
+                </p>
+              </div>
+              
+              <div className="grid gap-4 sm:grid-cols-3">
+                {/* Paystack Guide */}
+                <Card className="border-border/40 bg-card/50 backdrop-blur-sm rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Zap className="h-4 w-4 text-teal-500" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-foreground">Paystack</h3>
+                  </div>
+                  <ol className="text-[11px] text-muted-foreground space-y-1.5 list-decimal pl-4 leading-relaxed">
+                    <li>Create a Paystack account.</li>
+                    <li>Navigate to Settings &rarr; Developers.</li>
+                    <li>Copy your Public Key.</li>
+                    <li>Copy your Secret Key.</li>
+                    <li>Paste both keys into PayVerify.</li>
+                    <li>Save Provider.</li>
+                    <li>Click Sync Transactions.</li>
+                  </ol>
+                </Card>
+
+                {/* Bank Transfer Guide */}
+                <Card className="border-border/40 bg-card/50 backdrop-blur-sm rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Building2 className="h-4 w-4 text-sky-500" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-foreground">Bank Transfer</h3>
+                  </div>
+                  <ol className="text-[11px] text-muted-foreground space-y-1.5 list-decimal pl-4 leading-relaxed">
+                    <li>Add your bank details.</li>
+                    <li>Import bank transaction reports when available.</li>
+                    <li>The system will automatically reconcile transactions against invoices.</li>
+                  </ol>
+                </Card>
+
+                {/* Mobile Money Guide */}
+                <Card className="border-border/40 bg-card/50 backdrop-blur-sm rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Smartphone className="h-4 w-4 text-yellow-500" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-foreground">Mobile Money</h3>
+                  </div>
+                  <ol className="text-[11px] text-muted-foreground space-y-1.5 list-decimal pl-4 leading-relaxed">
+                    <li>Select your provider (MTN, Telecel, AirtelTigo).</li>
+                    <li>Enter the registered business mobile number.</li>
+                    <li>Save the provider.</li>
+                    <li>Import transaction reports or manually record transactions.</li>
+                    <li>The reconciliation engine will match payments to invoices.</li>
+                  </ol>
+                </Card>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <Button shape="pill" size="sm" onClick={dismissGuide} className="font-semibold bg-primary text-white hover:bg-primary/90 px-6 cursor-pointer">
+                  Got It
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Provider Cards */}
       {isLoading ? (
@@ -442,7 +582,7 @@ function PaymentProvidersPage() {
               Add your Paystack API keys, bank transfer details, or mobile money accounts to start accepting and reconciling payments.
             </p>
             {isAdmin && (
-              <Button onClick={() => setAddOpen(true)} shape="pill" className="mt-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2">
+              <Button onClick={() => setAddOpen(true)} shape="pill" className="mt-6 font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 cursor-pointer">
                 <Plus className="h-4 w-4" /> Add Provider
               </Button>
             )}
@@ -480,7 +620,9 @@ function PaymentProvidersPage() {
                               : "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20"
                           }`}
                         >
-                          {provider.active ? "Active" : "Inactive"}
+                          {provider.provider_type === "paystack"
+                            ? (provider.active ? "Connected" : "Disconnected")
+                            : (provider.active ? "Active" : "Inactive")}
                         </Badge>
                       </div>
                     </div>
