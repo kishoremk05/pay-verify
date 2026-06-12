@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ClipboardList, CreditCard, BarChart3, Settings, ShieldCheck, LogOut, FileText, RotateCcw, History } from "lucide-react";
+import { LayoutDashboard, ClipboardList, CreditCard, BarChart3, Settings, ShieldCheck, LogOut, FileText, RotateCcw, History, Wallet } from "lucide-react";
 
 import {
   Sidebar,
@@ -27,6 +27,7 @@ const items = [
   { title: "Audit Logs", url: "/audit-logs", icon: History },
   { title: "Staff Directory", url: "/staff-management", icon: ShieldCheck },
   { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Payment Providers", url: "/settings/payment-providers", icon: Wallet },
 ];
 
 export function AppSidebar() {
@@ -36,7 +37,7 @@ export function AppSidebar() {
   const { signOut, organization, profile, role } = useAuth();
 
   const allowedItems = items.filter((item) => {
-    if (item.url === "/staff-management") {
+    if (item.url === "/staff-management" || item.url === "/settings/payment-providers") {
       return role === "super_admin" || role === "admin";
     }
     if (item.url === "/invoices" || item.url === "/refunds") {

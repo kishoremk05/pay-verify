@@ -119,18 +119,64 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_providers: {
+        Row: {
+          id: string
+          organization_id: string
+          provider_type: string
+          provider_name: string
+          credentials_json: Record<string, any>
+          active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          provider_type: string
+          provider_name: string
+          credentials_json?: Record<string, any>
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          provider_type?: string
+          provider_name?: string
+          credentials_json?: Record<string, any>
+          active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_providers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount_paid: number
+          bank_name: string | null
           created_at: string
           currency: string
           customer_id: string | null
           id: string
+          mobile_number: string | null
           notes: string | null
           organization_id: string
+          paid_by_name: string | null
+          paid_by_phone: string | null
           payment_date: string
           payment_method: string | null
           reference: string | null
+          relationship: string | null
           source: Database["public"]["Enums"]["payment_source"]
           status: Database["public"]["Enums"]["payment_status"]
           transaction_id: string | null
@@ -138,15 +184,20 @@ export type Database = {
         }
         Insert: {
           amount_paid?: number
+          bank_name?: string | null
           created_at?: string
           currency?: string
           customer_id?: string | null
           id?: string
+          mobile_number?: string | null
           notes?: string | null
           organization_id: string
+          paid_by_name?: string | null
+          paid_by_phone?: string | null
           payment_date?: string
           payment_method?: string | null
           reference?: string | null
+          relationship?: string | null
           source?: Database["public"]["Enums"]["payment_source"]
           status?: Database["public"]["Enums"]["payment_status"]
           transaction_id?: string | null
@@ -154,15 +205,20 @@ export type Database = {
         }
         Update: {
           amount_paid?: number
+          bank_name?: string | null
           created_at?: string
           currency?: string
           customer_id?: string | null
           id?: string
+          mobile_number?: string | null
           notes?: string | null
           organization_id?: string
+          paid_by_name?: string | null
+          paid_by_phone?: string | null
           payment_date?: string
           payment_method?: string | null
           reference?: string | null
+          relationship?: string | null
           source?: Database["public"]["Enums"]["payment_source"]
           status?: Database["public"]["Enums"]["payment_status"]
           transaction_id?: string | null
@@ -181,6 +237,78 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paystack_transactions: {
+        Row: {
+          id: string
+          organization_id: string
+          paystack_id: number
+          reference: string
+          amount: number
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          status: string
+          channel: string | null
+          paid_at: string | null
+          metadata: Record<string, any> | null
+          reconciled: boolean
+          linked_payment_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          paystack_id: number
+          reference: string
+          amount?: number
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          status?: string
+          channel?: string | null
+          paid_at?: string | null
+          metadata?: Record<string, any> | null
+          reconciled?: boolean
+          linked_payment_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          paystack_id?: number
+          reference?: string
+          amount?: number
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          status?: string
+          channel?: string | null
+          paid_at?: string | null
+          metadata?: Record<string, any> | null
+          reconciled?: boolean
+          linked_payment_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paystack_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "paystack_transactions_linked_payment_id_fkey"
+            columns: ["linked_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
             referencedColumns: ["id"]
           },
         ]
@@ -304,7 +432,7 @@ export type Database = {
     Enums: {
       app_role: "super_admin" | "admin" | "manager" | "finance_staff" | "viewer" | "member"
       customer_status: "paid" | "partial" | "unpaid" | "mismatch"
-      payment_source: "paystack" | "bank" | "cash" | "manual"
+      payment_source: "paystack" | "bank" | "cash" | "manual" | "mtn_momo" | "telecel_cash" | "airteltigo"
       payment_status: "paid" | "partial" | "unpaid" | "duplicate" | "mismatch"
     }
     CompositeTypes: {
@@ -435,7 +563,7 @@ export const Constants = {
     Enums: {
       app_role: ["super_admin", "admin", "manager", "finance_staff", "viewer", "member"],
       customer_status: ["paid", "partial", "unpaid", "mismatch"],
-      payment_source: ["paystack", "bank", "cash", "manual"],
+      payment_source: ["paystack", "bank", "cash", "manual", "mtn_momo", "telecel_cash", "airteltigo"],
       payment_status: ["paid", "partial", "unpaid", "duplicate", "mismatch"],
     },
   },

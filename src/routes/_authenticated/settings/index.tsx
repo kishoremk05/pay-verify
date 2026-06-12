@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -11,6 +11,8 @@ import {
   EyeOff,
   KeyRound,
   Coins,
+  CreditCard,
+  ChevronRight,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +36,7 @@ const SUPPORTED_CURRENCIES = [
   { code: "INR", label: "Indian Rupee (₹)" },
 ];
 
-export const Route = createFileRoute("/_authenticated/settings")({
+export const Route = createFileRoute("/_authenticated/settings/")({
   head: () => ({ meta: [{ title: "Settings — PayVerify" }] }),
   component: SettingsPage,
 });
@@ -377,6 +379,31 @@ function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Payment Providers Link */}
+      {(role === "admin" || role === "super_admin") && (
+        <Link
+          to="/settings/payment-providers"
+          className="block max-w-2xl"
+        >
+          <Card className="border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/30 group cursor-pointer">
+            <CardContent className="p-6 sm:p-8 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 group-hover:scale-105 transition-transform">
+                  <CreditCard className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight text-foreground">Payment Providers</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Configure Paystack, bank transfers, and mobile money integrations
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+            </CardContent>
+          </Card>
+        </Link>
+      )}
     </div>
   );
 }

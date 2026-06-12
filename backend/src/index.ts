@@ -9,6 +9,8 @@ import cors from "cors";
 import invoiceRoutes from "./routes/invoices.js";
 import refundRoutes from "./routes/refunds.js";
 import inviteRoutes from "./routes/invites.js";
+import paystackRoutes from "./routes/paystack.js";
+import paymentRoutes from "./routes/payments.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "5000", 10);
@@ -48,6 +50,8 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/refunds", refundRoutes);
 app.use("/api/invites", inviteRoutes);
+app.use("/api/paystack", paystackRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // ── Start ──
 app.listen(PORT, () => {

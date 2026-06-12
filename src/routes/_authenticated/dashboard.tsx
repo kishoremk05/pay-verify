@@ -45,7 +45,7 @@ function DashboardPage() {
     queryKey: ["dashboard", organization?.id],
     enabled: !!organization?.id,
     queryFn: async () => {
-      const [{ data: customers }, { data: payments }, { data: refunds }] = await Promise.all([
+      const [{ data: customers }, { data: payments }, { data: refunds }, { data: alerts }] = await Promise.all([
         supabase.from("customers").select("id, expected_amount, due_amount, status"),
         supabase
           .from("payments")
@@ -54,6 +54,7 @@ function DashboardPage() {
           )
           .order("payment_date", { ascending: false }),
         (supabase as any).from("refunds").select("id, refund_amount, status"),
+        (supabase as any).from("alerts").select("id, type, amount, resolved"),
       ]);
       const expected = (customers ?? []).reduce((s, c) => s + Number(c.expected_amount ?? 0), 0);
       const received = (payments ?? []).reduce((s, p) => s + Number(p.amount_paid ?? 0), 0);
@@ -73,6 +74,10 @@ function DashboardPage() {
       const pendingRefundsCount = ((refunds as any[]) ?? []).filter(
         (r) => r.status === "pending",
       ).length;
+
+      const overpaymentAlerts = ((alerts as any[]) ?? []).filter((a) => a.type === "overpayment" && !a.resolved);
+      const overpaymentCount = overpaymentAlerts.length;
+      const overpaymentAmount = overpaymentAlerts.reduce((s: number, a: any) => s + Number(a.amount ?? 0), 0);
 
       const byDay = new Map<string, number>();
       (payments ?? []).forEach((p) => {
@@ -97,6 +102,8 @@ function DashboardPage() {
         pendingRefundsCount,
         recent: (payments ?? []).slice(0, 5),
         chart,
+        overpaymentCount,
+        overpaymentAmount,
       };
     },
   });
@@ -207,6 +214,12 @@ function DashboardPage() {
       count: data?.mismatchCount ?? 0,
       icon: ShieldAlert,
       tone: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20",
+    },
+    {
+      label: "Overpayments",
+      count: data?.overpaymentCount ?? 0,
+      icon: AlertTriangle,
+      tone: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20",
     },
   ];
 

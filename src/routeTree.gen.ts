@@ -18,7 +18,6 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InvoiceInvoiceIdRouteImport } from './routes/invoice.$invoiceId'
 import { Route as AuthenticatedStaffManagementRouteImport } from './routes/_authenticated/staff-management'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedServicesRouteImport } from './routes/_authenticated/services'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedRefundsRouteImport } from './routes/_authenticated/refunds'
@@ -28,6 +27,8 @@ import { Route as AuthenticatedInvoicesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedAuditLogsRouteImport } from './routes/_authenticated/audit-logs'
+import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedSettingsPaymentProvidersRouteImport } from './routes/_authenticated/settings/payment-providers'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -74,11 +75,6 @@ const AuthenticatedStaffManagementRoute =
     path: '/staff-management',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedServicesRoute = AuthenticatedServicesRouteImport.update({
   id: '/services',
   path: '/services',
@@ -125,6 +121,18 @@ const AuthenticatedAuditLogsRoute = AuthenticatedAuditLogsRouteImport.update({
   path: '/audit-logs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsIndexRoute =
+  AuthenticatedSettingsIndexRouteImport.update({
+    id: '/settings/',
+    path: '/settings/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsPaymentProvidersRoute =
+  AuthenticatedSettingsPaymentProvidersRouteImport.update({
+    id: '/settings/payment-providers',
+    path: '/settings/payment-providers',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -142,9 +150,10 @@ export interface FileRoutesByFullPath {
   '/refunds': typeof AuthenticatedRefundsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/services': typeof AuthenticatedServicesRoute
-  '/settings': typeof AuthenticatedSettingsRoute
   '/staff-management': typeof AuthenticatedStaffManagementRoute
   '/invoice/$invoiceId': typeof InvoiceInvoiceIdRoute
+  '/settings/payment-providers': typeof AuthenticatedSettingsPaymentProvidersRoute
+  '/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -162,9 +171,10 @@ export interface FileRoutesByTo {
   '/refunds': typeof AuthenticatedRefundsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/services': typeof AuthenticatedServicesRoute
-  '/settings': typeof AuthenticatedSettingsRoute
   '/staff-management': typeof AuthenticatedStaffManagementRoute
   '/invoice/$invoiceId': typeof InvoiceInvoiceIdRoute
+  '/settings/payment-providers': typeof AuthenticatedSettingsPaymentProvidersRoute
+  '/settings': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -184,9 +194,10 @@ export interface FileRoutesById {
   '/_authenticated/refunds': typeof AuthenticatedRefundsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/services': typeof AuthenticatedServicesRoute
-  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/staff-management': typeof AuthenticatedStaffManagementRoute
   '/invoice/$invoiceId': typeof InvoiceInvoiceIdRoute
+  '/_authenticated/settings/payment-providers': typeof AuthenticatedSettingsPaymentProvidersRoute
+  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -206,9 +217,10 @@ export interface FileRouteTypes {
     | '/refunds'
     | '/reports'
     | '/services'
-    | '/settings'
     | '/staff-management'
     | '/invoice/$invoiceId'
+    | '/settings/payment-providers'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -226,9 +238,10 @@ export interface FileRouteTypes {
     | '/refunds'
     | '/reports'
     | '/services'
-    | '/settings'
     | '/staff-management'
     | '/invoice/$invoiceId'
+    | '/settings/payment-providers'
+    | '/settings'
   id:
     | '__root__'
     | '/'
@@ -247,9 +260,10 @@ export interface FileRouteTypes {
     | '/_authenticated/refunds'
     | '/_authenticated/reports'
     | '/_authenticated/services'
-    | '/_authenticated/settings'
     | '/_authenticated/staff-management'
     | '/invoice/$invoiceId'
+    | '/_authenticated/settings/payment-providers'
+    | '/_authenticated/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -328,13 +342,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffManagementRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/services': {
       id: '/_authenticated/services'
       path: '/services'
@@ -398,6 +405,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuditLogsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings/': {
+      id: '/_authenticated/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/payment-providers': {
+      id: '/_authenticated/settings/payment-providers'
+      path: '/settings/payment-providers'
+      fullPath: '/settings/payment-providers'
+      preLoaderRoute: typeof AuthenticatedSettingsPaymentProvidersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -411,8 +432,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRefundsRoute: typeof AuthenticatedRefundsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedServicesRoute: typeof AuthenticatedServicesRoute
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStaffManagementRoute: typeof AuthenticatedStaffManagementRoute
+  AuthenticatedSettingsPaymentProvidersRoute: typeof AuthenticatedSettingsPaymentProvidersRoute
+  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -425,8 +447,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedRefundsRoute: AuthenticatedRefundsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedServicesRoute: AuthenticatedServicesRoute,
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStaffManagementRoute: AuthenticatedStaffManagementRoute,
+  AuthenticatedSettingsPaymentProvidersRoute:
+    AuthenticatedSettingsPaymentProvidersRoute,
+  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

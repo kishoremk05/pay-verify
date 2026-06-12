@@ -68,9 +68,14 @@ const schema = z.object({
   reference: z.string().optional(),
   payment_date: z.string().min(1, "Date required"),
   notes: z.string().optional(),
-  source: z.enum(["paystack", "bank", "cash", "manual"]),
+  source: z.enum(["paystack", "bank", "cash", "manual", "mtn_momo", "telecel_cash", "airteltigo"]),
   transaction_id: z.string().optional(),
   currency: z.string(),
+  bank_name: z.string().optional(),
+  mobile_number: z.string().optional(),
+  paid_by_name: z.string().optional(),
+  paid_by_phone: z.string().optional(),
+  relationship: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -83,9 +88,14 @@ interface Payment {
   payment_date: string;
   notes: string | null;
   status: "paid" | "partial" | "unpaid" | "duplicate" | "mismatch";
-  source: "paystack" | "bank" | "cash" | "manual";
+  source: "paystack" | "bank" | "cash" | "manual" | "mtn_momo" | "telecel_cash" | "airteltigo";
   transaction_id: string | null;
   currency: string;
+  bank_name: string | null;
+  mobile_number: string | null;
+  paid_by_name: string | null;
+  paid_by_phone: string | null;
+  relationship: string | null;
 }
 interface Customer {
   id: string;
@@ -339,8 +349,15 @@ function PaymentsPage() {
       source: "manual",
       transaction_id: "",
       currency: "NGN",
+      bank_name: "",
+      mobile_number: "",
+      paid_by_name: "",
+      paid_by_phone: "",
+      relationship: "",
     },
   });
+
+  const watchSource = form.watch("source");
 
   const onSubmit = async (values: FormValues) => {
     if (!organization) return;
@@ -350,6 +367,11 @@ function PaymentsPage() {
       payment_method: values.payment_method || null,
       reference: values.reference || null,
       notes: values.notes || null,
+      bank_name: values.bank_name || null,
+      mobile_number: values.mobile_number || null,
+      paid_by_name: values.paid_by_name || null,
+      paid_by_phone: values.paid_by_phone || null,
+      relationship: values.relationship || null,
       organization_id: organization.id,
     });
     if (error) {
@@ -681,10 +703,90 @@ function PaymentsPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className="rounded-2xl border-border/60 bg-card">
-                            {["manual", "bank", "paystack", "cash"].map((s) => (
-                              <SelectItem key={s} value={s} className="capitalize">
-                                {s}
+                            {[
+                              { value: "manual", label: "Manual" },
+                              { value: "bank", label: "Bank Transfer" },
+                              { value: "paystack", label: "Paystack" },
+                              { value: "cash", label: "Cash" },
+                              { value: "mtn_momo", label: "MTN MoMo" },
+                              { value: "telecel_cash", label: "Telecel Cash" },
+                              { value: "airteltigo", label: "AirtelTigo" },
+                            ].map((s) => (
+                              <SelectItem key={s.value} value={s.value}>
+                                {s.label}
                               </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Conditional: Bank Transfer fields */}
+                    {watchSource === "bank" && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Bank Name
+                        </Label>
+                        <Input
+                          placeholder="e.g. GCB Bank, Ecobank"
+                          className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                          {...form.register("bank_name")}
+                        />
+                      </div>
+                    )}
+
+                    {/* Conditional: Mobile Money fields */}
+                    {(watchSource === "mtn_momo" || watchSource === "telecel_cash" || watchSource === "airteltigo") && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Mobile Number
+                        </Label>
+                        <Input
+                          placeholder="e.g. 0241234567"
+                          className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all font-mono"
+                          {...form.register("mobile_number")}
+                        />
+                      </div>
+                    )}
+
+                    {/* Third-Party Payer Fields */}
+                    <div className="border-t border-border/40 pt-4 mt-2">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-3 pl-1">Third-Party Payer (Optional)</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                            Paid By (Name)
+                          </Label>
+                          <Input
+                            placeholder="Who made the payment?"
+                            className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                            {...form.register("paid_by_name")}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                            Paid By (Phone)
+                          </Label>
+                          <Input
+                            placeholder="0241234567"
+                            className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all font-mono"
+                            {...form.register("paid_by_phone")}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5 mt-3">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                          Relationship
+                        </Label>
+                        <Select
+                          onValueChange={(v) => form.setValue("relationship", v)}
+                        >
+                          <SelectTrigger className="rounded-full h-10 border-border/80 bg-background text-foreground px-4">
+                            <SelectValue placeholder="Select relationship..." />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-2xl border-border/60 bg-card">
+                            {["Self", "Parent", "Spouse", "Sibling", "Guardian", "Employer", "Other"].map((r) => (
+                              <SelectItem key={r} value={r.toLowerCase()}>{r}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
