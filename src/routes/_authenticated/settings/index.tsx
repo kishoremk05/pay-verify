@@ -13,6 +13,7 @@ import {
   Coins,
   CreditCard,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -30,10 +31,12 @@ import {
 } from "@/components/ui/select";
 
 const SUPPORTED_CURRENCIES = [
-  { code: "NGN", label: "Nigerian Naira (₦)" },
   { code: "GHS", label: "Ghanaian Cedi (₵)" },
+  { code: "XOF", label: "West African CFA Franc (CFA)" },
+  { code: "NGN", label: "Nigerian Naira (₦)" },
   { code: "USD", label: "US Dollar ($)" },
-  { code: "INR", label: "Indian Rupee (₹)" },
+  { code: "EUR", label: "Euro (€)" },
+  { code: "GBP", label: "British Pound (£)" },
 ];
 
 export const Route = createFileRoute("/_authenticated/settings/")({
@@ -45,7 +48,7 @@ function SettingsPage() {
   const { profile, organization, user, role, refresh } = useAuth();
   const [fullName, setFullName] = useState("");
   const [orgName, setOrgName] = useState("");
-  const [orgCurrency, setOrgCurrency] = useState("NGN");
+  const [orgCurrency, setOrgCurrency] = useState("GHS");
   const [saving, setSaving] = useState(false);
 
   // Password Update States
@@ -83,7 +86,7 @@ function SettingsPage() {
   useEffect(() => {
     setFullName(profile?.full_name ?? "");
     setOrgName(organization?.name ?? "");
-    setOrgCurrency(organization?.currency ?? "NGN");
+    setOrgCurrency(organization?.currency ?? "GHS");
   }, [profile, organization]);
 
   const saveProfile = async () => {
@@ -282,6 +285,51 @@ function SettingsPage() {
               >
                 {saving ? <Loader2 className="h-4.5 w-4.5 animate-spin mr-2" /> : null}
                 Save Workspace Changes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* App Preferences */}
+        <Card className="border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-md">
+          <CardHeader className="pb-4 pt-6 border-b border-border/40">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold tracking-tight">App Preferences</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Customize your workspace experience
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 sm:p-8 space-y-6">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                Onboarding Guide
+              </Label>
+              <p className="text-xs text-muted-foreground leading-normal">
+                If you dismissed the onboarding wizard or it was automatically hidden, you can re-enable it here.
+              </p>
+            </div>
+            <div className="pt-2">
+              <Button
+                onClick={() => {
+                  if (organization?.id) {
+                    localStorage.removeItem(`payverify_onboarding_dismissed_${organization.id}`);
+                    localStorage.removeItem(`payverify_onboarding_first_seen_${organization.id}`);
+                    toast.success("Onboarding guide has been reset! Go to Dashboard to view it.");
+                  } else {
+                    toast.error("Organization not loaded.");
+                  }
+                }}
+                variant="outline"
+                shape="pill"
+                className="w-full sm:w-auto px-6 h-11 font-semibold border-primary/40 text-primary hover:bg-primary/5 transition-all cursor-pointer"
+              >
+                Reset Onboarding Guide
               </Button>
             </div>
           </CardContent>

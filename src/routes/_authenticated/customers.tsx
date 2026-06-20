@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-filter";
 import { ImportWizard } from "@/components/import-wizard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,14 +75,8 @@ const schema = z.object({
   name: z.string().min(1, "Name required"),
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
-  service: z.string().optional(),
-  expected_amount: z.coerce.number().min(0),
   account_number: z.string().optional(),
   customer_status: z.string().min(1, "Status required"),
-  discount_eligible: z.boolean(),
-  discount_type: z.enum(["percentage", "fixed", "scholarship"]).nullable().optional(),
-  discount_value: z.coerce.number().min(0).nullable().optional(),
-  discount_ref: z.string().nullable().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -109,32 +104,26 @@ interface Customer {
 /*  Excel Format Preview (matches the Payments screen pattern)        */
 /* ------------------------------------------------------------------ */
 function CustomerExcelPreview() {
-  const cols = ["A", "B", "C", "D", "E", "F", "G"];
+  const cols = ["A", "B", "C", "D", "E"];
   const headers = [
     "customer_code",
     "name",
     "phone",
     "email",
-    "service",
-    "expected_amount",
     "account_number",
   ];
   const row1 = [
     "CUST-001",
     "John Doe",
-    "+2348012345678",
+    "+233241234567",
     "john@example.com",
-    "Web Development",
-    50000,
     "1203948576",
   ];
   const row2 = [
     "CUST-002",
     "Jane Smith",
-    "+2349087654321",
+    "+233208765432",
     "",
-    "Consultation",
-    25000,
     "0987654321",
   ];
 
@@ -228,22 +217,30 @@ function CustomerExcelPreview() {
               . Customer full name.
             </p>
             <p>
-              <strong>account_number</strong> (Col G): Optional banking identification field.
+              <strong>account_number</strong> (Col E): Optional banking identification field.
             </p>
           </div>
           <div className="space-y-1.5">
             <p>
-              <strong>expected_amount</strong> (Col F): Numeric value. Defaults to{" "}
-              <code className="bg-muted px-1.5 py-0.5 rounded">0</code> if blank.
-            </p>
-            <p>
-              <strong>phone, email, service</strong>: Optional text fields.
+              <strong>phone, email</strong>: Optional text fields.
             </p>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function generateCode(existingCodes: (string | null)[]) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const codeSet = new Set(existingCodes.filter(Boolean));
+  let code = "";
+  do {
+    code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join(
+      "",
+    );
+  } while (codeSet.has(code));
+  return code;
 }
 
 /* ------------------------------------------------------------------ */
@@ -259,7 +256,7 @@ function CustomersPage() {
   const [editing, setEditing] = useState<Customer | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-  const currency = organization?.currency ?? "NGN";
+  const currency = organization?.currency ?? "GHS";
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardHeaders, setWizardHeaders] = useState<string[]>([]);
@@ -269,12 +266,16 @@ function CustomersPage() {
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
 
   // States for Phone Country Code selector
-  const [phoneCode, setPhoneCode] = useState("+234");
+  const [phoneCode, setPhoneCode] = useState("+233");
   const [localPhone, setLocalPhone] = useState("");
 
   // States for Duplicate Detection
   const [duplicateCustomer, setDuplicateCustomer] = useState<Customer | null>(null);
   const [pendingSubmitValues, setPendingSubmitValues] = useState<FormValues | null>(null);
+  const [dateRange, setDateRange] = useState<DateRangeFilterValue>({
+    startDate: null,
+    endDate: null,
+  });
 
   // Fetch services for dropdown
   const { data: servicesList = [] } = useQuery({
@@ -301,13 +302,21 @@ function CustomersPage() {
   };
 
   const { data: customers, isLoading } = useQuery({
-    queryKey: ["customers", organization?.id],
+    queryKey: ["customers", organization?.id, dateRange],
     enabled: !!organization?.id,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      let query = (supabase as any)
         .from("customers")
-        .select("*, creator:profiles!created_by(full_name)")
-        .order("created_at", { ascending: false });
+        .select("*, creator:profiles!created_by(full_name)");
+
+      if (dateRange.startDate) {
+        query = query.gte("created_at", dateRange.startDate);
+      }
+      if (dateRange.endDate) {
+        query = query.lte("created_at", dateRange.endDate);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Customer[];
     },
@@ -333,23 +342,21 @@ function CustomersPage() {
       name: "",
       phone: "",
       email: "",
-      service: "",
-      expected_amount: 0,
       account_number: "",
       customer_status: "Active",
-      discount_eligible: false,
-      discount_type: null,
-      discount_value: 0,
-      discount_ref: "",
     },
   });
 
   const parsePhone = (fullPhone: string | null) => {
-    if (!fullPhone) return { code: "+234", local: "" };
+    if (!fullPhone) return { code: "+233", local: "" };
     if (fullPhone.startsWith("+233")) return { code: "+233", local: fullPhone.slice(4) };
     if (fullPhone.startsWith("+234")) return { code: "+234", local: fullPhone.slice(4) };
+    if (fullPhone.startsWith("+44")) return { code: "+44", local: fullPhone.slice(3) };
+    if (fullPhone.startsWith("+1")) return { code: "+1", local: fullPhone.slice(2) };
     if (fullPhone.startsWith("+91")) return { code: "+91", local: fullPhone.slice(3) };
-    return { code: "+234", local: fullPhone };
+    if (fullPhone.startsWith("+49")) return { code: "+49", local: fullPhone.slice(3) };
+    if (fullPhone.startsWith("+33")) return { code: "+33", local: fullPhone.slice(3) };
+    return { code: "+233", local: fullPhone };
   };
 
   const openCreate = () => {
@@ -361,16 +368,10 @@ function CustomersPage() {
       name: "",
       phone: "",
       email: "",
-      service: "",
-      expected_amount: 0,
       account_number: "",
       customer_status: "Active",
-      discount_eligible: false,
-      discount_type: null,
-      discount_value: 0,
-      discount_ref: "",
     });
-    setPhoneCode("+234");
+    setPhoneCode("+233");
     setLocalPhone("");
     setOpen(true);
   };
@@ -383,14 +384,8 @@ function CustomersPage() {
       name: c.name,
       phone: c.phone ?? "",
       email: c.email ?? "",
-      service: c.service ?? "",
-      expected_amount: Number(c.expected_amount),
       account_number: c.account_number ?? "",
       customer_status: c.customer_status || "Active",
-      discount_eligible: c.discount_eligible || false,
-      discount_type: c.discount_type || null,
-      discount_value: c.discount_value ? Number(c.discount_value) : 0,
-      discount_ref: c.discount_ref ?? "",
     });
     const parsed = parsePhone(c.phone);
     setPhoneCode(parsed.code);
@@ -398,32 +393,6 @@ function CustomersPage() {
     setOpen(true);
   };
 
-  /* ---- Auto-generate Customer Code ---- */
-  const generateCode = (existingCodes: (string | null)[]) => {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    const codeSet = new Set(existingCodes.filter(Boolean));
-    let code = "";
-    do {
-      code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join(
-        "",
-      );
-    } while (codeSet.has(code));
-    return code;
-  };
-
-  const getFinalFee = (c: Customer) => {
-    if (!c.discount_eligible) return c.expected_amount;
-    if (c.discount_type === "percentage") {
-      return c.expected_amount - (c.expected_amount * (c.discount_value || 0)) / 100;
-    }
-    if (c.discount_type === "fixed") {
-      return c.expected_amount - (c.discount_value || 0);
-    }
-    if (c.discount_type === "scholarship") {
-      return 0;
-    }
-    return c.expected_amount;
-  };
 
   const onSubmit = async (values: FormValues) => {
     if (!organization) return;
@@ -479,21 +448,46 @@ function CustomersPage() {
       name: values.name.trim(),
       phone: values.phone || null,
       email: values.email || null,
-      service: values.service || null,
-      expected_amount: values.expected_amount,
       account_number: values.account_number || null,
       organization_id: organization.id,
       customer_status: values.customer_status,
-      discount_eligible: values.discount_eligible,
-      discount_type: values.discount_eligible ? values.discount_type : null,
-      discount_value: values.discount_eligible ? values.discount_value : null,
-      discount_ref: values.discount_eligible ? values.discount_ref : null,
       created_by: editing ? editing.created_by : user?.id,
     };
 
     if (editing) {
       const { error } = await supabase.from("customers").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
+
+      // Log changes to customer_change_log
+      const changes: any[] = [];
+      const fieldsToTrack: ("name" | "phone" | "email" | "customer_code" | "account_number" | "customer_status")[] = [
+        "name",
+        "phone",
+        "email",
+        "customer_code",
+        "account_number",
+        "customer_status",
+      ];
+      
+      fieldsToTrack.forEach((field) => {
+        const oldVal = editing[field as keyof Customer] ?? "";
+        const newVal = payload[field as keyof typeof payload] ?? "";
+        if (String(oldVal).trim() !== String(newVal).trim()) {
+          changes.push({
+            organization_id: organization.id,
+            customer_id: editing.id,
+            changed_by: user?.id,
+            field_name: field,
+            old_value: oldVal ? String(oldVal) : null,
+            new_value: newVal ? String(newVal) : null,
+          });
+        }
+      });
+
+      if (changes.length > 0) {
+        await (supabase as any).from("customer_change_log").insert(changes);
+      }
+
       toast.success("Customer updated");
     } else {
       const { error } = await supabase.from("customers").insert(payload);
@@ -522,9 +516,6 @@ function CustomersPage() {
     { key: "name", label: "Full Name", required: true, type: "string" as const },
     { key: "phone", label: "Phone Number", required: false, type: "string" as const },
     { key: "email", label: "Email Address", required: false, type: "email" as const },
-    { key: "service", label: "Subscribed Service", required: false, type: "string" as const },
-    { key: "expected_amount", label: "Expected Amount", required: true, type: "number" as const },
-    { key: "due_amount", label: "Due Amount / Balance", required: false, type: "number" as const },
     { key: "account_number", label: "Account Number", required: false, type: "string" as const },
   ];
 
@@ -567,45 +558,21 @@ function CustomersPage() {
 
     // Gather existing codes to auto-generate for rows without one
     const existingCodes = (customers ?? []).map((c) => c.customer_code);
-
     const rows = mappedRows.map((r) => {
-      const expAmt = Number(r.expected_amount ?? 0);
-      const dueAmt =
-        r.due_amount !== undefined && r.due_amount !== "" ? Number(r.due_amount) : expAmt;
-
       return {
         organization_id: organization.id,
         customer_code: (r.customer_code || null) as string | null,
         name: String(r.name ?? "").trim(),
         phone: r.phone || null,
         email: r.email || null,
-        service: r.service || null,
-        expected_amount: expAmt,
-        due_amount: dueAmt,
         account_number: r.account_number || null,
-        status: (dueAmt === 0
-          ? "paid"
-          : dueAmt === expAmt
-            ? "unpaid"
-            : dueAmt > expAmt
-              ? "mismatch"
-              : "partial") as "paid" | "partial" | "unpaid" | "mismatch",
+        expected_amount: 0,
+        due_amount: 0,
+        status: "unpaid" as const,
         customer_status: "Active",
         created_by: user?.id || null,
       };
     });
-
-    // Auto-generate codes for rows that don't have one
-    const allCodes = [...existingCodes];
-    for (const row of rows) {
-      if (!row.customer_code) {
-        const nextCode = generateCode(allCodes);
-        row.customer_code = nextCode;
-        allCodes.push(nextCode);
-      } else {
-        allCodes.push(row.customer_code);
-      }
-    }
 
     const { error } = await supabase.from("customers").insert(rows);
     if (error) throw new Error(error.message);
@@ -732,7 +699,7 @@ function CustomersPage() {
                         placeholder="John Doe"
                         {...form.register("name")}
                       />
-                      {form.formState.errors.name && (
+                      {form.formState.errors.name?.message && (
                         <p className="text-xs text-destructive pl-1">
                           {form.formState.errors.name.message}
                         </p>
@@ -768,9 +735,13 @@ function CustomersPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="+234">+234 (NG)</SelectItem>
                             <SelectItem value="+233">+233 (GH)</SelectItem>
+                            <SelectItem value="+234">+234 (NG)</SelectItem>
+                            <SelectItem value="+44">+44 (UK)</SelectItem>
+                            <SelectItem value="+1">+1 (US/CA)</SelectItem>
                             <SelectItem value="+91">+91 (IN)</SelectItem>
+                            <SelectItem value="+49">+49 (DE)</SelectItem>
+                            <SelectItem value="+33">+33 (FR)</SelectItem>
                           </SelectContent>
                         </Select>
                         <Input
@@ -792,130 +763,14 @@ function CustomersPage() {
                         placeholder="john@example.com"
                         {...form.register("email")}
                       />
-                      {form.formState.errors.email && (
+                      {form.formState.errors.email?.message && (
                         <p className="text-xs text-destructive pl-1">
                           {form.formState.errors.email.message}
                         </p>
                       )}
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
-                        Assigned Service
-                      </Label>
-                      <Select
-                        value={form.watch("service") || ""}
-                        onValueChange={(val) => {
-                          form.setValue("service", val);
-                          const selectedService = servicesList.find((s) => s.name === val);
-                          if (selectedService) {
-                            form.setValue("expected_amount", Number(selectedService.fee));
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all">
-                          <SelectValue placeholder="Select a service..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {servicesList.map((s) => (
-                            <SelectItem key={s.id} value={s.name}>
-                              {s.name} — {formatCurrency(s.fee, currency)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
-                        Expected Amount
-                      </Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        className="rounded-full px-5 h-10 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-                        placeholder="0.00"
-                        {...form.register("expected_amount")}
-                      />
-                    </div>
-
-                    {canManageDiscounts && (
-                      <div className="border border-border/45 rounded-2xl p-4 bg-muted/5 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-xs font-black uppercase tracking-wider text-foreground">
-                            Discount Settings
-                          </Label>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground font-semibold">
-                              Eligible
-                            </span>
-                            <Checkbox
-                              checked={form.watch("discount_eligible") || false}
-                              onCheckedChange={(checked) => {
-                                form.setValue("discount_eligible", !!checked);
-                                if (checked) {
-                                  form.setValue("discount_type", "percentage");
-                                  form.setValue("discount_value", 0);
-                                } else {
-                                  form.setValue("discount_type", null);
-                                  form.setValue("discount_value", null);
-                                  form.setValue("discount_ref", null);
-                                }
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {form.watch("discount_eligible") && (
-                          <div className="space-y-4 pt-3 border-t border-border/20 animate-fade-in">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-1.5">
-                                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
-                                  Discount Type
-                                </Label>
-                                <Select
-                                  value={form.watch("discount_type") || "percentage"}
-                                  onValueChange={(val: any) => form.setValue("discount_type", val)}
-                                >
-                                  <SelectTrigger className="rounded-full px-4 h-9 border-border/80 bg-background text-foreground">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="percentage">Percentage (%)</SelectItem>
-                                    <SelectItem value="fixed">Fixed Amount</SelectItem>
-                                    <SelectItem value="scholarship">Scholarship (100%)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              {form.watch("discount_type") !== "scholarship" && (
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
-                                    Discount Value
-                                  </Label>
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    className="rounded-full px-4 h-9 border-border/80 bg-background text-foreground"
-                                    placeholder="0.00"
-                                    {...form.register("discount_value")}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
-                                Discount Reference / Code
-                              </Label>
-                              <Input
-                                className="rounded-full px-4 h-9 border-border/80 bg-background text-foreground"
-                                placeholder="e.g. SCH-2026-X"
-                                {...form.register("discount_ref")}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    {/* Decoupled services/discounts fields removed */}
 
                     <DialogFooter className="pt-4 border-t border-border/40 gap-2 sm:gap-0">
                       <Button
@@ -949,14 +804,17 @@ function CustomersPage() {
 
       <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden">
         <CardContent className="p-6 space-y-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              className="pl-11 pr-5 h-11 rounded-full border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
-              placeholder="Search customers by name, status, ID or added by..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative max-w-md flex-1 min-w-[280px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-11 pr-5 h-11 rounded-full border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
+                placeholder="Search customers by name, status, ID or added by..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <DateRangeFilter onChange={setDateRange} />
           </div>
 
           {isLoading ? (
@@ -993,18 +851,8 @@ function CustomersPage() {
                     <TableHead className="font-bold text-foreground py-4">
                       Customer Status
                     </TableHead>
-                    <TableHead className="font-bold text-foreground py-4">
-                      Subscribed Service
-                    </TableHead>
                     <TableHead className="font-bold text-foreground py-4 text-right">
-                      Original Fee
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-center">
-                      Discount
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Discount Ref</TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right">
-                      Final Fee
+                      Total Billed
                     </TableHead>
                     <TableHead className="font-bold text-foreground py-4 text-right">
                       Paid
@@ -1043,19 +891,6 @@ function CustomersPage() {
                         "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-500/20";
                     }
 
-                    let discountDisplay = "—";
-                    if (c.discount_eligible) {
-                      if (c.discount_type === "percentage") {
-                        discountDisplay = `${c.discount_value}%`;
-                      } else if (c.discount_type === "fixed") {
-                        discountDisplay = formatCurrency(c.discount_value || 0, currency);
-                      } else if (c.discount_type === "scholarship") {
-                        discountDisplay = "Scholarship";
-                      }
-                    }
-
-                    const finalFee = Math.max(0, getFinalFee(c));
-                    const paidAmount = Math.max(0, finalFee - c.due_amount);
                     const initials = c.name
                       ? c.name
                           .split(" ")
@@ -1117,25 +952,11 @@ function CustomersPage() {
                             {c.customer_status || "Active"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="py-4">
-                          <span className="font-semibold px-2.5 py-1 rounded-md text-xs bg-muted/65 text-muted-foreground border border-border/30 uppercase tracking-wider">
-                            {c.service ?? "Custom Option"}
-                          </span>
-                        </TableCell>
                         <TableCell className="py-4 text-right font-extrabold text-foreground">
                           {formatCurrency(c.expected_amount, currency)}
                         </TableCell>
-                        <TableCell className="py-4 text-center font-bold text-xs">
-                          {discountDisplay}
-                        </TableCell>
-                        <TableCell className="py-4 text-xs font-mono">
-                          {c.discount_ref || "—"}
-                        </TableCell>
-                        <TableCell className="py-4 text-right font-extrabold text-foreground">
-                          {formatCurrency(finalFee, currency)}
-                        </TableCell>
                         <TableCell className="py-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
-                          {formatCurrency(paidAmount, currency)}
+                          {formatCurrency(c.expected_amount - c.due_amount, currency)}
                         </TableCell>
                         <TableCell className="py-4 text-right font-extrabold">
                           <span

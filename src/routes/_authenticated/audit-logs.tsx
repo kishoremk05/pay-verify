@@ -46,21 +46,57 @@ function SecureAuditLogsPage() {
     role === "finance_staff" ||
     role === "viewer";
 
-  // Fetch real database audit logs
+  // Fetch real database audit logs and customer changes
   const { data: auditLogs = [], isLoading } = useQuery({
     queryKey: ["audit-logs-secure", organization?.id],
     enabled: !!organization?.id && isAuthorized,
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      // Fetch profiles to map user IDs to names
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name");
+      const profileMap = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
+
+      // Fetch general audit logs
+      const { data: systemLogs } = await (supabase as any)
         .from("audit_logs")
-        .select(
-          `
-          *
-        `,
-        )
+        .select("*")
         .eq("organization_id", organization!.id)
         .order("created_at", { ascending: false });
-      return (data as any[]) ?? [];
+
+      // Fetch customer change logs
+      const { data: customerLogs } = await (supabase as any)
+        .from("customer_change_log")
+        .select(`
+          *,
+          customers!customer_id(name, customer_code)
+        `)
+        .eq("organization_id", organization!.id)
+        .order("created_at", { ascending: false });
+
+      const formattedSystemLogs = (systemLogs ?? []).map((log: any) => ({
+        id: log.id,
+        organization_id: log.organization_id,
+        action_type: log.action_type,
+        action_description: log.action_description,
+        performed_by: log.performed_by,
+        created_at: log.created_at,
+        profiles: { full_name: log.performed_by ? profileMap.get(log.performed_by) : null },
+      }));
+
+      const formattedCustomerLogs = (customerLogs ?? []).map((log: any) => ({
+        id: log.id,
+        organization_id: log.organization_id,
+        action_type: "customer_update",
+        action_description: `Changed customer '${log.customers?.name || "Unknown"}' (${log.customers?.customer_code || "No Code"}) field '${log.field_name}' from '${log.old_value || "None"}' to '${log.new_value || "None"}'`,
+        performed_by: log.changed_by,
+        created_at: log.created_at,
+        profiles: { full_name: log.changed_by ? profileMap.get(log.changed_by) : null },
+      }));
+
+      const combined = [...formattedSystemLogs, ...formattedCustomerLogs];
+      combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return combined;
     },
   });
 
@@ -103,6 +139,8 @@ function SecureAuditLogsPage() {
         return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25";
       case "csv_ingest":
         return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25";
+      case "customer_update":
+        return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25";
       default:
         return "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25";
     }
@@ -190,6 +228,7 @@ function SecureAuditLogsPage() {
                 <SelectItem value="staff_invite">Recruiting</SelectItem>
                 <SelectItem value="payout_refund">Refunds</SelectItem>
                 <SelectItem value="csv_ingest">Ingestion</SelectItem>
+                <SelectItem value="customer_update">Customer Changes</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex gap-1.5 shrink-0 pl-2">

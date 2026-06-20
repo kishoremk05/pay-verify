@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, ClipboardList, CreditCard, BarChart3, Settings, ShieldCheck, LogOut, FileText, RotateCcw, History, Wallet } from "lucide-react";
+import { Home, LayoutDashboard, ClipboardList, CreditCard, BarChart3, Settings, ShieldCheck, LogOut, FileText, RotateCcw, History, Wallet } from "lucide-react";
 
 import {
   Sidebar,
@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 
 const items = [
+  { title: "Home", url: "/", icon: Home },
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Services", url: "/services", icon: ClipboardList },
   { title: "Invoices", url: "/invoices", icon: FileText },
@@ -49,7 +50,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border py-4 px-3 bg-sidebar">
-        <Link to="/dashboard" className="flex items-center gap-3 select-none">
+        <Link to="/" className="flex items-center gap-3 select-none">
           <div className="relative h-9 w-9 flex items-center justify-center font-sans text-2xl font-black italic shrink-0">
             <span className="absolute text-blue-400 select-none" style={{ transform: "translate(-3px, -2px)" }}>P</span>
             <span className="absolute text-cyan-400 opacity-85 select-none" style={{ transform: "translate(3px, 2px)" }}>V</span>

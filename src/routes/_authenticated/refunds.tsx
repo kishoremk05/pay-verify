@@ -23,6 +23,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-filter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,10 @@ function RefundsPage() {
   const [activeTab, setActiveTab] = useState<
     "all" | "pending" | "approved" | "completed" | "rejected"
   >("all");
+  const [dateRange, setDateRange] = useState<DateRangeFilterValue>({
+    startDate: null,
+    endDate: null,
+  });
 
   // Form states
   const [customerId, setCustomerId] = useState("");
@@ -76,10 +81,10 @@ function RefundsPage() {
 
   // Fetch refunds with rich joins (including custom alias fields)
   const { data: refunds = [], isLoading: refundsLoading } = useQuery({
-    queryKey: ["refunds", organization?.id],
+    queryKey: ["refunds", organization?.id, dateRange],
     enabled: !!organization?.id && (role as any) !== "viewer",
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      let query = (supabase as any)
         .from("refunds")
         .select(
           `
@@ -88,18 +93,26 @@ function RefundsPage() {
           payments!payment_id (id, reference, amount_paid, payment_date, transaction_id)
         `,
         )
-        .eq("organization_id", organization!.id)
-        .order("created_at", { ascending: false });
+        .eq("organization_id", organization!.id);
+
+      if (dateRange.startDate) {
+        query = query.gte("created_at", dateRange.startDate);
+      }
+      if (dateRange.endDate) {
+        query = query.lte("created_at", dateRange.endDate);
+      }
+
+      const { data } = await query.order("created_at", { ascending: false });
       return (data as any[]) ?? [];
     },
   });
 
   // Fetch discrepancy alerts (alerts table)
   const { data: alerts = [], isLoading: alertsLoading } = useQuery({
-    queryKey: ["discrepancy-alerts", organization?.id],
+    queryKey: ["discrepancy-alerts", organization?.id, dateRange],
     enabled: !!organization?.id,
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      let query = (supabase as any)
         .from("alerts")
         .select(
           `
@@ -109,8 +122,16 @@ function RefundsPage() {
         `,
         )
         .eq("organization_id", organization!.id)
-        .eq("is_resolved", false)
-        .order("created_at", { ascending: false });
+        .eq("is_resolved", false);
+
+      if (dateRange.startDate) {
+        query = query.gte("created_at", dateRange.startDate);
+      }
+      if (dateRange.endDate) {
+        query = query.lte("created_at", dateRange.endDate);
+      }
+
+      const { data } = await query.order("created_at", { ascending: false });
       return (data as any[]) ?? [];
     },
   });
@@ -687,14 +708,17 @@ function RefundsPage() {
             </button>
           </div>
 
-          <div className="relative w-full sm:w-[260px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
-            <Input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by client or reason..."
-              className="pl-10 pr-5 rounded-full h-10 border-border/80"
-            />
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <DateRangeFilter onChange={setDateRange} />
+            <div className="relative w-full sm:w-[260px]">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by client or reason..."
+                className="pl-10 pr-5 rounded-full h-10 border-border/80"
+              />
+            </div>
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Banknote,
   Clock,
@@ -31,6 +31,8 @@ import { formatCurrency, formatDate } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
+import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-filter";
+
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — PayVerify" }] }),
   component: DashboardPage,
@@ -38,23 +40,74 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function DashboardPage() {
   const { organization, profile, role } = useAuth();
-  const currency = organization?.currency ?? "NGN";
+  const currency = organization?.currency ?? "GHS";
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [isAutoDismissed, setIsAutoDismissed] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRangeFilterValue>({
+    startDate: null,
+    endDate: null,
+  });
+
+  useEffect(() => {
+    if (!organization?.id) return;
+    const dismissedKey = `payverify_onboarding_dismissed_${organization.id}`;
+    const firstSeenKey = `payverify_onboarding_first_seen_${organization.id}`;
+
+    const isDismissed = localStorage.getItem(dismissedKey) === "true";
+    setWizardDismissed(isDismissed);
+
+    let firstSeen = localStorage.getItem(firstSeenKey);
+    if (!firstSeen) {
+      firstSeen = Date.now().toString();
+      localStorage.setItem(firstSeenKey, firstSeen);
+    }
+
+    const firstSeenTime = parseInt(firstSeen, 10);
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    if (Date.now() - firstSeenTime > thirtyDaysMs) {
+      setIsAutoDismissed(true);
+    }
+  }, [organization?.id]);
+
+  const handleDismiss = () => {
+    if (organization?.id) {
+      const dismissedKey = `payverify_onboarding_dismissed_${organization.id}`;
+      localStorage.setItem(dismissedKey, "true");
+    }
+    setWizardDismissed(true);
+  };
 
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard", organization?.id],
+    queryKey: ["dashboard", organization?.id, dateRange],
     enabled: !!organization?.id,
     queryFn: async () => {
+      let customersQuery = supabase.from("customers").select("id, expected_amount, due_amount, status, created_at");
+      let paymentsQuery = supabase
+        .from("payments")
+        .select(
+          "id, amount_paid, status, payment_date, customer_id, reference, payment_method, source",
+        );
+      let refundsQuery = (supabase as any).from("refunds").select("id, refund_amount, status, created_at");
+      let alertsQuery = (supabase as any).from("alerts").select("id, type, amount, resolved, created_at");
+
+      if (dateRange.startDate) {
+        customersQuery = customersQuery.gte("created_at", dateRange.startDate);
+        paymentsQuery = paymentsQuery.gte("payment_date", dateRange.startDate.slice(0, 10));
+        refundsQuery = refundsQuery.gte("created_at", dateRange.startDate);
+        alertsQuery = alertsQuery.gte("created_at", dateRange.startDate);
+      }
+      if (dateRange.endDate) {
+        customersQuery = customersQuery.lte("created_at", dateRange.endDate);
+        paymentsQuery = paymentsQuery.lte("payment_date", dateRange.endDate.slice(0, 10));
+        refundsQuery = refundsQuery.lte("created_at", dateRange.endDate);
+        alertsQuery = alertsQuery.lte("created_at", dateRange.endDate);
+      }
+
       const [{ data: customers }, { data: payments }, { data: refunds }, { data: alerts }] = await Promise.all([
-        supabase.from("customers").select("id, expected_amount, due_amount, status"),
-        supabase
-          .from("payments")
-          .select(
-            "id, amount_paid, status, payment_date, customer_id, reference, payment_method, source",
-          )
-          .order("payment_date", { ascending: false }),
-        (supabase as any).from("refunds").select("id, refund_amount, status"),
-        (supabase as any).from("alerts").select("id, type, amount, resolved"),
+        customersQuery,
+        paymentsQuery.order("payment_date", { ascending: false }),
+        refundsQuery,
+        alertsQuery,
       ]);
       const expected = (customers ?? []).reduce((s, c) => s + Number(c.expected_amount ?? 0), 0);
       const received = (payments ?? []).reduce((s, p) => s + Number(p.amount_paid ?? 0), 0);
@@ -164,7 +217,7 @@ function DashboardPage() {
 
   const stepsCompleted = onboardingSteps.filter((s) => s.done).length;
   const isViewer = role === "viewer";
-  const showWizard = !isViewer && !wizardDismissed && stepsCompleted < 5;
+  const showWizard = !isViewer && !wizardDismissed && !isAutoDismissed && stepsCompleted < 5;
 
   const moneyKpis = [
     {
@@ -256,20 +309,29 @@ function DashboardPage() {
             </span>
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Here's a breakdown of your payment status and activities today.
+            Here's a breakdown of your payment status and activities.
           </p>
         </div>
+        <DateRangeFilter onChange={setDateRange} />
       </div>
 
       {/* Onboarding Wizard */}
       {showWizard && (
         <Card className="relative border-primary/30 bg-gradient-to-br from-primary/5 via-card to-primary/5 shadow-[var(--shadow-card)] rounded-2xl overflow-hidden">
-          <button
-            onClick={() => setWizardDismissed(true)}
-            className="absolute top-4 right-4 h-7 w-7 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
+          <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+            <button
+              onClick={handleDismiss}
+              className="h-7 text-[10px] font-bold px-2.5 rounded-full bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors border border-border/40"
+            >
+              Dismiss Forever
+            </button>
+            <button
+              onClick={handleDismiss}
+              className="h-7 w-7 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <CardContent className="p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-5">
               <div className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center border border-primary/20">

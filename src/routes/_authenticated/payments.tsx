@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import * as XLSX from "xlsx";
-import { Plus, Upload, Search, Loader2, Trash2, CreditCard, Info } from "lucide-react";
+import { Plus, Upload, Search, Loader2, Trash2, CreditCard, Info, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -96,6 +96,8 @@ interface Payment {
   paid_by_name: string | null;
   paid_by_phone: string | null;
   relationship: string | null;
+  confidence_score: number | null;
+  verification_status: "auto_verified" | "staff_verified" | "pending" | "rejected" | null;
 }
 interface Customer {
   id: string;
@@ -269,7 +271,7 @@ function ExcelPreview() {
 }
 
 function PaymentsPage() {
-  const { organization, role } = useAuth();
+  const { organization, user, role } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const isReadOnly = role === "viewer";
@@ -277,6 +279,47 @@ function PaymentsPage() {
   const [formatPreviewOpen, setFormatPreviewOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const [activeTab, setActiveTab] = useState<"ledger" | "review">("ledger");
+
+  const handleVerifyPayment = async (paymentId: string) => {
+    const { error } = await (supabase as any)
+      .from("payments")
+      .update({
+        verification_status: "staff_verified",
+        verified_by: user?.id,
+        verified_at: new Date().toISOString(),
+      })
+      .eq("id", paymentId);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Payment verified and reconciled!");
+      qc.invalidateQueries({ queryKey: ["payments"] });
+      qc.invalidateQueries({ queryKey: ["customers"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    }
+  };
+
+  const handleRejectPayment = async (paymentId: string) => {
+    const { error } = await (supabase as any)
+      .from("payments")
+      .update({
+        verification_status: "rejected",
+        verified_by: user?.id,
+        verified_at: new Date().toISOString(),
+      })
+      .eq("id", paymentId);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Payment rejected!");
+      qc.invalidateQueries({ queryKey: ["payments"] });
+      qc.invalidateQueries({ queryKey: ["customers"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    }
+  };
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardHeaders, setWizardHeaders] = useState<string[]>([]);
@@ -300,7 +343,7 @@ function PaymentsPage() {
   };
 
   const { data: payments, isLoading } = useQuery({
-    queryKey: ["payments", organization?.id],
+    queryKey: ["payments", organization?.id, activeTab],
     enabled: !!organization?.id,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -308,7 +351,7 @@ function PaymentsPage() {
         .select("*")
         .order("payment_date", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as Payment[];
+      return (data ?? []) as unknown as Payment[];
     },
   });
 
@@ -328,14 +371,21 @@ function PaymentsPage() {
     customers?.find((c) => c.id === id)?.account_number ?? "—";
   const getCustomer = (id: string | null) => customers?.find((c) => c.id === id);
 
-  const filtered = (payments ?? []).filter((p) =>
-    [
+  const filtered = (payments ?? []).filter((p) => {
+    // Filter by verification status for Ledger vs Review tab
+    const isPendingOrRejected = p.verification_status === "pending" || p.verification_status === "rejected";
+    if (activeTab === "ledger" && isPendingOrRejected) return false;
+    if (activeTab === "review" && !isPendingOrRejected) return false;
+
+    return [
       p.reference,
       p.payment_method,
+      p.transaction_id,
+      p.notes,
       customerName(p.customer_id),
       customerAccountNumber(p.customer_id),
-    ].some((f) => f?.toLowerCase().includes(search.toLowerCase())),
-  );
+    ].some((f) => f?.toLowerCase().includes(search.toLowerCase()));
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -348,7 +398,7 @@ function PaymentsPage() {
       notes: "",
       source: "manual",
       transaction_id: "",
-      currency: "NGN",
+      currency: "GHS",
       bank_name: "",
       mobile_number: "",
       paid_by_name: "",
@@ -506,7 +556,7 @@ function PaymentsPage() {
         status: "paid" as const,
         source: cleanSource,
         transaction_id: r.transaction_id || null,
-        currency: r.currency || "NGN",
+        currency: r.currency || "GHS",
       };
     });
 
@@ -847,6 +897,30 @@ function PaymentsPage() {
       </div>
 
       <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden">
+        <div className="px-6 pt-6 border-b border-border/40 flex items-center justify-between bg-muted/10">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-3">
+            <button
+              onClick={() => setActiveTab("ledger")}
+              className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 ${
+                activeTab === "ledger"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Payments Ledger
+            </button>
+            <button
+              onClick={() => setActiveTab("review")}
+              className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all shrink-0 ${
+                activeTab === "review"
+                  ? "bg-amber-500 text-white shadow-sm"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Review Queue
+            </button>
+          </div>
+        </div>
         <CardContent className="p-6 space-y-6">
           <div className="relative max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -889,185 +963,448 @@ function PaymentsPage() {
           ) : (
             <div className="overflow-x-auto rounded-xl border border-border/40">
               <Table>
-                <TableHeader className="bg-muted/30">
-                  <TableRow className="hover:bg-transparent">
-                    {!isReadOnly && (
-                      <TableHead className="w-12 py-4 pl-6">
-                        <Checkbox
-                          checked={filtered.length > 0 && selectedIds.length === filtered.length}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedIds(filtered.map((p) => p.id));
-                            } else {
-                              setSelectedIds([]);
-                            }
-                          }}
-                        />
-                      </TableHead>
-                    )}
-                    <TableHead className="font-bold text-foreground py-4 pl-2">
-                      Customer Name
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Account Number</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Origin Source</TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right">
-                      Expected Amount
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right">
-                      Paid Amount
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right">
-                      Balance Due
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Match Status</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Processed Date</TableHead>
-                    {!isReadOnly && (
-                      <TableHead className="font-bold text-foreground py-4 text-right pr-6">
-                        Action
-                      </TableHead>
-                    )}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((p) => {
-                    const isSuccess = p.status === "paid";
-                    const isFail = p.status === "mismatch" || p.status === "duplicate";
-                    const isPartial = p.status === "partial";
-
-                    let badgeClass =
-                      "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
-                    if (isSuccess)
-                      badgeClass =
-                        "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20";
-                    if (isFail)
-                      badgeClass =
-                        "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20";
-                    if (isPartial)
-                      badgeClass =
-                        "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
-
-                    let sourceBadge =
-                      "bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-border/80";
-                    if (p.source === "paystack")
-                      sourceBadge =
-                        "bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-500/20";
-                    if (p.source === "bank")
-                      sourceBadge =
-                        "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-100 dark:border-sky-500/20";
-                    if (p.source === "cash")
-                      sourceBadge =
-                        "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
-
-                    return (
-                      <TableRow
-                        key={p.id}
-                        className="hover:bg-muted/20 transition-colors duration-150 border-b border-border/30 last:border-b-0"
-                      >
+                {activeTab === "ledger" ? (
+                  <>
+                    <TableHeader className="bg-muted/30">
+                      <TableRow className="hover:bg-transparent">
                         {!isReadOnly && (
-                          <TableCell className="py-4 pl-6">
+                          <TableHead className="w-12 py-4 pl-6">
                             <Checkbox
-                              checked={selectedIds.includes(p.id)}
+                              checked={filtered.length > 0 && selectedIds.length === filtered.length}
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  setSelectedIds((prev) => [...prev, p.id]);
+                                  setSelectedIds(filtered.map((p) => p.id));
                                 } else {
-                                  setSelectedIds((prev) => prev.filter((id) => id !== p.id));
+                                  setSelectedIds([]);
                                 }
                               }}
                             />
-                          </TableCell>
+                          </TableHead>
                         )}
-                        <TableCell className="py-4 pl-2 font-bold text-foreground">
-                          {p.customer_id ? (
-                            customerName(p.customer_id)
-                          ) : (
-                            <span className="text-xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded border border-border/40 uppercase tracking-wider">
-                              Anonymous
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-4 font-mono font-bold text-xs">
-                          {p.customer_id && customerAccountNumber(p.customer_id) !== "—" ? (
-                            <span className="text-foreground bg-secondary/50 dark:bg-secondary px-2.5 py-1 rounded-md border border-border/80">
-                              {customerAccountNumber(p.customer_id)}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground/50 italic">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <Badge
-                            variant="outline"
-                            className={`rounded-full px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider border ${sourceBadge}`}
-                          >
-                            {p.source}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-4 text-right font-extrabold text-foreground">
-                          {(() => {
-                            const cust = getCustomer(p.customer_id);
-                            return cust
-                              ? `${p.currency || "NGN"} ${cust.expected_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                              : "—";
-                          })()}
-                        </TableCell>
-                        <TableCell className="py-4 text-right font-extrabold text-foreground">
-                          {p.currency || "NGN"}{" "}
-                          {p.amount_paid.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </TableCell>
-                        <TableCell className="py-4 text-right font-extrabold">
-                          {(() => {
-                            const cust = getCustomer(p.customer_id);
-                            return cust ? (
-                              <span
-                                className={
-                                  cust.due_amount <= 0
-                                    ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
-                                    : "text-amber-600 dark:text-amber-400 font-extrabold"
-                                }
-                              >
-                                {p.currency || "NGN"}{" "}
-                                {cust.due_amount.toLocaleString(undefined, {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </span>
-                            ) : (
-                              "—"
-                            );
-                          })()}
-                        </TableCell>
-                        <TableCell className="py-4">
-                          <Badge
-                            variant="outline"
-                            className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${badgeClass}`}
-                          >
-                            {p.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-4 font-semibold text-muted-foreground">
-                          {formatDate(p.payment_date)}
-                        </TableCell>
+                        <TableHead className="font-bold text-foreground py-4 pl-2">
+                          Customer Name
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Account Number</TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Origin Source</TableHead>
+                        <TableHead className="font-bold text-foreground py-4 text-right">
+                          Expected Amount
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground py-4 text-right">
+                          Paid Amount
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground py-4 text-right">
+                          Balance Due
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Match Status</TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Verification</TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Processed Date</TableHead>
                         {!isReadOnly && (
-                          <TableCell className="py-4 text-right pr-6">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors"
-                              onClick={() => setDeleteId(p.id)}
-                              title="Delete payment"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
+                          <TableHead className="font-bold text-foreground py-4 text-right pr-6">
+                            Action
+                          </TableHead>
                         )}
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((p) => {
+                        const isSuccess = p.status === "paid";
+                        const isFail = p.status === "mismatch" || p.status === "duplicate";
+                        const isPartial = p.status === "partial";
+
+                        let badgeClass =
+                          "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+                        if (isSuccess)
+                          badgeClass =
+                            "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20";
+                        if (isFail)
+                          badgeClass =
+                            "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20";
+                        if (isPartial)
+                          badgeClass =
+                            "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
+
+                        let sourceBadge =
+                          "bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-border/80";
+                        if (p.source === "paystack")
+                          sourceBadge =
+                            "bg-teal-50 dark:bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-500/20";
+                        if (p.source === "bank")
+                          sourceBadge =
+                            "bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-100 dark:border-sky-500/20";
+                        if (p.source === "cash")
+                          sourceBadge =
+                            "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
+
+                        // Verification Status Badges for Ledger
+                        let verBadge = "bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 border-border/80";
+                        if (p.verification_status === "auto_verified") {
+                          verBadge = "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20";
+                        } else if (p.verification_status === "staff_verified") {
+                          verBadge = "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-500/20";
+                        }
+
+                        return (
+                          <TableRow
+                            key={p.id}
+                            className="hover:bg-muted/20 transition-colors duration-150 border-b border-border/30 last:border-b-0"
+                          >
+                            {!isReadOnly && (
+                              <TableCell className="py-4 pl-6">
+                                <Checkbox
+                                  checked={selectedIds.includes(p.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedIds((prev) => [...prev, p.id]);
+                                    } else {
+                                      setSelectedIds((prev) => prev.filter((id) => id !== p.id));
+                                    }
+                                  }}
+                                />
+                              </TableCell>
+                            )}
+                            <TableCell className="py-4 pl-2 font-bold text-foreground">
+                              {p.customer_id ? (
+                                customerName(p.customer_id)
+                              ) : (
+                                <span className="text-xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded border border-border/40 uppercase tracking-wider">
+                                  Anonymous
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="py-4 font-mono font-bold text-xs">
+                              {p.customer_id && customerAccountNumber(p.customer_id) !== "—" ? (
+                                <span className="text-foreground bg-secondary/50 dark:bg-secondary px-2.5 py-1 rounded-md border border-border/80">
+                                  {customerAccountNumber(p.customer_id)}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground/50 italic">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Badge
+                                variant="outline"
+                                className={`rounded-full px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider border ${sourceBadge}`}
+                              >
+                                {p.source}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-4 text-right font-extrabold text-foreground">
+                              {(() => {
+                                const cust = getCustomer(p.customer_id);
+                                return cust
+                                  ? `${p.currency || "GHS"} ${cust.expected_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                  : "—";
+                              })()}
+                            </TableCell>
+                            <TableCell className="py-4 text-right font-extrabold text-foreground">
+                              {p.currency || "GHS"}{" "}
+                              {p.amount_paid.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </TableCell>
+                            <TableCell className="py-4 text-right font-extrabold">
+                              {(() => {
+                                const cust = getCustomer(p.customer_id);
+                                return cust ? (
+                                  <span
+                                    className={
+                                      cust.due_amount <= 0
+                                        ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
+                                        : "text-amber-600 dark:text-amber-400 font-extrabold"
+                                    }
+                                  >
+                                    {p.currency || "GHS"}{" "}
+                                    {cust.due_amount.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </span>
+                                ) : (
+                                  "—"
+                                );
+                              })()}
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Badge
+                                variant="outline"
+                                className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${badgeClass}`}
+                              >
+                                {p.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Badge
+                                variant="outline"
+                                className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${verBadge}`}
+                              >
+                                {p.verification_status === "auto_verified" ? "Auto Verified" : "Staff Verified"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-4 font-semibold text-muted-foreground">
+                              {formatDate(p.payment_date)}
+                            </TableCell>
+                            {!isReadOnly && (
+                              <TableCell className="py-4 text-right pr-6">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors"
+                                  onClick={() => setDeleteId(p.id)}
+                                  title="Delete payment"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </>
+                ) : (
+                  <>
+                    <TableHeader className="bg-muted/30">
+                      <TableRow className="hover:bg-transparent">
+                        {!isReadOnly && (
+                          <TableHead className="w-12 py-4 pl-6">
+                            <Checkbox
+                              checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedIds(filtered.map((p) => p.id));
+                                } else {
+                                  setSelectedIds([]);
+                                }
+                              }}
+                            />
+                          </TableHead>
+                        )}
+                        <TableHead className="font-bold text-foreground py-4 pl-2">
+                          Customer Info / Payer Details
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground py-4 text-right">
+                          Expected
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground py-4 text-right">
+                          Paid Amount
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Match Confidence</TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Match Status</TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Verification</TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Date</TableHead>
+                        {!isReadOnly && (
+                          <TableHead className="font-bold text-foreground py-4 text-right pr-6">
+                            Verification Controls
+                          </TableHead>
+                        )}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((p) => {
+                        const isSuccess = p.status === "paid";
+                        const isFail = p.status === "mismatch" || p.status === "duplicate";
+                        const isPartial = p.status === "partial";
+
+                        let badgeClass =
+                          "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+                        if (isSuccess)
+                          badgeClass =
+                            "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20";
+                        if (isFail)
+                          badgeClass =
+                            "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20";
+                        if (isPartial)
+                          badgeClass =
+                            "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
+
+                        // Verification status badge
+                        let verBadge = "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20";
+                        if (p.verification_status === "rejected") {
+                          verBadge = "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20";
+                        }
+
+                        // Confidence score progress bar details
+                        const score = p.confidence_score ?? 0;
+                        let barColor = "bg-rose-500";
+                        let scoreTextColor = "text-rose-600 dark:text-rose-400";
+                        let bgTrack = "bg-rose-100 dark:bg-rose-950/30";
+                        if (score >= 85) {
+                          barColor = "bg-emerald-500";
+                          scoreTextColor = "text-emerald-600 dark:text-emerald-400";
+                          bgTrack = "bg-emerald-100 dark:bg-emerald-950/30";
+                        } else if (score >= 50) {
+                          barColor = "bg-amber-500";
+                          scoreTextColor = "text-amber-600 dark:text-amber-400";
+                          bgTrack = "bg-amber-100 dark:bg-amber-950/30";
+                        }
+
+                        return (
+                          <TableRow
+                            key={p.id}
+                            className="hover:bg-muted/20 transition-colors duration-150 border-b border-border/30 last:border-b-0"
+                          >
+                            {!isReadOnly && (
+                              <TableCell className="py-4 pl-6">
+                                <Checkbox
+                                  checked={selectedIds.includes(p.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedIds((prev) => [...prev, p.id]);
+                                    } else {
+                                      setSelectedIds((prev) => prev.filter((id) => id !== p.id));
+                                    }
+                                  }}
+                                />
+                              </TableCell>
+                            )}
+                            <TableCell className="py-4 pl-2 font-bold text-foreground">
+                              <div className="flex flex-col">
+                                <span className="flex items-center gap-1.5">
+                                  {p.customer_id ? (
+                                    customerName(p.customer_id)
+                                  ) : (
+                                    <span className="text-xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded border border-border/40 uppercase tracking-wider">
+                                      Anonymous
+                                    </span>
+                                  )}
+                                  {p.notes && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button className="text-muted-foreground hover:text-foreground cursor-pointer">
+                                            <Info className="h-3.5 w-3.5" />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs p-2 text-xs font-medium">
+                                          {p.notes}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </span>
+                                {p.customer_id && customerAccountNumber(p.customer_id) !== "—" && (
+                                  <span className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                                    Acc: {customerAccountNumber(p.customer_id)}
+                                  </span>
+                                )}
+                                {(p.paid_by_name || p.paid_by_phone) && (
+                                  <span className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                                    Payer: {p.paid_by_name || "—"} {p.paid_by_phone ? `(${p.paid_by_phone})` : ""}
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-4 text-right font-extrabold text-foreground">
+                              {(() => {
+                                const cust = getCustomer(p.customer_id);
+                                return cust
+                                  ? `${p.currency || "GHS"} ${cust.expected_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                  : "—";
+                              })()}
+                            </TableCell>
+                            <TableCell className="py-4 text-right font-extrabold text-foreground">
+                              {p.currency || "GHS"}{" "}
+                              {p.amount_paid.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <div className="flex items-center gap-2">
+                                <div className={`h-2 w-16 rounded-full overflow-hidden ${bgTrack}`}>
+                                  <div
+                                    className={`h-full ${barColor}`}
+                                    style={{ width: `${score}%` }}
+                                  />
+                                </div>
+                                <span className={`text-xs font-bold ${scoreTextColor}`}>
+                                  {score}%
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Badge
+                                variant="outline"
+                                className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${badgeClass}`}
+                              >
+                                {p.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-4">
+                              <Badge
+                                variant="outline"
+                                className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${verBadge}`}
+                              >
+                                {p.verification_status === "rejected" ? "Rejected" : "Pending Review"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-4 font-semibold text-muted-foreground">
+                              {formatDate(p.payment_date)}
+                            </TableCell>
+                            {!isReadOnly && (
+                              <TableCell className="py-4 text-right pr-6">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="icon"
+                                          variant="outline"
+                                          className="h-8 w-8 rounded-full border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                          onClick={() => handleVerifyPayment(p.id)}
+                                        >
+                                          <Check className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="text-xs font-semibold">Verify and Reconcile Payment</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+
+                                    {p.verification_status !== "rejected" && (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            size="icon"
+                                            variant="outline"
+                                            className="h-8 w-8 rounded-full border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                                            onClick={() => handleRejectPayment(p.id)}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p className="text-xs font-semibold">Reject Payment Match</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    )}
+
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-8 w-8 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors"
+                                          onClick={() => setDeleteId(p.id)}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="text-xs font-semibold text-rose-500">Delete Payment Permanently</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </>
+                )}
               </Table>
             </div>
           )}

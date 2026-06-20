@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-filter";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({ meta: [{ title: "Reports — PayVerify" }] }),
@@ -26,15 +28,31 @@ const COLORS = [
 
 function ReportsPage() {
   const { organization } = useAuth();
-  const currency = organization?.currency ?? "NGN";
+  const currency = organization?.currency ?? "GHS";
+  const [dateRange, setDateRange] = useState<DateRangeFilterValue>({
+    startDate: null,
+    endDate: null,
+  });
 
   const { data } = useQuery({
-    queryKey: ["reports", organization?.id],
+    queryKey: ["reports", organization?.id, dateRange],
     enabled: !!organization?.id,
     queryFn: async () => {
+      let customersQuery = supabase.from("customers").select("*");
+      let paymentsQuery = supabase.from("payments").select("*");
+
+      if (dateRange.startDate) {
+        customersQuery = customersQuery.gte("created_at", dateRange.startDate);
+        paymentsQuery = paymentsQuery.gte("payment_date", dateRange.startDate.slice(0, 10));
+      }
+      if (dateRange.endDate) {
+        customersQuery = customersQuery.lte("created_at", dateRange.endDate);
+        paymentsQuery = paymentsQuery.lte("payment_date", dateRange.endDate.slice(0, 10));
+      }
+
       const [{ data: customers }, { data: payments }] = await Promise.all([
-        supabase.from("customers").select("*"),
-        supabase.from("payments").select("*").order("payment_date", { ascending: false }),
+        customersQuery,
+        paymentsQuery.order("payment_date", { ascending: false }),
       ]);
       
       const all = payments ?? [];
@@ -147,9 +165,12 @@ function ReportsPage() {
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-sans">Reports</h1>
           <p className="text-sm text-muted-foreground mt-1">Reconciliation trends, payment distributions, and data exports.</p>
         </div>
-        <Button onClick={exportCSV} disabled={!data?.all.length} shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 px-6">
-          <Download className="h-4.5 w-4.5" /> Export CSV Data
-        </Button>
+        <div className="flex items-center gap-3">
+          <DateRangeFilter onChange={setDateRange} />
+          <Button onClick={exportCSV} disabled={!data?.all.length} shape="pill" className="font-semibold shadow-md bg-primary hover:bg-primary/95 text-white gap-2 px-6">
+            <Download className="h-4.5 w-4.5" /> Export CSV Data
+          </Button>
+        </div>
       </div>
 
       {!data?.all.length ? (

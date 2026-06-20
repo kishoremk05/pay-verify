@@ -31,6 +31,11 @@ router.post("/", async (req: Request, res: Response) => {
       customer_name,
       organization_name,
       frontend_url,
+      line_items,
+      invoice_discount_type,
+      invoice_discount_value,
+      invoice_discount_ref,
+      subtotal,
     } = req.body;
 
     if (!organization_id || !customer_id || !invoice_number || !amount || !due_date) {
@@ -44,9 +49,9 @@ router.post("/", async (req: Request, res: Response) => {
       .select("currency")
       .eq("id", organization_id)
       .single();
-    const orgCurrency = orgData?.currency || "NGN";
+    const orgCurrency = orgData?.currency || "GHS";
 
-    // 2. Insert invoice with dynamic currency
+    // 2. Insert invoice with dynamic currency and discounts
     const { data: invoice, error: invError } = await supabaseAdmin
       .from("invoices")
       .insert({
@@ -58,6 +63,10 @@ router.post("/", async (req: Request, res: Response) => {
         status: "pending",
         generated_by: generated_by || null,
         currency: orgCurrency,
+        invoice_discount_type: invoice_discount_type || null,
+        invoice_discount_value: invoice_discount_value ? parseFloat(invoice_discount_value) : 0,
+        invoice_discount_ref: invoice_discount_ref || null,
+        subtotal: subtotal ? parseFloat(subtotal) : parseFloat(amount),
       })
       .select()
       .single();
@@ -68,21 +77,37 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
-    // 2. Update customer expected_amount
+    // 3. Insert invoice line items if present
+    if (line_items && Array.isArray(line_items) && line_items.length > 0) {
+      const itemsToInsert = line_items.map((item: any) => ({
+        invoice_id: invoice.id,
+        service_id: item.serviceId || null,
+        service_name: item.name,
+        unit_price: parseFloat(item.unitPrice || 0),
+        quantity: parseInt(item.quantity || 1, 10),
+        discount_type: item.discountType || null,
+        discount_value: item.discountValue ? parseFloat(item.discountValue) : 0,
+        discount_ref: item.discountRef || null,
+        subtotal: parseFloat(item.subtotal || item.unitPrice || 0),
+      }));
+
+      const { error: lineItemsError } = await supabaseAdmin
+        .from("invoice_line_items")
+        .insert(itemsToInsert);
+
+      if (lineItemsError) {
+        console.error("[Invoice] Line items insert error:", lineItemsError.message);
+      }
+    }
+
+    // 4. Fetch customer details for email routing
     const { data: customer } = await supabaseAdmin
       .from("customers")
-      .select("expected_amount, service, account_number")
+      .select("service, account_number")
       .eq("id", customer_id)
       .single();
 
-    if (customer) {
-      await supabaseAdmin
-        .from("customers")
-        .update({ expected_amount: parseFloat(amount) })
-        .eq("id", customer_id);
-    }
-
-    // 3. Write audit log
+    // 5. Write audit log
     await supabaseAdmin.from("audit_logs").insert({
       organization_id,
       action_type: "invoice_creation",
@@ -91,13 +116,17 @@ router.post("/", async (req: Request, res: Response) => {
       related_record_id: invoice.id,
     });
 
-    // 4. Build portal URL
+    // 6. Build portal URL
     const baseUrl = process.env.FRONTEND_URL || frontend_url || "http://localhost:3000";
     const portalUrl = `${baseUrl}/invoice/${invoice.id}`;
 
-    // 5. Send email via Resend/Brevo
+    // 7. Send email via Resend/Brevo
     let emailResult: any = { success: false, error: "No email sent" };
     if (customer_email) {
+      const lineItemNames = line_items && Array.isArray(line_items)
+        ? line_items.map((item: any) => item.name).join(", ")
+        : (customer?.service || undefined);
+
       emailResult = await sendInvoiceEmail({
         customerName: customer_name || "Customer",
         customerEmail: customer_email,
@@ -107,7 +136,7 @@ router.post("/", async (req: Request, res: Response) => {
         currency: orgCurrency,
         portalUrl,
         organizationName: organization_name || "PayVerify",
-        subscribedService: customer?.service || undefined,
+        subscribedService: lineItemNames,
         accountNumber: customer?.account_number || undefined,
       });
 

@@ -1,4 +1,4 @@
-export const formatCurrency = (n: number | null | undefined, currency = "NGN") => {
+export const formatCurrency = (n: number | null | undefined, currency = "GHS") => {
   const v = Number(n ?? 0);
   // Hardcode the symbol to avoid locale rendering issues (e.g. ₦ showing as "N")
   const symbols: Record<string, string> = {
@@ -10,6 +10,7 @@ export const formatCurrency = (n: number | null | undefined, currency = "NGN") =
     INR: "₹",
     KES: "KSh",
     ZAR: "R",
+    XOF: "CFA ",
   };
   const symbol = symbols[currency] ?? currency + " ";
   return symbol + v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });

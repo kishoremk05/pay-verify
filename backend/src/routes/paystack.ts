@@ -83,4 +83,46 @@ router.post("/verify", async (req: Request, res: Response) => {
   }
 });
 
+// ─── POST /api/paystack/webhook ───
+// Receives transaction updates from Paystack webhooks
+router.post("/webhook", async (req: Request, res: Response) => {
+  try {
+    const { event, data } = req.body;
+
+    if (event === "charge.success" && data) {
+      const organizationId = data.metadata?.organization_id;
+      if (!organizationId) {
+        console.warn("[Paystack Webhook] Missing organization_id in metadata");
+        res.status(200).json({ status: "skipped", message: "Missing organization_id" });
+        return;
+      }
+
+      // Reconcile the webhook transaction
+      const result = await reconcileTransaction({
+        organization_id: organizationId,
+        amount: data.amount / 100, // kobo → currency unit
+        reference: data.reference,
+        customer_email: data.customer?.email || null,
+        customer_phone: data.customer?.phone || null,
+        customer_name: data.customer
+          ? [data.customer.first_name, data.customer.last_name].filter(Boolean).join(" ") || null
+          : null,
+        transaction_id: String(data.id),
+        payment_date: data.paid_at ? new Date(data.paid_at).toISOString().slice(0, 10) : undefined,
+        source: "paystack",
+        channel: data.channel,
+        currency: data.currency,
+      });
+
+      res.status(200).json({ status: "success", result });
+      return;
+    }
+
+    res.status(200).json({ status: "ignored" });
+  } catch (err: any) {
+    console.error("[Paystack Webhook] Error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

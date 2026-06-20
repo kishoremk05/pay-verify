@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   FileText,
@@ -23,6 +23,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-filter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,6 +77,10 @@ function InvoicesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRangeFilterValue>({
+    startDate: null,
+    endDate: null,
+  });
 
   // Form states
   const [customerId, setCustomerId] = useState("");
@@ -86,8 +91,11 @@ function InvoicesPage() {
     null,
   );
   const [creating, setCreating] = useState(false);
-  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
-  const currency = organization?.currency ?? "NGN";
+  const [lineItems, setLineItems] = useState<any[]>([]);
+  const [invoiceDiscountType, setInvoiceDiscountType] = useState<"percentage" | "fixed" | null>(null);
+  const [invoiceDiscountValue, setInvoiceDiscountValue] = useState("");
+  const [invoiceDiscountRef, setInvoiceDiscountRef] = useState("");
+  const currency = organization?.currency ?? "GHS";
 
   // Auto-generate and auto-populate invoice form based on customer select
   const handleCustomerChange = (val: string) => {
@@ -208,10 +216,10 @@ function InvoicesPage() {
 
   // Fetch invoices
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
-    queryKey: ["invoices", organization?.id],
+    queryKey: ["invoices", organization?.id, dateRange],
     enabled: !!organization?.id && (role as any) !== "viewer",
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      let query = (supabase as any)
         .from("invoices")
         .select(
           `
@@ -228,8 +236,16 @@ function InvoicesPage() {
           )
         `,
         )
-        .eq("organization_id", organization!.id)
-        .order("created_at", { ascending: false });
+        .eq("organization_id", organization!.id);
+
+      if (dateRange.startDate) {
+        query = query.gte("created_at", dateRange.startDate);
+      }
+      if (dateRange.endDate) {
+        query = query.lte("created_at", dateRange.endDate);
+      }
+
+      const { data } = await query.order("created_at", { ascending: false });
       return (data as any[]) ?? [];
     },
   });
@@ -275,20 +291,73 @@ function InvoicesPage() {
     );
   }
 
-  // Toggle a service, and recompute the amount total
-  const toggleService = (serviceId: string) => {
-    setSelectedServiceIds((prev) => {
-      const next = prev.includes(serviceId)
-        ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId];
-      const total = next.reduce((sum, id) => {
-        const svc = servicesList.find((s) => s.id === id);
-        return sum + (svc ? Number(svc.fee) : 0);
-      }, 0);
-      setAmount(total > 0 ? String(total) : "");
+  const toggleService = (svc: any) => {
+    setLineItems((prev) => {
+      const exists = prev.some((item) => item.serviceId === svc.id);
+      if (exists) {
+        return prev.filter((item) => item.serviceId !== svc.id);
+      } else {
+        return [
+          ...prev,
+          {
+            serviceId: svc.id,
+            name: svc.name,
+            unitPrice: Number(svc.fee),
+            quantity: 1,
+            discountType: null,
+            discountValue: 0,
+            discountRef: "",
+          },
+        ];
+      }
+    });
+  };
+
+  const updateLineItem = (idx: number, key: string, val: any) => {
+    setLineItems((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [key]: val };
       return next;
     });
   };
+
+  const calculateItemSubtotal = (item: any) => {
+    const total = item.unitPrice * item.quantity;
+    if (!item.discountType) return total;
+    if (item.discountType === "percentage") {
+      return Math.max(0, total - (total * (item.discountValue || 0)) / 100);
+    }
+    if (item.discountType === "fixed") {
+      return Math.max(0, total - (item.discountValue || 0));
+    }
+    if (item.discountType === "scholarship") {
+      return 0;
+    }
+    return total;
+  };
+
+  const itemsSubtotalSum = lineItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
+
+  const calculateFinalAmount = () => {
+    if (!invoiceDiscountType) return itemsSubtotalSum;
+    if (invoiceDiscountType === "percentage") {
+      const val = parseFloat(invoiceDiscountValue) || 0;
+      return Math.max(0, itemsSubtotalSum - (itemsSubtotalSum * val) / 100);
+    }
+    if (invoiceDiscountType === "fixed") {
+      const val = parseFloat(invoiceDiscountValue) || 0;
+      return Math.max(0, itemsSubtotalSum - val);
+    }
+    return itemsSubtotalSum;
+  };
+
+  const finalInvoiceAmount = calculateFinalAmount();
+
+  useEffect(() => {
+    if (lineItems.length > 0) {
+      setAmount(String(finalInvoiceAmount));
+    }
+  }, [lineItems, invoiceDiscountType, invoiceDiscountValue, finalInvoiceAmount]);
 
   // Handle invoice creation (using custom backend API to dispatch Brevo transaction email)
   const handleCreateInvoice = async (e: React.FormEvent) => {
@@ -323,6 +392,14 @@ function InvoicesPage() {
           customer_name: selectedCustomer.name,
           organization_name: organization.name,
           frontend_url: window.location.origin,
+          line_items: lineItems.map((item) => ({
+            ...item,
+            subtotal: calculateItemSubtotal(item),
+          })),
+          invoice_discount_type: invoiceDiscountType,
+          invoice_discount_value: invoiceDiscountValue ? parseFloat(invoiceDiscountValue) : 0,
+          invoice_discount_ref: invoiceDiscountRef,
+          subtotal: itemsSubtotalSum,
         }),
       });
 
@@ -346,6 +423,10 @@ function InvoicesPage() {
       setAmount("");
       setDueDate("");
       setSelectedCustomerAccountNumber(null);
+      setLineItems([]);
+      setInvoiceDiscountType(null);
+      setInvoiceDiscountValue("");
+      setInvoiceDiscountRef("");
 
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["invoices", organization.id] });
@@ -587,8 +668,8 @@ function InvoicesPage() {
                           className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
                         >
                           <Checkbox
-                            checked={selectedServiceIds.includes(svc.id)}
-                            onCheckedChange={() => toggleService(svc.id)}
+                            checked={lineItems.some((item) => item.serviceId === svc.id)}
+                            onCheckedChange={() => toggleService(svc)}
                           />
                           <span className="text-xs font-semibold text-foreground flex-1">
                             {svc.name}
@@ -601,6 +682,92 @@ function InvoicesPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Configure Selected Services (Line Items detail) */}
+                {lineItems.length > 0 && (
+                  <div className="space-y-3 pt-2 animate-fade-in">
+                    <Label className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider">
+                      Configure Selected Services
+                    </Label>
+                    <div className="space-y-3 max-h-56 overflow-y-auto rounded-2xl border border-border/50 p-4 bg-muted/5">
+                      {lineItems.map((item, idx) => {
+                        const itemSubtotal = calculateItemSubtotal(item);
+                        return (
+                          <div key={item.serviceId} className="p-3 border border-border/40 rounded-xl bg-card space-y-3">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-extrabold text-foreground truncate">{item.name}</span>
+                              <span className="text-xs font-black text-primary">{formatCurrency(itemSubtotal, currency)}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Unit Price</label>
+                                <Input
+                                  type="number"
+                                  value={item.unitPrice}
+                                  onChange={(e) => updateLineItem(idx, "unitPrice", parseFloat(e.target.value) || 0)}
+                                  className="h-8 text-xs rounded-lg px-2"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Qty</label>
+                                <Input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) => updateLineItem(idx, "quantity", parseInt(e.target.value, 10) || 1)}
+                                  className="h-8 text-xs rounded-lg px-2"
+                                />
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase">Disc Type</label>
+                                <Select
+                                  value={item.discountType || "none"}
+                                  onValueChange={(val) => updateLineItem(idx, "discountType", val === "none" ? null : val)}
+                                >
+                                  <SelectTrigger className="h-8 text-xs rounded-lg px-2">
+                                    <SelectValue placeholder="None" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">None</SelectItem>
+                                    <SelectItem value="percentage">Percent (%)</SelectItem>
+                                    <SelectItem value="fixed">Fixed</SelectItem>
+                                    <SelectItem value="scholarship">100%</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1 col-span-2">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase">
+                                  {item.discountType === "scholarship" ? "Ref Code" : "Disc Value / Ref"}
+                                </label>
+                                <div className="flex gap-1.5">
+                                  {item.discountType !== "scholarship" && item.discountType !== null && (
+                                    <Input
+                                      type="number"
+                                      placeholder="Value"
+                                      value={item.discountValue}
+                                      onChange={(e) => updateLineItem(idx, "discountValue", parseFloat(e.target.value) || 0)}
+                                      className="h-8 text-xs rounded-lg px-2 w-16 shrink-0"
+                                    />
+                                  )}
+                                  {item.discountType !== null && (
+                                    <Input
+                                      type="text"
+                                      placeholder="Ref code"
+                                      value={item.discountRef}
+                                      onChange={(e) => updateLineItem(idx, "discountRef", e.target.value)}
+                                      className="h-8 text-xs rounded-lg px-2 flex-1"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -655,6 +822,79 @@ function InvoicesPage() {
                     required
                   />
                 </div>
+
+                {/* Invoice-Level Discount Settings */}
+                <div className="border border-border/45 rounded-2xl p-4 bg-muted/5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-black uppercase tracking-wider text-foreground">
+                      Invoice-Level Discount
+                    </Label>
+                    <Select
+                      value={invoiceDiscountType || "none"}
+                      onValueChange={(val) => {
+                        setInvoiceDiscountType(val === "none" ? null : val as any);
+                        if (val === "none") {
+                          setInvoiceDiscountValue("");
+                          setInvoiceDiscountRef("");
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-[120px] h-8 text-xs rounded-lg px-2">
+                        <SelectValue placeholder="None" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="percentage">Percentage (%)</SelectItem>
+                        <SelectItem value="fixed">Fixed Amount</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {invoiceDiscountType && (
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border/20 animate-fade-in">
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase">Discount Value</Label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={invoiceDiscountValue}
+                          onChange={(e) => setInvoiceDiscountValue(e.target.value)}
+                          className="h-9 rounded-full px-4 bg-background border-border/80"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] font-bold text-muted-foreground uppercase">Discount Ref</Label>
+                        <Input
+                          type="text"
+                          placeholder="e.g. TOTAL-5"
+                          value={invoiceDiscountRef}
+                          onChange={(e) => setInvoiceDiscountRef(e.target.value)}
+                          className="h-9 rounded-full px-4 bg-background border-border/80"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Billing Summary */}
+                {lineItems.length > 0 && (
+                  <div className="rounded-2xl bg-muted/20 p-4 space-y-2 border border-border/30 animate-fade-in">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Services Subtotal:</span>
+                      <span className="font-semibold">{formatCurrency(itemsSubtotalSum, currency)}</span>
+                    </div>
+                    {invoiceDiscountType && (
+                      <div className="flex justify-between text-xs text-rose-500 font-medium">
+                        <span>Invoice Discount ({invoiceDiscountType === "percentage" ? `${invoiceDiscountValue}%` : "Fixed"}):</span>
+                        <span>-{formatCurrency(itemsSubtotalSum - finalInvoiceAmount, currency)}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-border/40 my-2 pt-2 flex justify-between text-sm font-black text-foreground">
+                      <span>Total Amount:</span>
+                      <span className="text-primary">{formatCurrency(finalInvoiceAmount, currency)}</span>
+                    </div>
+                  </div>
+                )}
 
                 <DialogFooter className="pt-4 gap-2 sm:gap-0">
                   <Button
@@ -746,6 +986,7 @@ function InvoicesPage() {
             />
           </div>
           <div className="flex items-center gap-3">
+            <DateRangeFilter onChange={setDateRange} />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[170px] rounded-full h-10 border-border/80">
                 <SelectValue placeholder="Status" />
@@ -850,8 +1091,13 @@ function InvoicesPage() {
                         )}
                       </div>
                     </td>
-                    <td className="py-4.5 px-6 text-xs font-bold text-foreground">
-                      {formatCurrency(inv.amount, currency)}
+                    <td className="py-4.5 px-6 text-xs text-foreground leading-tight">
+                      <div className="font-bold">{formatCurrency(inv.amount, currency)}</div>
+                      {Number(inv.subtotal || 0) > Number(inv.amount) && (
+                        <div className="text-[10px] text-rose-500 font-medium mt-0.5">
+                          Disc: -{formatCurrency(Number(inv.subtotal || 0) - Number(inv.amount), currency)}
+                        </div>
+                      )}
                     </td>
                     <td
                       className="py-4.5 px-6 text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity"
@@ -1062,10 +1308,22 @@ function InvoicesPage() {
                     {selectedInvoice.customers?.account_number || "—"}
                   </span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground font-semibold">Subtotal</span>
+                  <span className="font-medium text-foreground">
+                    {formatCurrency(selectedInvoice.subtotal || selectedInvoice.amount, currency)}
+                  </span>
+                </div>
+                {Number(selectedInvoice.subtotal || 0) > Number(selectedInvoice.amount) && (
+                  <div className="flex justify-between items-center text-rose-500 font-medium">
+                    <span>Discount ({selectedInvoice.invoice_discount_type === "percentage" ? `${selectedInvoice.invoice_discount_value}%` : "Fixed"}):</span>
+                    <span>-{formatCurrency(Number(selectedInvoice.subtotal || 0) - Number(selectedInvoice.amount), currency)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center border-t border-border/40 pt-3">
-                  <span className="text-muted-foreground font-semibold">Invoice Amount</span>
+                  <span className="text-muted-foreground font-bold">Final Amount</span>
                   <span className="font-bold text-emerald-600 text-sm">
-                    {formatCurrency(selectedInvoice.amount)}
+                    {formatCurrency(selectedInvoice.amount, currency)}
                   </span>
                 </div>
               </div>
@@ -1138,8 +1396,18 @@ function InvoicesPage() {
                   <span className="font-bold">{selectedInvoice.invoice_number}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground font-semibold">Expected Amount</span>
-                  <span className="font-bold">{formatCurrency(selectedInvoice.amount)}</span>
+                  <span className="text-muted-foreground font-semibold">Subtotal</span>
+                  <span className="font-medium">{formatCurrency(selectedInvoice.subtotal || selectedInvoice.amount, currency)}</span>
+                </div>
+                {Number(selectedInvoice.subtotal || 0) > Number(selectedInvoice.amount) && (
+                  <div className="flex justify-between text-rose-500 font-medium">
+                    <span>Discount:</span>
+                    <span>-{formatCurrency(Number(selectedInvoice.subtotal || 0) - Number(selectedInvoice.amount), currency)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-border/40 pt-2">
+                  <span className="text-muted-foreground font-bold">Expected Amount</span>
+                  <span className="font-bold text-primary">{formatCurrency(selectedInvoice.amount, currency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground font-semibold">Customer Reference</span>
@@ -1152,7 +1420,7 @@ function InvoicesPage() {
                   htmlFor="actual_amount"
                   className="text-xs font-bold text-muted-foreground/80 pl-1 uppercase tracking-wider"
                 >
-                  Actual Amount Paid (NGN) <span className="text-rose-500">*</span>
+                  Actual Amount Paid ({currency}) <span className="text-rose-500">*</span>
                 </Label>
                 <Input
                   id="actual_amount"
