@@ -49,13 +49,15 @@ function LoginPage() {
     }
     toast.success("Welcome back!");
     navigate({ to: "/dashboard" });
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f5f7fa] via-white to-[#e4e8f0] dark:from-[#080b11] dark:via-[#0c101b] dark:to-[#0f1422] px-4 py-12 transition-colors duration-200 relative">
+  };  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#f9fafb] px-4 py-12 transition-colors duration-200 relative">
+      {/* Background Dot Grid Overlays */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-15 bg-[radial-gradient(#e2e8f0_1.2px,transparent_1.2px)] [background-size:24px_24px] mix-blend-multiply" />
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-10 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+      
       {/* Floating Back to Home button */}
       <div className="absolute top-6 left-6 sm:top-8 sm:left-8 z-10">
-        <Button variant="ghost" className="rounded-full gap-2 border border-slate-200 bg-white/80 hover:bg-slate-50 text-slate-700 hover:text-slate-900 shadow-sm transition-all text-xs font-semibold backdrop-blur-sm px-4 py-2" asChild>
+        <Button variant="ghost" className="rounded-full gap-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 shadow-sm transition-all text-xs font-semibold px-4 py-2" asChild>
           <Link to="/">
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Home</span>
@@ -63,48 +65,47 @@ function LoginPage() {
         </Button>
       </div>
 
-      <div className="w-full max-w-[420px] animate-fade-in">
+      <div className="w-full max-w-[420px] animate-fade-in relative z-10">
         <div className="flex justify-center mb-8">
-          <Link to="/" className="flex items-center gap-3 select-none">
-            <div className="relative h-12 w-12 flex items-center justify-center font-sans text-4xl font-black italic shrink-0">
-              <span className="absolute text-[#003087] dark:text-blue-400 select-none" style={{ transform: "translate(-5px, -4px)" }}>P</span>
-              <span className="absolute text-[#0070ba] dark:text-cyan-400 opacity-85 select-none" style={{ transform: "translate(5px, 4px)" }}>V</span>
+          <Link to="/" className="flex items-center gap-2.5 select-none">
+            <div className="h-10 w-10 rounded-xl bg-[#0a152d] flex items-center justify-center shadow-sm relative overflow-hidden">
+              <ShieldCheck className="h-5.5 w-5.5 text-white" />
             </div>
             <div className="leading-tight text-left">
-              <div className="text-2xl font-black tracking-tight text-[#003087] dark:text-white leading-none">
-                Pay<span className="text-[#0070ba] dark:text-cyan-400">Verify</span>
+              <div className="text-xl font-display font-semibold text-[#0a1b33] leading-none">
+                PAYVERIFY
               </div>
-              <div className="text-[10px] text-muted-foreground font-bold tracking-wider uppercase mt-1">
+              <div className="text-[9px] text-slate-450 font-bold tracking-wider uppercase mt-0.5">
                 Payment Verification
               </div>
             </div>
           </Link>
         </div>
 
-        <Card className="border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden">
+        <Card className="border border-slate-200/60 bg-white shadow-sm rounded-3xl overflow-hidden">
           <CardHeader className="pb-4 pt-8 text-center">
-            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Welcome Back</h1>
-            <p className="text-sm text-muted-foreground mt-1">Sign in to your admin account to continue</p>
+            <h1 className="text-2xl font-display font-medium tracking-tight text-[#0a1b33]">Welcome Back</h1>
+            <p className="text-sm text-slate-500 mt-1 font-sans">Sign in to your admin account to continue</p>
           </CardHeader>
           <CardContent className="pb-8 px-6 sm:px-8">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">Email Address</Label>
+                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-450 pl-1 font-mono">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
                   autoComplete="email"
                   placeholder="name@example.com"
-                  className="rounded-full px-5 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all"
+                  className="rounded-full px-5 h-11 border-slate-200 focus-visible:ring-2 focus-visible:ring-[#0a152d]/10 focus-visible:border-[#0a152d] bg-[#f9fafb] text-slate-900 transition-all font-sans"
                   {...form.register("email")}
                 />
                 {form.formState.errors.email && (
-                  <p className="text-xs text-destructive pl-1">{form.formState.errors.email.message}</p>
+                  <p className="text-xs text-rose-500 pl-1 font-sans">{form.formState.errors.email.message}</p>
                 )}
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between pl-1">
-                  <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Password</Label>
+                  <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-450 font-mono">Password</Label>
                 </div>
                 <div className="relative">
                   <Input
@@ -112,33 +113,33 @@ function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     placeholder="••••••••"
-                    className="rounded-full pl-5 pr-12 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all"
+                    className="rounded-full pl-5 pr-12 h-11 border-slate-200 focus-visible:ring-2 focus-visible:ring-[#0a152d]/10 focus-visible:border-[#0a152d] bg-[#f9fafb] text-slate-900 transition-all font-sans"
                     {...form.register("password")}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-450 hover:text-slate-800 transition-colors p-1"
                   >
                     {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
                   </button>
                 </div>
                 {form.formState.errors.password && (
-                  <p className="text-xs text-destructive pl-1">{form.formState.errors.password.message}</p>
+                  <p className="text-xs text-rose-500 pl-1 font-sans">{form.formState.errors.password.message}</p>
                 )}
               </div>
-              <Button type="submit" size="lg" className="w-full h-11 text-base font-semibold shadow-md cursor-pointer bg-primary hover:bg-primary/95 text-primary-foreground hover:scale-[1.01] active:scale-[0.99] transition-all rounded-full mt-2" disabled={loading}>
+              <Button type="submit" size="lg" className="w-full h-11 text-sm font-semibold shadow-sm cursor-pointer bg-[#0a152d] hover:bg-[#0a152d]/90 text-white transition-all rounded-full mt-2 font-sans" disabled={loading}>
                 {loading ? <Loader2 className="h-4.5 w-4.5 animate-spin mr-2" /> : null}
                 Agree &amp; Log In
               </Button>
             </form>
             <div className="relative flex items-center justify-center my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border/60"></div>
+                <div className="w-full border-t border-slate-200/50"></div>
               </div>
-              <span className="relative bg-card px-3 text-xs text-muted-foreground uppercase font-semibold">New to PayVerify?</span>
+              <span className="relative bg-white px-3 text-[10px] text-slate-400 uppercase font-bold tracking-wider font-mono">New to PayVerify?</span>
             </div>
-            <Button variant="outline" shape="pill" className="w-full h-11 text-sm font-semibold border-primary/40 text-primary hover:bg-primary/5 rounded-full" asChild>
+            <Button variant="outline" className="w-full h-11 text-xs font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full font-sans" asChild>
               <Link to="/signup">Create your account</Link>
             </Button>
           </CardContent>

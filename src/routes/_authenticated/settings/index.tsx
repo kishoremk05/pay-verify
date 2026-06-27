@@ -14,6 +14,11 @@ import {
   CreditCard,
   ChevronRight,
   Sparkles,
+  Percent,
+  Sliders,
+  Bell,
+  UserCheck,
+  Check,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +55,128 @@ function SettingsPage() {
   const [orgName, setOrgName] = useState("");
   const [orgCurrency, setOrgCurrency] = useState("GHS");
   const [saving, setSaving] = useState(false);
+
+  // Monetization Settings States
+  const [platformFeePercent, setPlatformFeePercent] = useState(0.15);
+  const [transactionFeeFixed, setTransactionFeeFixed] = useState(50.00);
+  const [savingMonetization, setSavingMonetization] = useState(false);
+
+  // Subscription States
+  const [activePlan, setActivePlan] = useState("Starter");
+  const [usageInvoicesCount, setUsageInvoicesCount] = useState(15);
+  const [usageInvoicesLimit, setUsageInvoicesLimit] = useState(50);
+
+  // Workflow Automation States
+  const [ruleSmartReminders, setRuleSmartReminders] = useState(true);
+  const [ruleAutoNotifications, setRuleAutoNotifications] = useState(false);
+  const [ruleApprovalWorkflows, setRuleApprovalWorkflows] = useState(true);
+  const [savingAutomation, setSavingAutomation] = useState(false);
+
+  useEffect(() => {
+    if (!organization?.id) return;
+    const client = supabase as any;
+    const loadSettings = async () => {
+      try {
+        const { data: billingData } = await client
+          .from("organization_billing_settings")
+          .select("*")
+          .eq("organization_id", organization.id)
+          .maybeSingle();
+        if (billingData) {
+          setPlatformFeePercent(billingData.platform_fee_percent);
+          setTransactionFeeFixed(billingData.transaction_fee_fixed);
+        }
+
+        const { data: subData } = await client
+          .from("organization_subscriptions")
+          .select("*, plan:subscription_plans(*)")
+          .eq("organization_id", organization.id)
+          .maybeSingle();
+        if (subData) {
+          setActivePlan(subData.plan?.name || "Starter");
+          setUsageInvoicesCount(subData.usage_invoices_count || 0);
+          setUsageInvoicesLimit(subData.plan?.invoice_limit || 50);
+        }
+
+        const { data: rulesData } = await client
+          .from("automation_rules")
+          .select("*")
+          .eq("organization_id", organization.id);
+        if (rulesData) {
+          rulesData.forEach((r: any) => {
+            if (r.event_type === "payment_mismatch") setRuleAutoNotifications(r.enabled);
+            if (r.event_type === "overdue_invoice") setRuleSmartReminders(r.enabled);
+            if (r.event_type === "high_value_check") setRuleApprovalWorkflows(r.enabled);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load settings details", err);
+      }
+    };
+    loadSettings();
+  }, [organization]);
+
+  const saveMonetization = async () => {
+    if (!organization?.id) return;
+    setSavingMonetization(true);
+    const client = supabase as any;
+    const { error } = await client
+      .from("organization_billing_settings")
+      .upsert({
+        organization_id: organization.id,
+        platform_fee_percent: platformFeePercent,
+        transaction_fee_fixed: transactionFeeFixed,
+        updated_at: new Date().toISOString()
+      });
+    setSavingMonetization(false);
+    if (error) return toast.error(error.message);
+    toast.success("Monetization settings saved successfully");
+  };
+
+  const saveAutomation = async () => {
+    if (!organization?.id) return;
+    setSavingAutomation(true);
+    const client = supabase as any;
+    const rules = [
+      { organization_id: organization.id, event_type: "overdue_invoice", action_type: "send_email_reminder", enabled: ruleSmartReminders },
+      { organization_id: organization.id, event_type: "payment_mismatch", action_type: "auto_flag_discrepancy", enabled: ruleAutoNotifications },
+      { organization_id: organization.id, event_type: "high_value_check", action_type: "require_second_approval", enabled: ruleApprovalWorkflows },
+    ];
+    
+    const { error } = await client
+      .from("automation_rules")
+      .upsert(rules);
+      
+    setSavingAutomation(false);
+    if (error) return toast.error(error.message);
+    toast.success("Workflow automation rules updated successfully");
+  };
+
+  const changeSubscription = async (planName: string) => {
+    if (!organization?.id) return;
+    const client = supabase as any;
+    const { data: plan } = await client
+      .from("subscription_plans")
+      .select("id, invoice_limit")
+      .eq("name", planName)
+      .single();
+    if (!plan) return toast.error("Plan not found");
+    
+    const { error } = await client
+      .from("organization_subscriptions")
+      .upsert({
+        organization_id: organization.id,
+        plan_id: plan.id,
+        status: "active",
+        current_period_start: new Date().toISOString(),
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    if (error) return toast.error(error.message);
+    setActivePlan(planName);
+    setUsageInvoicesLimit(plan.invoice_limit);
+    toast.success(`Upgraded to ${planName} subscription!`);
+  };
 
   // Password Update States
   const [newPassword, setNewPassword] = useState("");
@@ -451,6 +578,196 @@ function SettingsPage() {
             </CardContent>
           </Card>
         </Link>
+      )}
+
+      {/* Platform Monetization Settings */}
+      {(role === "admin" || role === "super_admin") && (
+        <Card className="border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-md max-w-2xl">
+          <CardHeader className="pb-4 pt-6 border-b border-border/40">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Percent className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold tracking-tight">Platform Monetization</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Configure platform cuts and fixed transaction rates
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 sm:p-8 space-y-6">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="platformFee" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                  Platform Fee (%)
+                </Label>
+                <Input
+                  id="platformFee"
+                  type="number"
+                  step="0.01"
+                  value={platformFeePercent}
+                  onChange={(e) => setPlatformFeePercent(Number(e.target.value))}
+                  className="rounded-full px-5 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all duration-200"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="transactionFee" className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 pl-1">
+                  Fixed Transaction Fee ({organization?.currency || "GHS"})
+                </Label>
+                <Input
+                  id="transactionFee"
+                  type="number"
+                  step="0.1"
+                  value={transactionFeeFixed}
+                  onChange={(e) => setTransactionFeeFixed(Number(e.target.value))}
+                  className="rounded-full px-5 h-11 border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/80 bg-background text-foreground transition-all duration-200"
+                />
+              </div>
+            </div>
+            <div className="pt-2">
+              <Button
+                onClick={saveMonetization}
+                disabled={savingMonetization}
+                shape="pill"
+                className="w-full sm:w-auto px-6 h-11 font-semibold shadow-md bg-primary hover:bg-primary/95 text-primary-foreground hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+              >
+                {savingMonetization ? <Loader2 className="h-4.5 w-4.5 animate-spin mr-2" /> : null}
+                Save Fee Configuration
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Subscription Plans & Billing */}
+      <Card className="border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-md max-w-2xl">
+        <CardHeader className="pb-4 pt-6 border-b border-border/40">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <Sliders className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-bold tracking-tight">Subscription Plans & Quotas</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Monitor your billing plan usage and limits
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 sm:p-8 space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-border/40 pb-4">
+              <div>
+                <span className="text-xs font-bold text-muted-foreground uppercase block font-mono">Current Plan</span>
+                <span className="text-lg font-black text-foreground capitalize mt-1 block">{activePlan} Plan</span>
+              </div>
+              {(role === "admin" || role === "super_admin") && (
+                <div className="flex gap-2">
+                  {["Starter", "Growth", "Enterprise"].map((plan) => (
+                    <Button
+                      key={plan}
+                      variant={activePlan === plan ? "default" : "outline"}
+                      onClick={() => changeSubscription(plan)}
+                      shape="pill"
+                      size="sm"
+                      className="text-xs h-8 cursor-pointer"
+                    >
+                      {plan}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Quota Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Monthly Invoices Processed</span>
+                <span>{usageInvoicesCount} / {usageInvoicesLimit} Invoices</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-primary h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, (usageInvoicesCount / usageInvoicesLimit) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Workflow Automation Rules */}
+      {(role === "admin" || role === "super_admin") && (
+        <Card className="border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden transition-all duration-300 hover:shadow-md max-w-2xl">
+          <CardHeader className="pb-4 pt-6 border-b border-border/40">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <Bell className="h-5 w-5" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold tracking-tight">Workflow Automation</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Configure automated reconciliation rules and alerts
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 sm:p-8 space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="max-w-[80%]">
+                  <Label className="text-sm font-bold text-foreground block">Smart Overdue Reminders</Label>
+                  <span className="text-xs text-muted-foreground">Auto-schedule smart email notifications for pending matching issues after 48h.</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={ruleSmartReminders}
+                  onChange={(e) => setRuleSmartReminders(e.target.checked)}
+                  className="h-4.5 w-4.5 accent-primary cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="max-w-[80%]">
+                  <Label className="text-sm font-bold text-foreground block">Automated Mismatch Notifications</Label>
+                  <span className="text-xs text-muted-foreground">Auto-notify accounting leads and dispatcher bots when transaction mismatch is flagged.</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={ruleAutoNotifications}
+                  onChange={(e) => setRuleAutoNotifications(e.target.checked)}
+                  className="h-4.5 w-4.5 accent-primary cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="max-w-[80%]">
+                  <Label className="text-sm font-bold text-foreground block">Dual-Sign Approval Workflows</Label>
+                  <span className="text-xs text-muted-foreground">Require secondary reviewer signatures for transaction amounts exceeding ₦500k.</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={ruleApprovalWorkflows}
+                  onChange={(e) => setRuleApprovalWorkflows(e.target.checked)}
+                  className="h-4.5 w-4.5 accent-primary cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border/40">
+              <Button
+                onClick={saveAutomation}
+                disabled={savingAutomation}
+                shape="pill"
+                className="w-full sm:w-auto px-6 h-11 font-semibold shadow-md bg-primary hover:bg-primary/95 text-primary-foreground hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+              >
+                {savingAutomation ? <Loader2 className="h-4.5 w-4.5 animate-spin mr-2" /> : null}
+                Save Automation Rules
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

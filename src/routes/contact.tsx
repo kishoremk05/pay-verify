@@ -44,18 +44,13 @@ function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa]/30 text-slate-900 font-sans selection:bg-blue-500/20 selection:text-blue-900 overflow-x-hidden antialiased relative">
-      {/* Background and Dot Grid Overlays */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat bg-fixed opacity-65"
-        style={{ backgroundImage: `url(${newBg})` }}
-      />
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-45 bg-[radial-gradient(#e2e8f0_1.2px,transparent_1.2px)] [background-size:24px_24px] mix-blend-multiply" />
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-15 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+    <div className="min-h-screen bg-[#f9fafb] text-slate-900 font-sans selection:bg-blue-500/20 selection:text-blue-900 overflow-x-hidden antialiased relative">
+      {/* Background Dot Grid Overlays */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-15 bg-[radial-gradient(#e2e8f0_1.2px,transparent_1.2px)] [background-size:24px_24px] mix-blend-multiply" />
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-10 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem]" />
       
       {/* Floating Ambient Glowing Blobs */}
-      <div className="absolute top-0 left-[10%] w-[50rem] h-[35rem] rounded-full bg-blue-600/[0.02] blur-[140px] pointer-events-none z-0" />
-      <div className="absolute top-[35%] left-[20%] w-[40rem] h-[40rem] rounded-full bg-indigo-500/[0.01] blur-[160px] pointer-events-none z-0" />
+      <div className="absolute top-0 left-[10%] w-[50rem] h-[35rem] rounded-full bg-indigo-950/[0.01] blur-[140px] pointer-events-none z-0 animate-float" />
 
       <Navbar />
 
@@ -70,13 +65,13 @@ function ContactPage() {
             transition={{ duration: 0.5 }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 border border-blue-250 bg-blue-50/50 px-3.5 py-1 rounded-md font-mono text-[9px] uppercase tracking-[0.2em] text-[#0070ba] mb-5 font-bold shadow-sm backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 border border-slate-200 bg-slate-50 px-3.5 py-1 rounded-full font-mono text-[9px] uppercase tracking-[0.2em] text-[#0a1b33] mb-5 font-bold shadow-sm">
               // SECURE CHANNELS
             </div>
-            <h1 className="text-4xl font-black tracking-tighter text-slate-900 sm:text-6xl">
+            <h1 className="text-4xl font-display font-medium tracking-tight text-[#0a1b33] sm:text-6xl">
               Connect with ledger specialists.
             </h1>
-            <p className="mt-5 text-slate-650 max-w-2xl mx-auto font-light leading-relaxed">
+            <p className="mt-5 text-slate-500 max-w-2xl mx-auto font-sans font-light leading-relaxed">
               Have complex bank API integrations, multi-tenant compliance queries, or custom CSV layouts? Reach out and get verified answers immediately.
             </p>
           </motion.div>
@@ -91,16 +86,16 @@ function ContactPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
-                className="rounded-3xl border border-slate-200 bg-white/60 backdrop-blur-md p-6 shadow-md hover:shadow-lg transition-all"
+                className="rounded-[32px] border border-slate-200/60 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <div className="flex gap-4 items-start">
-                  <div className="h-10 w-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0070ba] shrink-0">
+                  <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-[#0a1b33] shrink-0">
                     <Zap className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">Enterprise Relations</h3>
-                    <p className="text-xs font-mono text-slate-400 mt-0.5">// SALES &amp; DEMOS</p>
-                    <a href="mailto:sales@payverify.com" className="text-sm text-[#0070ba] hover:underline block mt-3 font-semibold">
+                    <h3 className="font-display font-semibold text-[#0a1b33]">Enterprise Relations</h3>
+                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">// SALES &amp; DEMOS</p>
+                    <a href="mailto:sales@payverify.com" className="text-sm text-[#0a1b33] hover:underline block mt-3 font-semibold font-sans">
                       sales@payverify.com
                     </a>
                   </div>
@@ -112,16 +107,16 @@ function ContactPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.2 }}
-                className="rounded-3xl border border-slate-200 bg-white/60 backdrop-blur-md p-6 shadow-md hover:shadow-lg transition-all"
+                className="rounded-[32px] border border-slate-200/60 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <div className="flex gap-4 items-start">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-50/50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                     <Headphones className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">Technical Helpdesk</h3>
-                    <p className="text-xs font-mono text-slate-400 mt-0.5">// 24/7 COMPLIANCE &amp; DEPLOY</p>
-                    <a href="mailto:support@payverify.com" className="text-sm text-emerald-600 hover:underline block mt-3 font-semibold">
+                    <h3 className="font-display font-semibold text-slate-900">Technical Helpdesk</h3>
+                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">// 24/7 COMPLIANCE &amp; DEPLOY</p>
+                    <a href="mailto:support@payverify.com" className="text-sm text-emerald-600 hover:underline block mt-3 font-semibold font-sans">
                       support@payverify.com
                     </a>
                   </div>
@@ -133,16 +128,16 @@ function ContactPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.3 }}
-                className="rounded-3xl border border-slate-200 bg-white/60 backdrop-blur-md p-6 shadow-md hover:shadow-lg transition-all"
+                className="rounded-[32px] border border-slate-200/60 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <div className="flex gap-4 items-start">
-                  <div className="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+                  <div className="h-10 w-10 rounded-xl bg-rose-50/50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
                     <ShieldAlert className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">Security Response Desk</h3>
-                    <p className="text-xs font-mono text-slate-400 mt-0.5">// RECON PIPELINE VULNERABILITIES</p>
-                    <a href="mailto:security@payverify.com" className="text-sm text-rose-600 hover:underline block mt-3 font-semibold">
+                    <h3 className="font-display font-semibold text-slate-900">Security Response Desk</h3>
+                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">// RECON PIPELINE VULNERABILITIES</p>
+                    <a href="mailto:security@payverify.com" className="text-sm text-rose-600 hover:underline block mt-3 font-semibold font-sans">
                       security@payverify.com
                     </a>
                   </div>
@@ -156,63 +151,63 @@ function ContactPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}
-              className="md:col-span-3 rounded-3xl border border-slate-200/50 bg-[#eef5fc]/60 backdrop-blur-xl p-8 md:p-10 shadow-xl"
+              className="md:col-span-3 rounded-[32px] border border-slate-200/60 bg-white p-8 md:p-10 shadow-sm hover:shadow-md transition-all duration-300"
             >
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-1">Full Name</label>
+                    <label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-450 pl-1 font-mono">Full Name</label>
                     <input
                       id="name"
                       type="text"
                       placeholder="Leon Chike"
-                      className="w-full rounded-2xl px-4 py-3 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#0070ba] bg-white text-slate-900 transition-all text-sm"
+                      className="w-full rounded-full px-5 py-3 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0a152d]/10 focus:border-[#0a152d] bg-white text-slate-900 transition-all text-sm font-sans"
                       {...register("name")}
                     />
-                    {errors.name && <p className="text-xs text-rose-500 pl-1">{errors.name.message}</p>}
+                    {errors.name && <p className="text-xs text-rose-500 pl-1 font-sans">{errors.name.message}</p>}
                   </div>
                   
                   <div className="space-y-2">
-                    <label htmlFor="company" className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-1">Company Name</label>
+                    <label htmlFor="company" className="text-xs font-bold uppercase tracking-wider text-slate-450 pl-1 font-mono">Company Name</label>
                     <input
                       id="company"
                       type="text"
                       placeholder="Acme Ledger Inc."
-                      className="w-full rounded-2xl px-4 py-3 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#0070ba] bg-white text-slate-900 transition-all text-sm"
+                      className="w-full rounded-full px-5 py-3 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0a152d]/10 focus:border-[#0a152d] bg-white text-slate-900 transition-all text-sm font-sans"
                       {...register("company")}
                     />
-                    {errors.company && <p className="text-xs text-rose-500 pl-1">{errors.company.message}</p>}
+                    {errors.company && <p className="text-xs text-rose-500 pl-1 font-sans">{errors.company.message}</p>}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-1">Work Email</label>
+                  <label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-450 pl-1 font-mono">Work Email</label>
                   <input
                     id="email"
                     type="email"
                     placeholder="leon@acme.com"
-                    className="w-full rounded-2xl px-4 py-3 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#0070ba] bg-white text-slate-900 transition-all text-sm"
+                    className="w-full rounded-full px-5 py-3 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0a152d]/10 focus:border-[#0a152d] bg-white text-slate-900 transition-all text-sm font-sans"
                     {...register("email")}
                   />
-                  {errors.email && <p className="text-xs text-rose-500 pl-1">{errors.email.message}</p>}
+                  {errors.email && <p className="text-xs text-rose-500 pl-1 font-sans">{errors.email.message}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <label htmlFor="message" className="text-xs font-bold uppercase tracking-wider text-slate-500 pl-1">Message / Project Scope</label>
+                  <label htmlFor="message" className="text-xs font-bold uppercase tracking-wider text-slate-450 pl-1 font-mono">Message / Project Scope</label>
                   <textarea
                     id="message"
                     rows={4}
                     placeholder="Describe your multi-tenant volume and target API adapters..."
-                    className="w-full rounded-2xl px-4 py-3 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-[#0070ba] bg-white text-slate-900 transition-all text-sm resize-none"
+                    className="w-full rounded-3xl px-5 py-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0a152d]/10 focus:border-[#0a152d] bg-white text-slate-900 transition-all text-sm font-sans resize-none"
                     {...register("message")}
                   />
-                  {errors.message && <p className="text-xs text-rose-500 pl-1">{errors.message.message}</p>}
+                  {errors.message && <p className="text-xs text-rose-500 pl-1 font-sans">{errors.message.message}</p>}
                 </div>
 
                 <Button 
                   type="submit" 
                   size="lg" 
-                  className="w-full py-6 font-mono text-xs tracking-wider bg-gradient-to-r from-blue-700 to-[#0070ba] text-white font-bold rounded-2xl shadow-md hover:bg-blue-700 flex items-center justify-center gap-2 group transition-all"
+                  className="w-full py-6 font-sans text-xs font-semibold tracking-wider bg-[#0a152d] hover:bg-[#0a152d]/90 text-white rounded-full shadow-sm flex items-center justify-center gap-2 group transition-all"
                   disabled={loading}
                 >
                   {loading ? (

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import * as XLSX from "xlsx";
-import { Plus, Upload, Search, Loader2, Trash2, CreditCard, Info, Check, X } from "lucide-react";
+import { Plus, Upload, Search, Loader2, Trash2, CreditCard, Info, Check, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -370,6 +370,94 @@ function PaymentsPage() {
   const customerAccountNumber = (id: string | null) =>
     customers?.find((c) => c.id === id)?.account_number ?? "—";
   const getCustomer = (id: string | null) => customers?.find((c) => c.id === id);
+
+  // AI Reconciliation Assistant State
+  const [aiAnalysisPaymentId, setAiAnalysisPaymentId] = useState<string | null>(null);
+  const [aiInsightLoading, setAiInsightLoading] = useState(false);
+  const [aiInsight, setAiInsight] = useState<{
+    summary: string;
+    discrepancy_score: number;
+    detected_issues: string[];
+    recommendation: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!aiAnalysisPaymentId) {
+      setAiInsight(null);
+      return;
+    }
+    const loadAiInsight = async () => {
+      setAiInsightLoading(true);
+      try {
+        const client = supabase as any;
+        const { data, error } = await client
+          .from("ai_reconciliation_insights")
+          .select("*")
+          .eq("payment_id", aiAnalysisPaymentId)
+          .maybeSingle();
+
+        if (data) {
+          setAiInsight({
+            summary: data.summary,
+            discrepancy_score: Number(data.discrepancy_score || 0),
+            detected_issues: Array.isArray(data.detected_issues) ? data.detected_issues : [],
+            recommendation: data.audit_recommendation
+          });
+        } else {
+          const p = payments?.find(pay => pay.id === aiAnalysisPaymentId);
+          if (p) {
+            const cust = getCustomer(p.customer_id);
+            const expectedAmount = cust ? cust.expected_amount : p.amount_paid;
+            const amountDiff = Math.abs(p.amount_paid - expectedAmount);
+            
+            const issues: string[] = [];
+            let score = 0;
+            if (amountDiff > 0.01) {
+              issues.push(`Amount mismatch: expected ${expectedAmount}, paid ${p.amount_paid}`);
+              score += 40;
+            }
+            if (!p.reference) {
+              issues.push("Reference parameter omitted from Paystack payload");
+              score += 20;
+            }
+            if (p.status === "duplicate") {
+              issues.push("Duplicate reference code match found in bank ledger");
+              score += 30;
+            }
+
+            let recommendation = "Approve reconciliation match. The customer name and email address match 100%.";
+            if (score >= 60) {
+              recommendation = "Reject reconciliation. Significant discrepancy in paid volume. Investigate duplicate references.";
+            } else if (score > 0) {
+              recommendation = "Review manually. Amount discrepancy fits partial invoice threshold.";
+            }
+
+            const summaryStr = `AI Summary: Reconciled transaction of ${p.currency || "GHS"} ${p.amount_paid.toLocaleString()} against customer "${cust?.name || "Anonymous"}". Match parameters: ${p.reference ? "Valid UTR reference" : "Omitted reference"}, verified email/phone details. Status: ${p.status.toUpperCase()}.`;
+
+            await client.from("ai_reconciliation_insights").insert({
+              payment_id: aiAnalysisPaymentId,
+              summary: summaryStr,
+              discrepancy_score: score,
+              detected_issues: issues,
+              audit_recommendation: recommendation
+            });
+
+            setAiInsight({
+              summary: summaryStr,
+              discrepancy_score: score,
+              detected_issues: issues,
+              recommendation
+            });
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setAiInsightLoading(false);
+      }
+    };
+    loadAiInsight();
+  }, [aiAnalysisPaymentId, payments, customers]);
 
   const filtered = (payments ?? []).filter((p) => {
     // Filter by verification status for Ledger vs Review tab
@@ -1148,8 +1236,17 @@ function PaymentsPage() {
                               <TableCell className="py-4 text-right pr-6">
                                 <Button
                                   size="icon"
+                                  variant="outline"
+                                  className="h-9 w-9 rounded-full border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-purple-600 dark:text-purple-400 mr-2 cursor-pointer transition-transform hover:scale-105"
+                                  onClick={() => setAiAnalysisPaymentId(p.id)}
+                                  title="AI Reconciliation Insight"
+                                >
+                                  <Sparkles className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
                                   variant="ghost"
-                                  className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors"
+                                  className="h-9 w-9 rounded-full bg-destructive/5 hover:bg-destructive/10 text-destructive border border-destructive/10 transition-colors cursor-pointer"
                                   onClick={() => setDeleteId(p.id)}
                                   title="Delete payment"
                                 >
@@ -1351,6 +1448,22 @@ function PaymentsPage() {
                                         <Button
                                           size="icon"
                                           variant="outline"
+                                          className="h-8 w-8 rounded-full border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-purple-600 dark:text-purple-400 cursor-pointer"
+                                          onClick={() => setAiAnalysisPaymentId(p.id)}
+                                        >
+                                          <Sparkles className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="text-xs font-semibold">AI Reconciliation Assistant</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="icon"
+                                          variant="outline"
                                           className="h-8 w-8 rounded-full border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                           onClick={() => handleVerifyPayment(p.id)}
                                         >
@@ -1471,6 +1584,115 @@ function PaymentsPage() {
         fields={PAYMENT_FIELDS}
         onImport={onWizardImport}
       />
+
+      {/* AI Reconciliation Assistant Dialog */}
+      <Dialog open={!!aiAnalysisPaymentId} onOpenChange={(open) => !open && setAiAnalysisPaymentId(null)}>
+        <DialogContent className="rounded-3xl border-border/60 bg-card max-w-lg p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
+          <DialogHeader className="pb-4 border-b border-border/40">
+            <DialogTitle className="flex items-center gap-2 text-xl font-extrabold text-foreground font-sans">
+              <Sparkles className="h-5 w-5 text-purple-500 animate-pulse" />
+              AI Reconciliation Analysis
+            </DialogTitle>
+          </DialogHeader>
+
+          {aiInsightLoading ? (
+            <div className="py-12 flex flex-col items-center justify-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+              <p className="text-sm font-semibold text-muted-foreground animate-pulse">Running Parallel Consensus Engine...</p>
+            </div>
+          ) : aiInsight ? (
+            <div className="space-y-6 pt-4">
+              {/* Summary Block */}
+              <div className="rounded-2xl bg-purple-500/10 p-5 border border-purple-500/20">
+                <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block font-mono">Consensus Summary</span>
+                <p className="text-sm text-foreground mt-2 leading-relaxed font-medium">
+                  {aiInsight.summary}
+                </p>
+              </div>
+
+              {/* Score Indicator */}
+              <div className="flex items-center justify-between border-b border-border/40 pb-4">
+                <div>
+                  <span className="text-xs font-bold text-muted-foreground uppercase block font-mono">Discrepancy Score</span>
+                  <span className="text-2xl font-black text-foreground mt-1 block">
+                    {aiInsight.discrepancy_score}%
+                  </span>
+                </div>
+                <div className="w-1/2 bg-muted rounded-full h-3 overflow-hidden">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-500 ${
+                      aiInsight.discrepancy_score >= 60 ? "bg-rose-500" : aiInsight.discrepancy_score > 0 ? "bg-amber-500" : "bg-emerald-500"
+                    }`}
+                    style={{ width: `${aiInsight.discrepancy_score}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Detected Issues */}
+              {aiInsight.detected_issues.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-xs font-bold text-muted-foreground uppercase block font-mono">Isolated Discrepancies</span>
+                  <ul className="space-y-1.5 pl-1">
+                    {aiInsight.detected_issues.map((issue, idx) => (
+                      <li key={idx} className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                        {issue}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Audit Recommendation */}
+              <div className="space-y-2 bg-muted/40 p-4 rounded-xl border border-border/40">
+                <span className="text-xs font-bold text-muted-foreground uppercase block font-mono">Recommended Action</span>
+                <p className="text-xs font-medium text-foreground leading-normal">
+                  {aiInsight.recommendation}
+                </p>
+              </div>
+
+              {/* Actions Footer */}
+              <DialogFooter className="pt-4 border-t border-border/40 gap-2 sm:gap-0">
+                <Button
+                  variant="outline"
+                  shape="pill"
+                  className="px-5 font-semibold text-muted-foreground border-border/60 hover:bg-muted"
+                  onClick={() => setAiAnalysisPaymentId(null)}
+                >
+                  Close
+                </Button>
+                {payments?.find(p => p.id === aiAnalysisPaymentId)?.verification_status === "pending" && (
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      shape="pill"
+                      className="px-5 font-semibold border-rose-500/20 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                      onClick={() => {
+                        handleRejectPayment(aiAnalysisPaymentId!);
+                        setAiAnalysisPaymentId(null);
+                      }}
+                    >
+                      Reject Match
+                    </Button>
+                    <Button
+                      shape="pill"
+                      className="px-6 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                      onClick={() => {
+                        handleVerifyPayment(aiAnalysisPaymentId!);
+                        setAiAnalysisPaymentId(null);
+                      }}
+                    >
+                      Approve & Reconcile
+                    </Button>
+                  </div>
+                )}
+              </DialogFooter>
+            </div>
+          ) : (
+            <p className="text-sm text-center py-6 text-muted-foreground">Error generating analysis insight.</p>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

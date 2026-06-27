@@ -11,6 +11,10 @@ import refundRoutes from "./routes/refunds.js";
 import inviteRoutes from "./routes/invites.js";
 import paystackRoutes from "./routes/paystack.js";
 import paymentRoutes from "./routes/payments.js";
+import analyticsRoutes from "./routes/analytics.js";
+import automationRoutes from "./routes/automation.js";
+import monetizationRoutes from "./routes/monetization.js";
+import billingRoutes from "./routes/billing.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "5000", 10);
@@ -52,6 +56,10 @@ app.use("/api/refunds", refundRoutes);
 app.use("/api/invites", inviteRoutes);
 app.use("/api/paystack", paystackRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/analytics", analyticsRoutes);
+app.use("/api/automation", automationRoutes);
+app.use("/api/monetization", monetizationRoutes);
+app.use("/api/billing", billingRoutes);
 
 // ── Start ──
 app.listen(PORT, () => {
