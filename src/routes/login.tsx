@@ -20,7 +20,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Sign in — Todella" }] }),
   component: LoginPage,
 });
 
@@ -73,7 +73,7 @@ function LoginPage() {
             </div>
             <div className="leading-tight text-left">
               <div className="text-xl font-display font-semibold text-[#0a1b33] leading-none">
-                PAYVERIFY
+                TODELLA
               </div>
               <div className="text-[9px] text-slate-450 font-bold tracking-wider uppercase mt-0.5">
                 Payment Verification
@@ -137,7 +137,7 @@ function LoginPage() {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200/50"></div>
               </div>
-              <span className="relative bg-white px-3 text-[10px] text-slate-400 uppercase font-bold tracking-wider font-mono">New to PayVerify?</span>
+              <span className="relative bg-white px-3 text-[10px] text-slate-400 uppercase font-bold tracking-wider font-mono">New to Todella?</span>
             </div>
             <Button variant="outline" className="w-full h-11 text-xs font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full font-sans" asChild>
               <Link to="/signup">Create your account</Link>

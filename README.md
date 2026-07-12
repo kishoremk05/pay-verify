@@ -1,4 +1,4 @@
-# PayVerify — Premium Payment Verification & Auto-Reconciling System
+# Todella — Premium Payment Verification & Auto-Reconciling System
 
 <div align="center">
   <h3>Auto-reconcile Paystack, bank statement CSVs, and manual ledgers with hairline precision. Eliminate leaks instantly.</h3>
@@ -8,7 +8,7 @@
 
 ## 💎 Project Overview
 
-**PayVerify** is a premium, high-integrity financial reconciliation application designed for modern high-volume finance teams. Powered by TanStack Start, Nitro, and Tailwind CSS, it offers a real-time responsive platform that helps businesses parse, match, and audit transactional ledgers instantly.
+**Todella** is a premium, high-integrity financial reconciliation application designed for modern high-volume finance teams. Powered by TanStack Start, Nitro, and Tailwind CSS, it offers a real-time responsive platform that helps businesses parse, match, and audit transactional ledgers instantly.
 
 ---
 

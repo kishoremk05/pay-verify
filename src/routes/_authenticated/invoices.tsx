@@ -65,7 +65,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/invoices")({
-  head: () => ({ meta: [{ title: "Invoices — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Invoices — Todella" }] }),
   component: InvoicesPage,
 });
 

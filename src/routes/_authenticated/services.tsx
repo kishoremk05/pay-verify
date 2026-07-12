@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/services")({
-  head: () => ({ meta: [{ title: "Services — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Services — Todella" }] }),
   component: ServicesPage,
 });
 

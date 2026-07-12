@@ -20,11 +20,14 @@ import {
   X,
   ChevronRight,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+
+const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || "http://localhost:5000";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -33,8 +36,119 @@ import { Button } from "@/components/ui/button";
 
 import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-filter";
 
+function AIDashboardInsights({ stats, orgId }: { stats: any; orgId?: string }) {
+  const [summary, setSummary] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!orgId) return;
+    const cached = sessionStorage.getItem(`todella_dashboard_ai_summary_${orgId}`);
+    if (cached) {
+      setSummary(cached);
+    } else {
+      setSummary(null);
+    }
+  }, [orgId]);
+
+  const generateSummary = async () => {
+    if (!orgId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/ai/dashboard-summary`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          organization_id: orgId,
+          stats: {
+            expected: stats.expected,
+            received: stats.received,
+            due: stats.due,
+            partialCount: stats.partialCount,
+            unpaidCount: stats.unpaidCount,
+            duplicateCount: stats.duplicateCount,
+            mismatchCount: stats.mismatchCount,
+            completedRefundsCount: stats.completedRefundsCount,
+            completedRefundsAmount: stats.completedRefundsAmount,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to generate summary: status ${response.status}`);
+      }
+
+      const resData = await response.json();
+      if (resData.success && resData.summary) {
+        setSummary(resData.summary);
+        sessionStorage.setItem(`todella_dashboard_ai_summary_${orgId}`, resData.summary);
+      } else {
+        throw new Error(resData.error || "AI pipeline failure");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="border-purple-500/20 bg-gradient-to-r from-purple-500/10 to-indigo-500/5 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden p-6 border transition-all duration-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+            <Sparkles className="h-5 w-5 animate-pulse" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold tracking-tight text-foreground font-sans">AI Dashboard Insights</h3>
+            <p className="text-xs text-muted-foreground">Automated ledger analysis and auditing recommendations</p>
+          </div>
+        </div>
+        {!summary && !loading && (
+          <Button
+            onClick={generateSummary}
+            className="bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md px-5 h-9 text-xs rounded-full shrink-0"
+          >
+            Generate AI Insights
+          </Button>
+        )}
+      </div>
+
+      {loading && (
+        <div className="mt-4 flex items-center gap-2.5 text-sm text-muted-foreground animate-pulse">
+          <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
+          <span>Analyzing ledger reconciliation trends and checking duplicate payloads...</span>
+        </div>
+      )}
+
+      {error && (
+        <p className="mt-4 text-xs text-rose-500 font-medium">
+          Error loading insights: {error}. Please verify configuration.
+        </p>
+      )}
+
+      {summary && (
+        <div className="mt-4 text-sm text-foreground/90 leading-relaxed font-medium animate-fade-in border-t border-purple-500/10 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <p className="flex-1">{summary}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-[10px] text-muted-foreground hover:text-foreground h-7 rounded-lg"
+            onClick={generateSummary}
+            disabled={loading}
+          >
+            Regenerate
+          </Button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Todella" }] }),
   component: DashboardPage,
 });
 
@@ -50,8 +164,8 @@ function DashboardPage() {
 
   useEffect(() => {
     if (!organization?.id) return;
-    const dismissedKey = `payverify_onboarding_dismissed_${organization.id}`;
-    const firstSeenKey = `payverify_onboarding_first_seen_${organization.id}`;
+    const dismissedKey = `todella_onboarding_dismissed_${organization.id}`;
+    const firstSeenKey = `todella_onboarding_first_seen_${organization.id}`;
 
     const isDismissed = localStorage.getItem(dismissedKey) === "true";
     setWizardDismissed(isDismissed);
@@ -71,7 +185,7 @@ function DashboardPage() {
 
   const handleDismiss = () => {
     if (organization?.id) {
-      const dismissedKey = `payverify_onboarding_dismissed_${organization.id}`;
+      const dismissedKey = `todella_onboarding_dismissed_${organization.id}`;
       localStorage.setItem(dismissedKey, "true");
     }
     setWizardDismissed(true);
@@ -314,6 +428,11 @@ function DashboardPage() {
         </div>
         <DateRangeFilter onChange={setDateRange} />
       </div>
+
+      {/* AI Dashboard Insights */}
+      {data && (
+        <AIDashboardInsights stats={data} orgId={organization?.id} />
+      )}
 
       {/* Onboarding Wizard */}
       {showWizard && (

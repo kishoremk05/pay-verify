@@ -29,7 +29,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Create account — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Create account — Todella" }] }),
   component: SignupPage,
 });
 
@@ -154,7 +154,7 @@ function SignupPage() {
         }
       }
 
-      toast.success("Account created — welcome to PayVerify!");
+      toast.success("Account created — welcome to Todella!");
       navigate({ to: "/dashboard" });
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
@@ -191,7 +191,7 @@ function SignupPage() {
             </div>
             <div className="leading-tight text-left">
               <div className="text-xl font-display font-semibold text-[#0a1b33] leading-none">
-                PAYVERIFY
+                TODELLA
               </div>
               <div className="text-[9px] text-slate-450 font-bold tracking-wider uppercase mt-0.5">
                 Payment Verification

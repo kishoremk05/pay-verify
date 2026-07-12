@@ -135,7 +135,7 @@ router.post("/", async (req: Request, res: Response) => {
         dueDate: due_date,
         currency: orgCurrency,
         portalUrl,
-        organizationName: organization_name || "PayVerify",
+        organizationName: organization_name || "Todella",
         subscribedService: lineItemNames,
         accountNumber: customer?.account_number || undefined,
       });

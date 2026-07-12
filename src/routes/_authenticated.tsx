@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { AIAssistant } from "@/components/ai-assistant";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -77,8 +78,9 @@ function AuthenticatedLayout() {
               </div>
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background transition-colors duration-200">
+          <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background transition-colors duration-200 relative">
             <Outlet />
+            <AIAssistant />
           </main>
         </div>
       </div>

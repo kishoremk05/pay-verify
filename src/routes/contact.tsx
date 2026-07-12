@@ -21,8 +21,8 @@ type FormValues = z.infer<typeof schema>;
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact Sales & Technical Support — PayVerify" },
-      { name: "description", content: "Reach out to PayVerify integration specialists for high-integrity payment reconciliation." }
+      { title: "Contact Sales & Technical Support — Todella" },
+      { name: "description", content: "Reach out to Todella integration specialists for high-integrity payment reconciliation." }
     ],
   }),
   component: ContactPage,
@@ -95,8 +95,8 @@ function ContactPage() {
                   <div>
                     <h3 className="font-display font-semibold text-[#0a1b33]">Enterprise Relations</h3>
                     <p className="text-[10px] font-mono text-slate-400 mt-0.5">// SALES &amp; DEMOS</p>
-                    <a href="mailto:sales@payverify.com" className="text-sm text-[#0a1b33] hover:underline block mt-3 font-semibold font-sans">
-                      sales@payverify.com
+                    <a href="mailto:sales@todella.com" className="text-sm text-[#0a1b33] hover:underline block mt-3 font-semibold font-sans">
+                      sales@todella.com
                     </a>
                   </div>
                 </div>
@@ -116,8 +116,8 @@ function ContactPage() {
                   <div>
                     <h3 className="font-display font-semibold text-slate-900">Technical Helpdesk</h3>
                     <p className="text-[10px] font-mono text-slate-400 mt-0.5">// 24/7 COMPLIANCE &amp; DEPLOY</p>
-                    <a href="mailto:support@payverify.com" className="text-sm text-emerald-600 hover:underline block mt-3 font-semibold font-sans">
-                      support@payverify.com
+                    <a href="mailto:support@todella.com" className="text-sm text-emerald-600 hover:underline block mt-3 font-semibold font-sans">
+                      support@todella.com
                     </a>
                   </div>
                 </div>
@@ -137,8 +137,8 @@ function ContactPage() {
                   <div>
                     <h3 className="font-display font-semibold text-slate-900">Security Response Desk</h3>
                     <p className="text-[10px] font-mono text-slate-400 mt-0.5">// RECON PIPELINE VULNERABILITIES</p>
-                    <a href="mailto:security@payverify.com" className="text-sm text-rose-600 hover:underline block mt-3 font-semibold font-sans">
-                      security@payverify.com
+                    <a href="mailto:security@todella.com" className="text-sm text-rose-600 hover:underline block mt-3 font-semibold font-sans">
+                      security@todella.com
                     </a>
                   </div>
                 </div>

@@ -6,8 +6,8 @@ import { Navbar, Footer } from "./index";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy & Ledger Security — PayVerify" },
-      { name: "description", content: "Understand how PayVerify enforces rigid row-level ledger isolation, multi-tenant databases, and cryptographic statement shielding." }
+      { title: "Privacy Policy & Ledger Security — Todella" },
+      { name: "description", content: "Understand how Todella enforces rigid row-level ledger isolation, multi-tenant databases, and cryptographic statement shielding." }
     ],
   }),
   component: PrivacyPage,
@@ -28,7 +28,7 @@ function PrivacyPage() {
     {
       icon: Key,
       title: "3. Cryptographic Token Protections",
-      content: "Client integration keys and credentials utilized for payment processor webhooks (such as Stripe or Paystack API tokens) are enveloped using high-strength hardware security modules (HSM). PayVerify developers and administrators have zero plaintext exposure to these integration parameters."
+      content: "Client integration credentials utilized for payment processor webhooks (such as Stripe or Paystack API tokens) are enveloped using high-strength hardware security modules (HSM). Todella developers and administrators have zero plaintext exposure to these integration parameters."
     },
     {
       icon: Eye,
@@ -77,7 +77,7 @@ function PrivacyPage() {
             <div className="border-b border-slate-100 pb-8">
               <span className="text-xs font-mono text-slate-450 uppercase tracking-widest block font-bold mb-2">// SPECIFICATION STATUS</span>
               <p className="text-sm text-slate-500 leading-relaxed font-sans font-light">
-                This specification document was last updated on <span className="font-semibold text-slate-800">May 23, 2026</span>. By connecting your active client ledgers and processor APIs to PayVerify, you agree to these operational security constraints.
+                This specification document was last updated on <span className="font-semibold text-slate-800">May 23, 2026</span>. By connecting your active client ledgers and processor APIs to Todella, you agree to these operational security constraints.
               </p>
             </div>
 

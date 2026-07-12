@@ -14,7 +14,7 @@ import { DateRangeFilter, DateRangeFilterValue } from "@/components/date-range-f
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/reports")({
-  head: () => ({ meta: [{ title: "Reports — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Reports — Todella" }] }),
   component: ReportsPage,
 });
 

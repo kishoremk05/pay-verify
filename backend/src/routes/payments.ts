@@ -44,6 +44,7 @@ router.post("/reconcile-batch", async (req: Request, res: Response) => {
       paid_by_phone: r.paid_by_phone || null,
       relationship: r.relationship || null,
       currency: r.currency || "NGN",
+      customer_id: r.customer_id || null,
     }));
 
     const result = await reconcileBatch(organization_id, inputs);

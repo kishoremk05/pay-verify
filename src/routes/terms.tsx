@@ -6,7 +6,7 @@ import { Navbar, Footer } from "./index";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms of Use & Service Guidelines — PayVerify" },
+      { title: "Terms of Use & Service Guidelines — Todella" },
       { name: "description", content: "Review standard terms, operational limits, multi-tenant database fair-use guidelines, and ledger matching liabilities." }
     ],
   }),
@@ -18,12 +18,12 @@ function TermsPage() {
     {
       icon: Scale,
       title: "1. Service Access & Multi-Tenant Fair Use",
-      content: "PayVerify grants you a non-exclusive, non-transferable right to access the cloud-hosted payment matching pipelines. To guarantee ultra-low latencies for all active financial spaces, automated uploads are governed by transactional rate limits of 100,000 matches/hour per tenant."
+      content: "Todella grants you a non-exclusive, non-transferable right to access the cloud-hosted payment matching pipelines. To guarantee ultra-low latencies for all active financial spaces, automated uploads are governed by transactional rate limits of 100,000 matches/hour per tenant."
     },
     {
       icon: CheckCircle2,
       title: "2. Precision & Matching Liabilities",
-      content: "While our Active Recon Engine employs high-precision hashing algorithms to isolate mismatched payloads and duplicate identifiers, manual audit verification controls remain the ultimate ledger authority. PayVerify is an advisor tool and holds no direct liability for ledger balancing errors."
+      content: "While our Active Recon Engine employs high-precision hashing algorithms to isolate mismatched payloads and duplicate identifiers, manual audit verification controls remain the ultimate ledger authority. Todella is an advisor tool and holds no direct liability for ledger balancing errors."
     },
     {
       icon: AlertTriangle,
@@ -77,7 +77,7 @@ function TermsPage() {
             <div className="border-b border-slate-100 pb-8">
               <span className="text-xs font-mono text-slate-450 uppercase tracking-widest block font-bold mb-2">// LEGAL ENFORCEABILITY</span>
               <p className="text-sm text-slate-500 leading-relaxed font-sans font-light">
-                By deploying the PayVerify diagnostic packages or utilizing the automated matching API pipelines, you signify consent to the following parameters. Please review these operational rules.
+                By deploying the Todella diagnostic packages or utilizing the automated matching API pipelines, you signify consent to the following parameters. Please review these operational rules.
               </p>
             </div>
 

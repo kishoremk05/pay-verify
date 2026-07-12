@@ -45,7 +45,7 @@ const SUPPORTED_CURRENCIES = [
 ];
 
 export const Route = createFileRoute("/_authenticated/settings/")({
-  head: () => ({ meta: [{ title: "Settings — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Settings — Todella" }] }),
   component: SettingsPage,
 });
 
@@ -445,8 +445,8 @@ function SettingsPage() {
               <Button
                 onClick={() => {
                   if (organization?.id) {
-                    localStorage.removeItem(`payverify_onboarding_dismissed_${organization.id}`);
-                    localStorage.removeItem(`payverify_onboarding_first_seen_${organization.id}`);
+                    localStorage.removeItem(`todella_onboarding_dismissed_${organization.id}`);
+                    localStorage.removeItem(`todella_onboarding_first_seen_${organization.id}`);
                     toast.success("Onboarding guide has been reset! Go to Dashboard to view it.");
                   } else {
                     toast.error("Organization not loaded.");

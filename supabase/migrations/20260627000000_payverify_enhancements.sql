@@ -1,5 +1,5 @@
 -- =========================================================================
--- DATABASE MIGRATION: PAYVERIFY ENHANCEMENTS (PHASE 2)
+-- DATABASE MIGRATION: TODELLA ENHANCEMENTS (PHASE 2)
 -- =========================================================================
 
 -- 1. AI Reconciliation Insights table

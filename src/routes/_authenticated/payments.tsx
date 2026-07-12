@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/payments")({
-  head: () => ({ meta: [{ title: "Payments — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Payments — Todella" }] }),
   component: PaymentsPage,
 });
 
@@ -460,11 +460,13 @@ function PaymentsPage() {
   }, [aiAnalysisPaymentId, payments, customers]);
 
   const filtered = (payments ?? []).filter((p) => {
-    // Filter by verification status for Ledger vs Review tab
-    const isPendingOrRejected = p.verification_status === "pending" || p.verification_status === "rejected";
-    if (activeTab === "ledger" && isPendingOrRejected) return false;
-    if (activeTab === "review" && !isPendingOrRejected) return false;
+    // Ledger = all payments (verified or pending) that are matched to a customer
+    // Review Queue = unmatched payments (no customer_id) or explicitly rejected ones
+    const isUnmatched = !p.customer_id || p.verification_status === "rejected";
+    if (activeTab === "ledger" && isUnmatched) return false;
+    if (activeTab === "review" && !isUnmatched) return false;
 
+    if (!search) return true;
     return [
       p.reference,
       p.payment_method,
@@ -648,8 +650,23 @@ function PaymentsPage() {
       };
     });
 
-    const { error } = await supabase.from("payments").insert(rows);
-    if (error) throw new Error(error.message);
+    // Send mapped rows to the backend reconciliation endpoint
+    const BACKEND_URL = (import.meta as any).env?.VITE_BACKEND_URL || "http://localhost:5000";
+    const response = await fetch(`${BACKEND_URL}/api/payments/reconcile-batch`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        organization_id: organization.id,
+        rows,
+      }),
+    });
+
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({}));
+      throw new Error(errJson.error || `Batch reconciliation failed with status ${response.status}`);
+    }
 
     qc.invalidateQueries({ queryKey: ["payments"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
@@ -1072,19 +1089,12 @@ function PaymentsPage() {
                         <TableHead className="font-bold text-foreground py-4 pl-2">
                           Customer Name
                         </TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Customer Code</TableHead>
                         <TableHead className="font-bold text-foreground py-4">Account Number</TableHead>
                         <TableHead className="font-bold text-foreground py-4">Origin Source</TableHead>
-                        <TableHead className="font-bold text-foreground py-4 text-right">
-                          Expected Amount
-                        </TableHead>
-                        <TableHead className="font-bold text-foreground py-4 text-right">
-                          Paid Amount
-                        </TableHead>
-                        <TableHead className="font-bold text-foreground py-4 text-right">
-                          Balance Due
-                        </TableHead>
-                        <TableHead className="font-bold text-foreground py-4">Match Status</TableHead>
-                        <TableHead className="font-bold text-foreground py-4">Verification</TableHead>
+                        <TableHead className="font-bold text-foreground py-4 text-right">Amount Paid</TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Status</TableHead>
+                        <TableHead className="font-bold text-foreground py-4">Notes</TableHead>
                         <TableHead className="font-bold text-foreground py-4">Processed Date</TableHead>
                         {!isReadOnly && (
                           <TableHead className="font-bold text-foreground py-4 text-right pr-6">
@@ -1159,6 +1169,18 @@ function PaymentsPage() {
                                 </span>
                               )}
                             </TableCell>
+                            <TableCell className="py-4 font-mono text-xs">
+                              {(() => {
+                                const cust = getCustomer(p.customer_id);
+                                return cust?.customer_code ? (
+                                  <span className="font-mono font-bold text-xs bg-primary/5 text-primary px-2.5 py-1 rounded-md border border-primary/15 tracking-wide">
+                                    {cust.customer_code}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground/50 italic">—</span>
+                                );
+                              })()}
+                            </TableCell>
                             <TableCell className="py-4 font-mono font-bold text-xs">
                               {p.customer_id && customerAccountNumber(p.customer_id) !== "—" ? (
                                 <span className="text-foreground bg-secondary/50 dark:bg-secondary px-2.5 py-1 rounded-md border border-border/80">
@@ -1177,41 +1199,11 @@ function PaymentsPage() {
                               </Badge>
                             </TableCell>
                             <TableCell className="py-4 text-right font-extrabold text-foreground">
-                              {(() => {
-                                const cust = getCustomer(p.customer_id);
-                                return cust
-                                  ? `${p.currency || "GHS"} ${cust.expected_amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                  : "—";
-                              })()}
-                            </TableCell>
-                            <TableCell className="py-4 text-right font-extrabold text-foreground">
                               {p.currency || "GHS"}{" "}
                               {p.amount_paid.toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
-                            </TableCell>
-                            <TableCell className="py-4 text-right font-extrabold">
-                              {(() => {
-                                const cust = getCustomer(p.customer_id);
-                                return cust ? (
-                                  <span
-                                    className={
-                                      cust.due_amount <= 0
-                                        ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
-                                        : "text-amber-600 dark:text-amber-400 font-extrabold"
-                                    }
-                                  >
-                                    {p.currency || "GHS"}{" "}
-                                    {cust.due_amount.toLocaleString(undefined, {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}
-                                  </span>
-                                ) : (
-                                  "—"
-                                );
-                              })()}
                             </TableCell>
                             <TableCell className="py-4">
                               <Badge
@@ -1221,13 +1213,12 @@ function PaymentsPage() {
                                 {p.status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="py-4">
-                              <Badge
-                                variant="outline"
-                                className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${verBadge}`}
-                              >
-                                {p.verification_status === "auto_verified" ? "Auto Verified" : "Staff Verified"}
-                              </Badge>
+                            <TableCell className="py-4 text-xs text-muted-foreground max-w-[160px] truncate">
+                              {p.notes ? (
+                                <span title={p.notes}>{p.notes}</span>
+                              ) : (
+                                <span className="italic text-muted-foreground/40">—</span>
+                              )}
                             </TableCell>
                             <TableCell className="py-4 font-semibold text-muted-foreground">
                               {formatDate(p.payment_date)}

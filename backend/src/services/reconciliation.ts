@@ -24,6 +24,7 @@ interface ReconcileInput {
   paid_by_phone?: string | null;
   relationship?: string | null;
   currency?: string;
+  customer_id?: string | null;
 }
 
 interface ReconcileResult {
@@ -89,31 +90,51 @@ async function checkDuplicate(
  * Core reconciliation function.
  * Takes a single transaction input, calculates a matching score, and creates a linked payment record.
  */
-export async function reconcileTransaction(input: ReconcileInput): Promise<ReconcileResult> {
+export async function reconcileTransaction(
+  input: ReconcileInput,
+  prefetched?: {
+    orgCurrency?: string;
+    customers?: any[];
+    invoices?: any[];
+  }
+): Promise<ReconcileResult> {
   const orgId = input.organization_id;
 
   // Step 1: Fetch organization currency to ensure currency-aware matching
-  const { data: org } = await supabaseAdmin
-    .from("organizations")
-    .select("currency")
-    .eq("id", orgId)
-    .single();
-  const orgCurrency = org?.currency || "GHS";
+  let orgCurrency: string;
+  if (prefetched?.orgCurrency) {
+    orgCurrency = prefetched.orgCurrency;
+  } else {
+    const { data: org } = await supabaseAdmin
+      .from("organizations")
+      .select("currency")
+      .eq("id", orgId)
+      .single();
+    orgCurrency = org?.currency || "GHS";
+  }
 
   const currencyMatch = !input.currency || input.currency.toUpperCase() === orgCurrency.toUpperCase();
   const currencyPenalty = currencyMatch ? 0 : -30;
 
-  // Step 2: Fetch candidate customers and invoices in this organization
-  const { data: allCustomers } = await supabaseAdmin
-    .from("customers")
-    .select("id, name, phone, email, customer_code, expected_amount, due_amount")
-    .eq("organization_id", orgId);
+  // Step 2: Fetch candidate customers and invoices in this organization if not prefetched
+  let allCustomers = prefetched?.customers;
+  if (!allCustomers) {
+    const { data } = await supabaseAdmin
+      .from("customers")
+      .select("id, name, phone, email, customer_code, expected_amount, due_amount")
+      .eq("organization_id", orgId);
+    allCustomers = data || [];
+  }
 
-  const { data: allInvoices } = await supabaseAdmin
-    .from("invoices")
-    .select("id, customer_id, invoice_number, amount, status")
-    .eq("organization_id", orgId)
-    .neq("status", "paid");
+  let allInvoices = prefetched?.invoices;
+  if (!allInvoices) {
+    const { data } = await supabaseAdmin
+      .from("invoices")
+      .select("id, customer_id, invoice_number, amount, status")
+      .eq("organization_id", orgId)
+      .neq("status", "paid");
+    allInvoices = data || [];
+  }
 
   // Step 3: Match heuristics and scoring
   let bestCustomer: any = null;
@@ -177,6 +198,11 @@ export async function reconcileTransaction(input: ReconcileInput): Promise<Recon
     // F. Currency Penalty
     score += currencyPenalty;
 
+    // G. Explicit customer ID match (+60 points to guarantee auto-verify threshold)
+    if (input.customer_id && c.id === input.customer_id) {
+      score += 60;
+    }
+
     if (score > maxScore) {
       maxScore = score;
       bestCustomer = c;
@@ -184,9 +210,34 @@ export async function reconcileTransaction(input: ReconcileInput): Promise<Recon
     }
   }
 
-  const confidenceScore = Math.max(0, Math.min(100, maxScore));
-  const customerId = bestCustomer?.id || null;
-  const invoiceId = bestInvoice?.id || null;
+  let confidenceScore = Math.max(0, Math.min(100, maxScore));
+  let customerId = bestCustomer?.id || null;
+  let invoiceId = bestInvoice?.id || null;
+  let aiAuditResult: any = null;
+
+  // Step 3.5: AI Auditing for ambiguous matching cases (heuristic score between 20 and 49)
+  // Skip AI if we are already auto-verified (score >= 50) or if the customer ID was explicitly provided by the user.
+  if (customerId && confidenceScore >= 20 && confidenceScore < 50 && !input.customer_id) {
+    try {
+      console.log(`[Reconciliation] Triggering AI match audit for customer "${bestCustomer.name}" (heuristic score: ${confidenceScore})`);
+      const { auditReconciliationWithAI } = await import("./ai.js");
+      aiAuditResult = await auditReconciliationWithAI(
+        {
+          paid_by_name: input.paid_by_name || input.customer_name,
+          paid_by_phone: input.paid_by_phone || input.customer_phone || input.mobile_number,
+          reference: input.reference,
+          amount_paid: input.amount,
+        },
+        bestCustomer,
+        confidenceScore
+      );
+      
+      console.log(`[Reconciliation] AI Match Audit Decision: ${aiAuditResult.matchDecision} (AI Score: ${aiAuditResult.confidenceScore})`);
+      confidenceScore = aiAuditResult.confidenceScore;
+    } catch (e: any) {
+      console.warn("[Reconciliation] AI matching audit failed:", e.message);
+    }
+  }
 
   // Step 4: Check duplicates
   const isDuplicate = await checkDuplicate(
@@ -208,7 +259,14 @@ export async function reconcileTransaction(input: ReconcileInput): Promise<Recon
 
   // Step 5: Determine verification status based on threshold (50 points)
   // If matched and score >= 50, it auto-verifies. Else, it stays pending review.
-  const verificationStatus = (customerId && confidenceScore >= 50) ? "auto_verified" : "pending";
+  let verificationStatus = "pending";
+  if (customerId) {
+    if (aiAuditResult) {
+      verificationStatus = aiAuditResult.matchDecision === "approve" ? "auto_verified" : "pending";
+    } else {
+      verificationStatus = confidenceScore >= 50 ? "auto_verified" : "pending";
+    }
+  }
 
   // Step 6: Determine outcome status
   let outcome: "matched" | "partial" | "overpaid" | "unmatched" = "unmatched";
@@ -231,6 +289,15 @@ export async function reconcileTransaction(input: ReconcileInput): Promise<Recon
   else if (outcome === "overpaid") paymentStatus = "mismatch";
   else if (outcome === "unmatched") paymentStatus = "paid";
 
+  // Build Audit/Reconciliation Notes
+  let notes = customerId
+    ? `Reconciled via ${input.source}. Match score: ${confidenceScore}. Status: ${outcome}. Verification: ${verificationStatus}.`
+    : `Unmatched transaction from ${input.source}. Verification: pending staff match.`;
+  
+  if (aiAuditResult?.reason) {
+    notes += ` [AI Audit: ${aiAuditResult.reason}]`;
+  }
+
   // Step 7: Insert payment record
   const { data: payment, error: payErr } = await supabaseAdmin
     .from("payments")
@@ -242,9 +309,7 @@ export async function reconcileTransaction(input: ReconcileInput): Promise<Recon
       payment_method: input.channel || null,
       reference: input.reference || null,
       payment_date: input.payment_date || new Date().toISOString().slice(0, 10),
-      notes: customerId
-        ? `Reconciled via ${input.source}. Match score: ${confidenceScore}. Status: ${outcome}. Verification: ${verificationStatus}.`
-        : `Unmatched transaction from ${input.source}. Verification: pending staff match.`,
+      notes,
       status: paymentStatus,
       source: input.source,
       transaction_id: input.transaction_id || null,
@@ -263,6 +328,24 @@ export async function reconcileTransaction(input: ReconcileInput): Promise<Recon
   if (payErr || !payment) {
     console.error("[Reconciliation] Payment insert error:", payErr?.message);
     return { status: "unmatched", message: `Failed to insert payment: ${payErr?.message}` };
+  }
+
+  // Step 7.5: Run fraud anomaly checks asynchronously in the background to avoid blocking HTTP imports
+  if (customerId && verificationStatus === "auto_verified") {
+    runBackgroundFraudDetection(
+      payment.id,
+      customerId,
+      orgId,
+      invoiceId,
+      input.amount,
+      input.channel || null,
+      input.source,
+      input.bank_name || null,
+      input.reference || null,
+      (input.paid_by_name || input.customer_name) || null
+    ).catch((err) => {
+      console.error("[Reconciliation] Background fraud detection trigger failed:", err.message);
+    });
   }
 
   // Step 8: If overpayment and verified, create alert & refund request
@@ -318,7 +401,77 @@ export async function reconcileTransaction(input: ReconcileInput): Promise<Recon
 }
 
 /**
+ * Background worker task for running fraud and anomaly checks.
+ */
+async function runBackgroundFraudDetection(
+  paymentId: string,
+  customerId: string,
+  orgId: string,
+  invoiceId: string | null,
+  amount: number,
+  channel: string | null,
+  source: string,
+  bankName: string | null,
+  reference: string | null,
+  paidByName: string | null
+) {
+  try {
+    const { detectPaymentAnomaly } = await import("./fraud-detection.js");
+    const fraudResult = await detectPaymentAnomaly(
+      {
+        amount_paid: amount,
+        payment_method: channel || "bank",
+        source,
+        bank_name: bankName,
+        reference,
+        paid_by_name: paidByName,
+      },
+      customerId
+    );
+
+    if (fraudResult.isAnomalous) {
+      const fraudReasons = fraudResult.reasons;
+
+      // Get current notes to append risk warning
+      const { data: currentPayment } = await supabaseAdmin
+        .from("payments")
+        .select("notes")
+        .eq("id", paymentId)
+        .single();
+
+      let updatedNotes = currentPayment?.notes || "";
+      updatedNotes += ` [Risk Alert: ${fraudReasons.join("; ")}]`;
+
+      // Update payment to demote verification_status to pending
+      await supabaseAdmin
+        .from("payments")
+        .update({
+          verification_status: "pending",
+          notes: updatedNotes,
+        })
+        .eq("id", paymentId);
+
+      // Insert security fraud warning alert
+      await supabaseAdmin.from("alerts").insert({
+        organization_id: orgId,
+        invoice_id: invoiceId,
+        payment_id: paymentId,
+        type: "fraud_warning",
+        amount,
+        message: `Suspicious payment flags: ${fraudReasons.join(". ")}`,
+      });
+
+      console.warn(`[Reconciliation-Background] Flagged high risk anomaly for payment ${paymentId}. Demoted to pending. Reasons: ${fraudReasons.join("; ")}`);
+    }
+  } catch (err: any) {
+    console.error("[Reconciliation-Background] Fraud detection background task failed:", err.message);
+  }
+}
+
+/**
  * Batch reconciliation for CSV/Excel imports.
+ * Uses controlled concurrency (5 at a time) to prevent DB deadlocks
+ * while still being much faster than sequential processing.
  */
 export async function reconcileBatch(orgId: string, rows: ReconcileInput[]): Promise<{
   total: number;
@@ -332,21 +485,51 @@ export async function reconcileBatch(orgId: string, rows: ReconcileInput[]): Pro
   const results: ReconcileResult[] = [];
   let matched = 0, partial = 0, overpaid = 0, duplicates = 0, unmatched = 0;
 
-  for (const row of rows) {
-    const result = await reconcileTransaction({
-      ...row,
-      organization_id: orgId,
-    });
-    results.push(result);
+  // Pre-fetch shared data once for the entire batch (3 queries instead of N×3)
+  const [orgResult, customersResult, invoicesResult] = await Promise.all([
+    supabaseAdmin.from("organizations").select("currency").eq("id", orgId).single(),
+    supabaseAdmin.from("customers").select("id, name, phone, email, customer_code, expected_amount, due_amount").eq("organization_id", orgId),
+    supabaseAdmin.from("invoices").select("id, customer_id, invoice_number, amount, status").eq("organization_id", orgId).neq("status", "paid"),
+  ]);
 
-    switch (result.status) {
-      case "matched": matched++; break;
-      case "partial": partial++; break;
-      case "overpaid": overpaid++; break;
-      case "duplicate": duplicates++; break;
-      case "unmatched": unmatched++; break;
+  const prefetched = {
+    orgCurrency: orgResult.data?.currency || "GHS",
+    customers: customersResult.data || [],
+    invoices: invoicesResult.data || [],
+  };
+
+  console.log(`[Reconciliation] Pre-fetched ${prefetched.customers.length} customers and ${prefetched.invoices.length} invoices for batch of ${rows.length}`);
+
+  // Process in chunks of 5 to avoid PostgreSQL deadlocks from concurrent
+  // row-level locks on the same customer records (trigger: recalculate_customer_reconciliation)
+  const CHUNK_SIZE = 5;
+  const chunks: ReconcileInput[][] = [];
+  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+    chunks.push(rows.slice(i, i + CHUNK_SIZE));
+  }
+
+  for (const chunk of chunks) {
+    const chunkResults = await Promise.all(
+      chunk.map((row) =>
+        reconcileTransaction(
+          { ...row, organization_id: orgId },
+          prefetched
+        )
+      )
+    );
+
+    for (const result of chunkResults) {
+      results.push(result);
+      switch (result.status) {
+        case "matched": matched++; break;
+        case "partial": partial++; break;
+        case "overpaid": overpaid++; break;
+        case "duplicate": duplicates++; break;
+        case "unmatched": unmatched++; break;
+      }
     }
   }
 
+  console.log(`[Reconciliation] Batch complete — matched: ${matched}, partial: ${partial}, overpaid: ${overpaid}, duplicates: ${duplicates}, unmatched: ${unmatched}`);
   return { total: rows.length, matched, partial, overpaid, duplicates, unmatched, results };
 }

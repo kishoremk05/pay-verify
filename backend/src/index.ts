@@ -1,5 +1,5 @@
 /**
- * PayVerify Backend Server
+ * Todella Backend Server
  * Express + TypeScript API for Invoice Workflow
  */
 
@@ -15,6 +15,7 @@ import analyticsRoutes from "./routes/analytics.js";
 import automationRoutes from "./routes/automation.js";
 import monetizationRoutes from "./routes/monetization.js";
 import billingRoutes from "./routes/billing.js";
+import aiRoutes from "./routes/ai.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "5000", 10);
@@ -45,7 +46,7 @@ app.use(express.json({ limit: "15mb" })); // Large limit for Base64 receipt imag
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
-    service: "PayVerify Invoice Workflow API",
+    service: "Todella Invoice Workflow API",
     timestamp: new Date().toISOString(),
   });
 });
@@ -60,12 +61,13 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/automation", automationRoutes);
 app.use("/api/monetization", monetizationRoutes);
 app.use("/api/billing", billingRoutes);
+app.use("/api/ai", aiRoutes);
 
 // ── Start ──
 app.listen(PORT, () => {
   console.log(`\n  ┌──────────────────────────────────────────────┐`);
   console.log(`  │                                              │`);
-  console.log(`  │   🚀 PayVerify Backend running on :${PORT}      │`);
+  console.log(`  │   🚀 Todella Backend running on :${PORT}       │`);
   console.log(`  │                                              │`);
   console.log(`  │   Health:  http://localhost:${PORT}/api/health   │`);
   console.log(`  │   API:     http://localhost:${PORT}/api/invoices │`);

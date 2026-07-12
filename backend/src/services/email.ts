@@ -166,7 +166,7 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<
                     <p style="margin:0 0 4px 0;font-size:12px;font-weight:800;color:#0f172a;text-transform:uppercase;letter-spacing:0.5px;">Payment Method</p>
                     <p style="margin:0 0 16px 0;font-size:12px;color:#475569;line-height:1.4;">
                       Bank Transfer or Card Payment.<br />
-                      Click below to pay via the secure PayVerify portal.
+                      Click below to pay via the secure Todella portal.
                     </p>
                     <!-- Muted Luxury Gold-Bronzed Button matching Borcelle brand colors -->
                     <a href="${params.portalUrl}" style="display:inline-block;background-color:#d4af37;color:#ffffff;text-decoration:none;font-weight:700;font-size:12px;padding:12px 24px;border-radius:4px;box-shadow:0 4px 12px rgba(212,175,55,0.25);text-transform:uppercase;letter-spacing:0.5px;">
@@ -225,10 +225,10 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="left" style="font-size:11px;color:#ffffff;font-weight:600;letter-spacing:0.3px;">
-                    PayVerify Ltd | 📞 +234 123 4567
+                    Todella Ltd | 📞 +234 123 4567
                   </td>
                   <td align="right" style="font-size:11px;color:#ffffff;font-weight:600;">
-                    <a href="https://pay-verify-omega.vercel.app/" style="color:#ffffff;text-decoration:none;font-weight:700;">🌐 pay-verify-omega.vercel.app</a>
+                    <a href="https://todella-omega.vercel.app/" style="color:#ffffff;text-decoration:none;font-weight:700;">🌐 todella-omega.vercel.app</a>
                   </td>
                 </tr>
               </table>
@@ -266,7 +266,7 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<
         },
       });
 
-      const senderName = process.env.BREVO_SENDER_NAME || "PayVerify";
+      const senderName = process.env.BREVO_SENDER_NAME || "Todella";
       const info = await transporter.sendMail({
         from: `"${senderName}" <${smtpUser}>`,
         to: params.customerEmail,
@@ -289,7 +289,7 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<
       return { success: false, provider: "Brevo", error: "BREVO_API_KEY is not configured in backend/.env" };
     }
 
-    const senderName = process.env.BREVO_SENDER_NAME || "PayVerify";
+    const senderName = process.env.BREVO_SENDER_NAME || "Todella";
     const senderEmail = process.env.BREVO_SENDER_EMAIL || "trinnarysystems@gmail.com";
 
     try {
@@ -330,7 +330,7 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<
     return { success: false, provider: "Resend", error: "RESEND_API_KEY is not configured in backend/.env" };
   }
 
-  const senderName = process.env.BREVO_SENDER_NAME || "PayVerify";
+  const senderName = process.env.BREVO_SENDER_NAME || "Todella";
   const sandboxRedirectEmail = process.env.RESEND_SANDBOX_REDIRECT || "trinnarysystems@gmail.com";
 
   try {
@@ -470,7 +470,7 @@ export async function sendInvitationEmail(params: SendInvitationEmailParams): Pr
                 Hello,
               </p>
               <p style="margin:0 0 20px 0;">
-                <strong>${params.invitedBy}</strong> has invited you to join the <strong>${params.organizationName}</strong> workspace on PayVerify. 
+                <strong>${params.invitedBy}</strong> has invited you to join the <strong>${params.organizationName}</strong> workspace on Todella. 
                 You have been assigned the role of <strong>${friendlyRole}</strong>.
               </p>
               
@@ -532,10 +532,10 @@ export async function sendInvitationEmail(params: SendInvitationEmailParams): Pr
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="left" style="font-size:11px;color:#ffffff;font-weight:600;letter-spacing:0.3px;">
-                    PayVerify Ltd | 📞 +234 123 4567
+                    Todella Ltd | 📞 +234 123 4567
                   </td>
                   <td align="right" style="font-size:11px;color:#ffffff;font-weight:600;">
-                    <a href="https://pay-verify-omega.vercel.app/" style="color:#ffffff;text-decoration:none;font-weight:700;">🌐 pay-verify-omega.vercel.app</a>
+                    <a href="https://todella-omega.vercel.app/" style="color:#ffffff;text-decoration:none;font-weight:700;">🌐 todella-omega.vercel.app</a>
                   </td>
                 </tr>
               </table>
@@ -573,11 +573,11 @@ export async function sendInvitationEmail(params: SendInvitationEmailParams): Pr
         },
       });
 
-      const senderName = process.env.BREVO_SENDER_NAME || "PayVerify";
+      const senderName = process.env.BREVO_SENDER_NAME || "Todella";
       const info = await transporter.sendMail({
         from: `"${senderName}" <${smtpUser}>`,
         to: params.email,
-        subject: `Invitation to join ${params.organizationName} on PayVerify`,
+        subject: `Invitation to join ${params.organizationName} on Todella`,
         html: htmlContent,
       });
 
@@ -596,7 +596,7 @@ export async function sendInvitationEmail(params: SendInvitationEmailParams): Pr
       return { success: false, provider: "Brevo", error: "BREVO_API_KEY is not configured in backend/.env" };
     }
 
-    const senderName = process.env.BREVO_SENDER_NAME || "PayVerify";
+    const senderName = process.env.BREVO_SENDER_NAME || "Todella";
     const senderEmail = process.env.BREVO_SENDER_EMAIL || "trinnarysystems@gmail.com";
 
     try {
@@ -611,7 +611,7 @@ export async function sendInvitationEmail(params: SendInvitationEmailParams): Pr
         body: JSON.stringify({
           sender: { name: senderName, email: senderEmail },
           to: [{ email: params.email }],
-          subject: `Invitation to join ${params.organizationName} on PayVerify`,
+          subject: `Invitation to join ${params.organizationName} on Todella`,
           htmlContent,
         }),
       });
@@ -637,13 +637,13 @@ export async function sendInvitationEmail(params: SendInvitationEmailParams): Pr
     return { success: false, provider: "Resend", error: "RESEND_API_KEY is not configured in backend/.env" };
   }
 
-  const senderName = process.env.BREVO_SENDER_NAME || "PayVerify";
+  const senderName = process.env.BREVO_SENDER_NAME || "Todella";
   const sandboxRedirectEmail = process.env.RESEND_SANDBOX_REDIRECT || "trinnarysystems@gmail.com";
 
   try {
     console.log(`[Email] Attempting Resend dispatch (Recipient: ${params.email})...`);
     let recipient = params.email;
-    let subject = `Invitation to join ${params.organizationName} on PayVerify`;
+    let subject = `Invitation to join ${params.organizationName} on Todella`;
     let finalHtml = htmlContent;
 
     const response = await fetch(RESEND_API_URL, {

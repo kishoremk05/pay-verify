@@ -66,7 +66,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/customers")({
-  head: () => ({ meta: [{ title: "Customers — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Customers — Todella" }] }),
   component: CustomersPage,
 });
 
@@ -848,18 +848,8 @@ function CustomersPage() {
                       Client Info
                     </TableHead>
                     <TableHead className="font-bold text-foreground py-4">Customer ID</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">
-                      Customer Status
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right">
-                      Total Billed
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right">
-                      Paid
-                    </TableHead>
-                    <TableHead className="font-bold text-foreground py-4 text-right">Due</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Payment Status</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Added By</TableHead>
+                    <TableHead className="font-bold text-foreground py-4">Email</TableHead>
+                    <TableHead className="font-bold text-foreground py-4">Account Number</TableHead>
                     {!isReadOnly && (
                       <TableHead className="font-bold text-foreground py-4 text-right pr-6">
                         Management
@@ -944,41 +934,21 @@ function CustomersPage() {
                             <span className="text-xs text-muted-foreground/50 italic">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="py-4">
-                          <Badge
-                            variant="outline"
-                            className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${statusBadgeClass}`}
-                          >
-                            {c.customer_status || "Active"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-4 text-right font-extrabold text-foreground">
-                          {formatCurrency(c.expected_amount, currency)}
-                        </TableCell>
-                        <TableCell className="py-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
-                          {formatCurrency(c.expected_amount - c.due_amount, currency)}
-                        </TableCell>
-                        <TableCell className="py-4 text-right font-extrabold">
-                          <span
-                            className={
-                              c.due_amount <= 0
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : "text-amber-600 dark:text-amber-400"
-                            }
-                          >
-                            {formatCurrency(c.due_amount, currency)}
-                          </span>
+                        <TableCell className="py-4 text-xs text-muted-foreground">
+                          {c.email ? (
+                            <span className="font-mono">{c.email}</span>
+                          ) : (
+                            <span className="italic text-muted-foreground/50">No email</span>
+                          )}
                         </TableCell>
                         <TableCell className="py-4">
-                          <Badge
-                            variant="outline"
-                            className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${badgeClass}`}
-                          >
-                            {c.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="py-4 text-xs font-semibold text-muted-foreground">
-                          {c.creator?.full_name || "System"}
+                          {c.account_number ? (
+                            <span className="font-mono font-bold text-xs bg-secondary/60 text-foreground px-2.5 py-1 rounded-md border border-border/60 tracking-wide">
+                              {c.account_number}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/50 italic">—</span>
+                          )}
                         </TableCell>
                         {!isReadOnly && (
                           <TableCell className="py-4 text-right pr-6">

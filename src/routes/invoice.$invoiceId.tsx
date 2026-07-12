@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/invoice/$invoiceId")({
-  head: () => ({ meta: [{ title: "Pay Invoice — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Pay Invoice — Todella" }] }),
   component: InvoicePortalPage,
 });
 
@@ -253,14 +253,14 @@ function InvoicePortalPage() {
 
   const isPaid = invoice.status === "paid";
   const isReview = invoice.status === "review_required";
-  const orgName = invoice.organizations?.name || "PayVerify";
+  const orgName = invoice.organizations?.name || "Todella";
   const initials =
     invoice.customers?.name
       ?.split(" ")
       .map((n: string) => n[0])
       .join("")
       .slice(0, 2)
-      .toUpperCase() || "PV";
+      .toUpperCase() || "TL";
 
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 font-sans relative overflow-hidden flex flex-col">
@@ -290,7 +290,7 @@ function InvoicePortalPage() {
 
           <div className="flex items-center gap-5">
             <a
-              href="mailto:support@payverify.com"
+              href="mailto:support@todella.com"
               className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors font-medium"
             >
               <HelpCircle className="h-3.5 w-3.5" />
@@ -755,9 +755,9 @@ function InvoicePortalPage() {
           <p className="text-[10px] text-slate-500">
             © {new Date().getFullYear()} {orgName}. All rights reserved.
           </p>
-          <p className="text-[10px] text-slate-600 flex items-center gap-1.5 justify-center">
+          <p className="text-[10px] text-slate-650 flex items-center gap-1.5 justify-center">
             <span>
-              Secured by <span className="font-bold text-indigo-400/80">PayVerify</span>
+              Secured by <span className="font-bold text-indigo-400/80">Todella</span>
             </span>
             <span>•</span>
             <span>End-to-end encrypted</span>

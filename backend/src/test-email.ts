@@ -27,7 +27,7 @@ async function runTest() {
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
     currency: "NGN",
     portalUrl: "http://localhost:8080/invoice/test-reconciliation-uuid",
-    organizationName: "PayVerify Dual Suite",
+    organizationName: "Todella Dual Suite",
   });
 
   console.log("\n=========================================");

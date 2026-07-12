@@ -56,7 +56,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/settings/payment-providers")({
-  head: () => ({ meta: [{ title: "Payment Providers — PayVerify" }] }),
+  head: () => ({ meta: [{ title: "Payment Providers — Todella" }] }),
   component: PaymentProvidersPage,
 });
 
@@ -517,7 +517,7 @@ function PaymentProvidersPage() {
                     <li>Navigate to Settings &rarr; Developers.</li>
                     <li>Copy your Public Key.</li>
                     <li>Copy your Secret Key.</li>
-                    <li>Paste both keys into PayVerify.</li>
+                    <li>Paste both keys into Todella.</li>
                     <li>Save Provider.</li>
                     <li>Click Sync Transactions.</li>
                   </ol>
