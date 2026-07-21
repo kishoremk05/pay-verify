@@ -9,6 +9,17 @@ import { supabaseAdmin } from "../config/supabase.js";
 import { reconcileTransaction } from "./reconciliation.js";
 
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
+const PAYSTACK_MODE = process.env.PAYSTACK_MODE || "live";
+
+// Safety indicator — visible in server logs on startup
+console.log(
+  `[Paystack] Running in ${PAYSTACK_MODE.toUpperCase()} MODE. ${
+    PAYSTACK_MODE === "test"
+      ? "Using test keys — no real money will be moved."
+      : "⚠️  LIVE MODE — real transactions are active."
+  }`
+);
+
 
 interface PaystackTransaction {
   id: number;

@@ -316,7 +316,33 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<
       }
 
       const errText = await response.text();
-      console.error(`[Email] ❌ Brevo API error: ${errText}`);
+      console.error(`[Email] ⚠️ Brevo API rejected dispatch (${errText}). Failing over to Custom SMTP...`);
+      
+      // Automatic Failover to Custom SMTP if Brevo fails
+      const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+      const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
+      const smtpUser = process.env.SMTP_USER;
+      const smtpPass = process.env.SMTP_PASS;
+
+      if (smtpUser && smtpPass) {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: { user: smtpUser, pass: smtpPass },
+        });
+
+        const info = await transporter.sendMail({
+          from: `"${senderName}" <${smtpUser}>`,
+          to: params.customerEmail,
+          subject: `Payment Request: Invoice ${params.invoiceNumber} — ${formattedAmount}`,
+          html: htmlContent,
+        });
+
+        console.log(`[Email] ✅ Failover Success! Payment link sent to ${params.customerEmail} via Custom SMTP (Failover)`);
+        return { success: true, provider: "Custom SMTP (Brevo Failover)", messageId: info.messageId };
+      }
+
       return { success: false, provider: "Brevo", error: errText };
     } catch (err: any) {
       console.error(`[Email] ❌ Brevo request exception: ${err.message}`);

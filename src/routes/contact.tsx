@@ -81,7 +81,7 @@ function ContactPage() {
             {/* Left Column: Contact Cards */}
             <div className="md:col-span-2 space-y-6">
               
-              {/* Sales Info Card */}
+              {/* Executive Contact Card */}
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -93,16 +93,19 @@ function ContactPage() {
                     <Zap className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-display font-semibold text-[#0a1b33]">Enterprise Relations</h3>
-                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">// SALES &amp; DEMOS</p>
-                    <a href="mailto:sales@todella.com" className="text-sm text-[#0a1b33] hover:underline block mt-3 font-semibold font-sans">
-                      sales@todella.com
+                    <h3 className="font-display font-semibold text-[#0a1b33]">Dr Noskim Atidigah</h3>
+                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">// ACCRA, GHANA</p>
+                    <a href="mailto:noskim.atidigah@gmail.com" className="text-xs text-[#0a1b33] hover:underline block mt-2 font-medium font-sans">
+                      noskim.atidigah@gmail.com
+                    </a>
+                    <a href="mailto:noskim@bulaiza.com" className="text-xs text-[#0a1b33] hover:underline block mt-1 font-medium font-sans">
+                      noskim@bulaiza.com
                     </a>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Support Card */}
+              {/* Phone & WhatsApp Card */}
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -114,16 +117,19 @@ function ContactPage() {
                     <Headphones className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-display font-semibold text-slate-900">Technical Helpdesk</h3>
-                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">// 24/7 COMPLIANCE &amp; DEPLOY</p>
-                    <a href="mailto:support@todella.com" className="text-sm text-emerald-600 hover:underline block mt-3 font-semibold font-sans">
-                      support@todella.com
+                    <h3 className="font-display font-semibold text-slate-900">Mobile &amp; WhatsApp</h3>
+                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">// DIRECT CALLS &amp; CHAT</p>
+                    <a href="tel:+233264445383" className="text-xs text-emerald-600 hover:underline block mt-2 font-medium font-sans">
+                      Mobile: +233-26 444 53 83
+                    </a>
+                    <a href="https://wa.me/233508069168" target="_blank" rel="noreferrer" className="text-xs text-emerald-600 hover:underline block mt-1 font-medium font-sans">
+                      WhatsApp: +233-50 806 9168
                     </a>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Security Audit card */}
+              {/* Skype Card */}
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -131,15 +137,15 @@ function ContactPage() {
                 className="rounded-[32px] border border-slate-200/60 bg-white p-6 shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <div className="flex gap-4 items-start">
-                  <div className="h-10 w-10 rounded-xl bg-rose-50/50 border border-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+                  <div className="h-10 w-10 rounded-xl bg-[#3675ff]/10 border border-[#3675ff]/20 flex items-center justify-center text-[#3675ff] shrink-0">
                     <ShieldAlert className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-display font-semibold text-slate-900">Security Response Desk</h3>
-                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">// RECON PIPELINE VULNERABILITIES</p>
-                    <a href="mailto:security@todella.com" className="text-sm text-rose-600 hover:underline block mt-3 font-semibold font-sans">
-                      security@todella.com
-                    </a>
+                    <h3 className="font-display font-semibold text-slate-900">Skype Communications</h3>
+                    <p className="text-[10px] font-mono text-slate-400 mt-0.5">// INSTANT MESSENGER</p>
+                    <span className="text-xs text-[#3675ff] block mt-2 font-semibold font-sans">
+                      Skype: noskim1
+                    </span>
                   </div>
                 </div>
               </motion.div>

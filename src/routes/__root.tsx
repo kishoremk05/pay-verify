@@ -74,16 +74,41 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "TODELLAA — AI-Powered Payment Reconciliation Platform" },
+      {
+        name: "description",
+        content:
+          "TODELLAA automates payment reconciliation for organizations and businesses. Match invoices with Paystack, bank transfers, and mobile money providers in real time.",
+      },
+      { name: "author", content: "Dr Noskim Atidigah, TODELLAA" },
+      { name: "keywords", content: "payment reconciliation, invoice matching, Paystack, bank sync, mobile money, financial operations, AI reconciliation, TODELLAA" },
+      { name: "theme-color", content: "#3675ff" },
+      // Open Graph
+      { property: "og:title", content: "TODELLAA — AI-Powered Payment Reconciliation" },
+      {
+        property: "og:description",
+        content:
+          "Automate invoice matching with Paystack, bank transfers, and mobile money. Built-in analytics, audit logs, and AI insights for financial operations teams.",
+      },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://todellaa.com" },
+      { property: "og:image", content: "/logo.png" },
+      { property: "og:image:alt", content: "TODELLAA Logo" },
+      { property: "og:site_name", content: "TODELLAA" },
+      // Twitter Card
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "TODELLAA — AI-Powered Payment Reconciliation" },
+      {
+        name: "twitter:description",
+        content:
+          "Automate payment matching from invoice to verification. Real-time Paystack, bank, and mobile money reconciliation.",
+      },
+      { name: "twitter:image", content: "/logo.png" },
     ],
     links: [
+      // Favicon from logo
+      { rel: "icon", type: "image/png", href: "/logo.png" },
+      { rel: "apple-touch-icon", href: "/logo.png" },
       {
         rel: "preconnect",
         href: "https://fonts.googleapis.com",
@@ -95,11 +120,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inria+Serif:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap",
-      },
-      {
-        rel: "stylesheet",
-        href: "https://db.onlinewebfonts.com/c/bb5de19d87c09a95216dc6ccd96e37c6?family=Nimbus+Sans+TW01",
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Sora:wght@400;600;700;800&family=Syne:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Inter:ital,wght@0,300..800;1,300..800&display=swap",
       },
       {
         rel: "stylesheet",
@@ -118,6 +139,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script src="https://js.paystack.co/v1/inline.js" async></script>
       </head>
       <body>
         {children}

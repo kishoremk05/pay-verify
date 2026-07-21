@@ -7,7 +7,7 @@ import "dotenv/config";
 import { sendInvoiceEmail } from "./services/email.js";
 
 // Testing both email addresses
-const TEST_RECIPIENT_EMAIL = "trinnarysystems@gmail.com"; 
+const TEST_RECIPIENT_EMAIL = "kishore.05mk@gmail.com"; 
 
 async function runTest() {
   console.log("=========================================");
