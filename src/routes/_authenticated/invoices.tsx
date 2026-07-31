@@ -590,7 +590,7 @@ function InvoicesPage() {
                 <Plus className="h-4.5 w-4.5" /> Create Invoice
               </Button>
             </DialogTrigger>
-            <DialogContent className="border border-border/60 bg-card shadow-[var(--shadow-elegant)] rounded-3xl p-6 sm:p-8">
+            <DialogContent className="border border-border/60 bg-card shadow-[var(--shadow-elegant)] rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-lg font-bold text-foreground">
                   Create New Invoice
@@ -1280,7 +1280,7 @@ function InvoicesPage() {
 
       {/* ─── Administrative Receipt Review Modal ─── */}
       <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
-        <DialogContent className="border border-border/60 bg-card rounded-3xl p-6 sm:p-8 max-w-2xl">
+        <DialogContent className="border border-border/60 bg-card rounded-3xl p-6 sm:p-8 max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               <Eye className="h-5 w-5 text-primary" /> Receipt Review
@@ -1377,7 +1377,7 @@ function InvoicesPage() {
 
       {/* ─── Staff Manual Reconciliation Modal ─── */}
       <Dialog open={isReconcileOpen} onOpenChange={setIsReconcileOpen}>
-        <DialogContent className="border border-border/60 bg-card rounded-3xl p-6 sm:p-8 max-w-lg">
+        <DialogContent className="border border-border/60 bg-card rounded-3xl p-6 sm:p-8 max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-primary" /> Staff Invoice Reconciliation

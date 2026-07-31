@@ -18,6 +18,7 @@ interface SendInvoiceEmailParams {
   dueDate: string;
   currency: string;
   portalUrl: string;
+  paystackUrl?: string;
   organizationName: string;
   subscribedService?: string;
   accountNumber?: string;
@@ -168,10 +169,23 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<
                       Bank Transfer or Card Payment.<br />
                       Click below to pay via the secure Todella portal.
                     </p>
-                    <!-- Muted Luxury Gold-Bronzed Button matching Borcelle brand colors -->
+                    <!-- Payment Buttons: Primary Paystack Pay Now + Secondary Upload Receipt -->
+                    ${params.paystackUrl ? `
+                    <div style="margin-bottom:12px;">
+                      <a href="${params.paystackUrl}" target="_blank" style="display:inline-block;background-color:#059669;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:12px 22px;border-radius:6px;box-shadow:0 4px 12px rgba(5,150,105,0.25);text-transform:uppercase;letter-spacing:0.5px;">
+                        💳 Pay Now with Paystack
+                      </a>
+                    </div>
+                    <div>
+                      <a href="${params.portalUrl}" target="_blank" style="display:inline-block;background-color:#ffffff;color:#475569;border:1px solid #cbd5e1;text-decoration:none;font-weight:600;font-size:11px;padding:8px 16px;border-radius:6px;text-transform:uppercase;letter-spacing:0.3px;">
+                        Upload Bank Receipt Instead
+                      </a>
+                    </div>
+                    ` : `
                     <a href="${params.portalUrl}" style="display:inline-block;background-color:#d4af37;color:#ffffff;text-decoration:none;font-weight:700;font-size:12px;padding:12px 24px;border-radius:4px;box-shadow:0 4px 12px rgba(212,175,55,0.25);text-transform:uppercase;letter-spacing:0.5px;">
                       View &amp; Upload Receipt
                     </a>
+                    `}
                   </td>
                   
                   <!-- Right: Clean Totals Grid with bold total line -->
@@ -325,22 +339,27 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams): Promise<
       const smtpPass = process.env.SMTP_PASS;
 
       if (smtpUser && smtpPass) {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: { user: smtpUser, pass: smtpPass },
-        });
+        try {
+          const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465,
+            auth: { user: smtpUser, pass: smtpPass },
+            tls: { rejectUnauthorized: false },
+          });
 
-        const info = await transporter.sendMail({
-          from: `"${senderName}" <${smtpUser}>`,
-          to: params.customerEmail,
-          subject: `Payment Request: Invoice ${params.invoiceNumber} — ${formattedAmount}`,
-          html: htmlContent,
-        });
+          const info = await transporter.sendMail({
+            from: `"${senderName}" <${smtpUser}>`,
+            to: params.customerEmail,
+            subject: `Payment Request: Invoice ${params.invoiceNumber} — ${formattedAmount}`,
+            html: htmlContent,
+          });
 
-        console.log(`[Email] ✅ Failover Success! Payment link sent to ${params.customerEmail} via Custom SMTP (Failover)`);
-        return { success: true, provider: "Custom SMTP (Brevo Failover)", messageId: info.messageId };
+          console.log(`[Email] ✅ Failover Success! Payment link sent to ${params.customerEmail} via Custom SMTP (Failover)`);
+          return { success: true, provider: "Custom SMTP (Brevo Failover)", messageId: info.messageId };
+        } catch (failoverErr: any) {
+          console.error(`[Email] ❌ Failover Custom SMTP failed: ${failoverErr.message}`);
+        }
       }
 
       return { success: false, provider: "Brevo", error: errText };

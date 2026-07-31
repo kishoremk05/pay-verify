@@ -13,6 +13,7 @@ import { supabaseAdmin } from "../config/supabase.js";
 import { sendInvoiceEmail } from "../services/email.js";
 import { analyzeReceipt } from "../services/ai.js";
 import { uploadToCloudinary } from "../services/cloudinary.js";
+import { initializePaystackInvoicePayment } from "../services/paystack.js";
 
 const router = Router();
 
@@ -116,9 +117,27 @@ router.post("/", async (req: Request, res: Response) => {
       related_record_id: invoice.id,
     });
 
-    // 6. Build portal URL
+    // 6. Build portal URL & initialize Paystack payment session
     const baseUrl = process.env.FRONTEND_URL || frontend_url || "http://localhost:3000";
     const portalUrl = `${baseUrl}/invoice/${invoice.id}`;
+
+    let paystackUrl: string | undefined;
+    if (customer_email) {
+      const paystackInit = await initializePaystackInvoicePayment({
+        organizationId: organization_id,
+        invoiceId: invoice.id,
+        invoiceNumber: invoice_number,
+        amount: parseFloat(amount),
+        currency: orgCurrency,
+        customerEmail: customer_email,
+        customerName: customer_name,
+        frontendUrl: baseUrl,
+      });
+
+      if (paystackInit.success && paystackInit.authorizationUrl) {
+        paystackUrl = paystackInit.authorizationUrl;
+      }
+    }
 
     // 7. Send email via Resend/Brevo
     let emailResult: any = { success: false, error: "No email sent" };
@@ -135,6 +154,7 @@ router.post("/", async (req: Request, res: Response) => {
         dueDate: due_date,
         currency: orgCurrency,
         portalUrl,
+        paystackUrl,
         organizationName: organization_name || "Todella",
         subscribedService: lineItemNames,
         accountNumber: customer?.account_number || undefined,
@@ -153,6 +173,7 @@ router.post("/", async (req: Request, res: Response) => {
     res.status(201).json({
       invoice,
       portalUrl,
+      paystackUrl,
       emailSent: emailResult.success,
     });
   } catch (err: any) {

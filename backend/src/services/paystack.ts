@@ -39,21 +39,27 @@ interface PaystackTransaction {
 }
 
 /**
- * Fetch the Paystack secret key for an organization from payment_providers table.
+ * Fetch the Paystack secret key for an organization from payment_providers table
+ * or fall back to process.env.PAYSTACK_SECRET_KEY.
  */
-async function getPaystackSecretKey(organizationId: string): Promise<string | null> {
-  const { data } = await supabaseAdmin
-    .from("payment_providers")
-    .select("credentials_json")
-    .eq("organization_id", organizationId)
-    .eq("provider_type", "paystack")
-    .eq("active", true)
-    .limit(1)
-    .single();
+export async function getPaystackSecretKey(organizationId?: string): Promise<string | null> {
+  if (organizationId) {
+    const { data } = await supabaseAdmin
+      .from("payment_providers")
+      .select("credentials_json")
+      .eq("organization_id", organizationId)
+      .eq("provider_type", "paystack")
+      .eq("active", true)
+      .limit(1)
+      .single();
 
-  if (!data?.credentials_json) return null;
-  return (data.credentials_json as any).secret_key || null;
+    if (data?.credentials_json && (data.credentials_json as any).secret_key) {
+      return (data.credentials_json as any).secret_key;
+    }
+  }
+  return process.env.PAYSTACK_SECRET_KEY || null;
 }
+
 
 /**
  * Fetch transactions from Paystack API.
@@ -273,3 +279,220 @@ export async function syncPaystackTransactions(organizationId: string): Promise<
 
   return { fetched, newTransactions, reconciled, duplicates, errors };
 }
+
+export interface InitializeInvoicePaymentParams {
+  organizationId: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  amount: number;
+  currency: string;
+  customerEmail: string;
+  customerName?: string;
+  frontendUrl?: string;
+}
+
+/**
+ * Initialize a Paystack checkout session for an invoice.
+ */
+export async function initializePaystackInvoicePayment(
+  params: InitializeInvoicePaymentParams
+): Promise<{ success: boolean; authorizationUrl?: string; reference?: string; message?: string }> {
+  const secretKey = await getPaystackSecretKey(params.organizationId);
+  if (!secretKey) {
+    return { success: false, message: "No Paystack secret key found." };
+  }
+
+  const baseUrl = params.frontendUrl || process.env.FRONTEND_URL || "http://localhost:3000";
+  const callbackUrl = `${baseUrl.replace(/\/$/, "")}/payment-success?invoice_id=${params.invoiceId}`;
+  
+  // Paystack expects amount in smallest currency unit (kobo/cents -> amount * 100)
+  const amountInSubunit = Math.round(params.amount * 100);
+  const reference = `INV_${params.invoiceNumber}_${Date.now()}`;
+
+  try {
+    const makeInitRequest = async (curr?: string) => {
+      const payload: any = {
+        email: params.customerEmail,
+        amount: amountInSubunit,
+        reference,
+        callback_url: callbackUrl,
+        metadata: {
+          invoice_id: params.invoiceId,
+          invoice_number: params.invoiceNumber,
+          organization_id: params.organizationId,
+          customer_name: params.customerName || "",
+          custom_fields: [
+            {
+              display_name: "Invoice Number",
+              variable_name: "invoice_number",
+              value: params.invoiceNumber,
+            },
+          ],
+        },
+      };
+
+      if (curr) {
+        payload.currency = curr;
+      }
+
+      const response = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      return response;
+    };
+
+    let response = await makeInitRequest(params.currency);
+    let data = (await response.json()) as any;
+
+    // If merchant account rejects specified currency (e.g. NGN vs GHS), retry without currency (uses merchant default)
+    if (!response.ok && (data.code === "unsupported_currency" || data.message?.includes("Currency"))) {
+      console.warn(`[Paystack] Currency ${params.currency} not enabled on merchant account. Retrying with merchant native default currency...`);
+      response = await makeInitRequest(undefined);
+      data = (await response.json()) as any;
+    }
+
+    if (!response.ok || !data.status) {
+      console.error("[Paystack] Initialize error:", data);
+      return { success: false, message: data.message || "Failed to initialize Paystack payment" };
+    }
+
+    return {
+      success: true,
+      authorizationUrl: data.data.authorization_url,
+      reference: data.data.reference,
+    };
+  } catch (err: any) {
+    console.error("[Paystack] Exception initializing payment:", err.message);
+    return { success: false, message: err.message };
+  }
+}
+
+/**
+ * Verify a transaction reference with Paystack and automatically update invoice status to paid.
+ */
+export async function verifyAndUpdateInvoicePayment(
+  reference: string,
+  invoiceId?: string,
+  organizationId?: string
+): Promise<{ success: boolean; message: string; invoice?: any; payment?: any }> {
+  let targetInvoiceId = invoiceId;
+  let targetOrgId = organizationId;
+
+  if (targetInvoiceId && !targetOrgId) {
+    const { data: inv } = await supabaseAdmin
+      .from("invoices")
+      .select("organization_id")
+      .eq("id", targetInvoiceId)
+      .single();
+    if (inv) {
+      targetOrgId = inv.organization_id;
+    }
+  }
+
+  const secretKey = await getPaystackSecretKey(targetOrgId);
+  if (!secretKey) {
+    return { success: false, message: "No Paystack secret key configured." };
+  }
+
+  const res = await fetch(`${PAYSTACK_BASE_URL}/transaction/verify/${encodeURIComponent(reference)}`, {
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    return { success: false, message: `Paystack verification request failed (${res.status}).` };
+  }
+
+  const body = (await res.json()) as { status?: boolean; data?: PaystackTransaction; message?: string };
+  if (!body.status || !body.data) {
+    return { success: false, message: body.message || "Verification failed." };
+  }
+
+  const txn = body.data;
+  if (txn.status !== "success") {
+    return { success: false, message: `Transaction status is '${txn.status}', not successful.` };
+  }
+
+  targetInvoiceId = targetInvoiceId || txn.metadata?.invoice_id;
+  targetOrgId = targetOrgId || txn.metadata?.organization_id;
+
+  if (!targetInvoiceId) {
+    return { success: false, message: "No linked invoice found for this payment reference." };
+  }
+
+  const { data: invoice, error: invFetchErr } = await supabaseAdmin
+    .from("invoices")
+    .select("*")
+    .eq("id", targetInvoiceId)
+    .single();
+
+  if (invFetchErr || !invoice) {
+    return { success: false, message: `Invoice ${targetInvoiceId} not found.` };
+  }
+
+  let updatedInvoice = invoice;
+  if (invoice.status !== "paid") {
+    const { data: updated, error: updateErr } = await supabaseAdmin
+      .from("invoices")
+      .update({
+        status: "paid",
+        payment_method: "paystack",
+        paid_at: txn.paid_at || new Date().toISOString(),
+      })
+      .eq("id", targetInvoiceId)
+      .select()
+      .single();
+
+    if (updateErr) {
+      console.error("[Paystack] Error updating invoice status to paid:", updateErr.message);
+    } else if (updated) {
+      updatedInvoice = updated;
+    }
+  }
+
+  const reconResult = await reconcileTransaction({
+    organization_id: targetOrgId || invoice.organization_id,
+    amount: txn.amount / 100,
+    reference: txn.reference,
+    customer_email: txn.customer?.email || null,
+    customer_phone: txn.customer?.phone || null,
+    customer_name: txn.customer
+      ? [txn.customer.first_name, txn.customer.last_name].filter(Boolean).join(" ") || null
+      : null,
+    transaction_id: String(txn.id),
+    payment_date: txn.paid_at ? new Date(txn.paid_at).toISOString().slice(0, 10) : undefined,
+    source: "paystack",
+    channel: txn.channel,
+    currency: txn.currency,
+    customer_id: invoice.customer_id,
+  });
+
+  await supabaseAdmin.from("audit_logs").insert({
+    organization_id: targetOrgId || invoice.organization_id,
+    action_type: "invoice_payment",
+    action_description: `Invoice #${invoice.invoice_number} paid via Paystack (Ref: ${txn.reference}, Amount: ${txn.currency} ${txn.amount / 100}).`,
+    related_record_id: targetInvoiceId,
+  });
+
+  await supabaseAdmin.from("notifications").insert({
+    organization_id: targetOrgId || invoice.organization_id,
+    title: "Invoice Paid via Paystack",
+    message: `Invoice #${invoice.invoice_number} of ${txn.currency} ${txn.amount / 100} was automatically marked as PAID.`,
+    type: "status_update",
+  });
+
+  return {
+    success: true,
+    message: "Payment verified and invoice updated to PAID.",
+    invoice: updatedInvoice,
+    payment: reconResult,
+  };
+}
+

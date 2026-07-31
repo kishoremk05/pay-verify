@@ -104,27 +104,24 @@ interface Customer {
 /*  Excel Format Preview (matches the Payments screen pattern)        */
 /* ------------------------------------------------------------------ */
 function CustomerExcelPreview() {
-  const cols = ["A", "B", "C", "D", "E"];
+  const cols = ["A", "B", "C", "D"];
   const headers = [
     "customer_code",
     "name",
     "phone",
     "email",
-    "account_number",
   ];
   const row1 = [
     "CUST-001",
     "John Doe",
     "+233241234567",
     "john@example.com",
-    "1203948576",
   ];
   const row2 = [
     "CUST-002",
     "Jane Smith",
     "+233208765432",
     "",
-    "0987654321",
   ];
 
   return (
@@ -516,7 +513,6 @@ function CustomersPage() {
     { key: "name", label: "Full Name", required: true, type: "string" as const },
     { key: "phone", label: "Phone Number", required: false, type: "string" as const },
     { key: "email", label: "Email Address", required: false, type: "email" as const },
-    { key: "account_number", label: "Account Number", required: false, type: "string" as const },
   ];
 
   /* ---- Bulk Excel Import ---- */
@@ -849,7 +845,6 @@ function CustomersPage() {
                     </TableHead>
                     <TableHead className="font-bold text-foreground py-4">Customer ID</TableHead>
                     <TableHead className="font-bold text-foreground py-4">Email</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Account Number</TableHead>
                     {!isReadOnly && (
                       <TableHead className="font-bold text-foreground py-4 text-right pr-6">
                         Management
@@ -939,15 +934,6 @@ function CustomersPage() {
                             <span className="font-mono">{c.email}</span>
                           ) : (
                             <span className="italic text-muted-foreground/50">No email</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-4">
-                          {c.account_number ? (
-                            <span className="font-mono font-bold text-xs bg-secondary/60 text-foreground px-2.5 py-1 rounded-md border border-border/60 tracking-wide">
-                              {c.account_number}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground/50 italic">—</span>
                           )}
                         </TableCell>
                         {!isReadOnly && (
