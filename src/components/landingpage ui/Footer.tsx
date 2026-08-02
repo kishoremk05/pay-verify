@@ -17,7 +17,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-[#faf9f5] text-[#010101] pt-16 pb-12 border-t border-[#e6e4dc] font-sans">
+    <footer className="bg-white text-[#010101] pt-16 pb-12 border-t border-[#e6e4dc] font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Top 4 Columns */}
@@ -59,10 +59,9 @@ export default function Footer() {
           <div className="md:col-span-2">
             <h4 className="text-xs font-bold text-[#010101] uppercase tracking-wider mb-4">Product</h4>
             <ul className="space-y-2.5 text-xs font-medium text-[#737373]">
-              <li><a href="#features" className="hover:text-[#010101] transition-colors">Features</a></li>
-              <li><a href="#integrations" className="hover:text-[#010101] transition-colors">Integrations</a></li>
-              <li><a href="#ai-tools" className="hover:text-[#010101] transition-colors">AI Tools</a></li>
-              <li><a href="#pricing" className="hover:text-[#010101] transition-colors">Pricing</a></li>
+              <li><Link to="/features" className="hover:text-[#010101] transition-colors">Features</Link></li>
+              <li><Link to="/integrations" className="hover:text-[#010101] transition-colors">Integrations</Link></li>
+              <li><Link to="/pricing" className="hover:text-[#010101] transition-colors">Pricing</Link></li>
             </ul>
           </div>
 
@@ -71,20 +70,20 @@ export default function Footer() {
             <div>
               <h4 className="text-xs font-bold text-[#010101] uppercase tracking-wider mb-4">Resources</h4>
               <ul className="space-y-2.5 text-xs font-medium text-[#737373]">
-                <li><a href="#" className="hover:text-[#010101] transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-[#010101] transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-[#010101] transition-colors">Guides</a></li>
-                <li><a href="#" className="hover:text-[#010101] transition-colors">API Docs</a></li>
+                <li><Link to="/help-center" className="hover:text-[#010101] transition-colors">Help Center</Link></li>
+                <li><Link to="/guides" className="hover:text-[#010101] transition-colors">Guides</Link></li>
+                <li><Link to="/security" className="hover:text-[#010101] transition-colors">Security</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-xs font-bold text-[#010101] uppercase tracking-wider mb-4">Company</h4>
               <ul className="space-y-2.5 text-xs font-medium text-[#737373]">
-                <li><a href="#" className="hover:text-[#010101] transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-[#010101] transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-[#010101] transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-[#010101] transition-colors">Privacy Policy</a></li>
+                <li><Link to="/about" className="hover:text-[#010101] transition-colors">About Us</Link></li>
+                <li><Link to="/careers" className="hover:text-[#010101] transition-colors">Careers</Link></li>
+                <li><Link to="/contact" className="hover:text-[#010101] transition-colors">Contact Us</Link></li>
+                <li><Link to="/privacy" className="hover:text-[#010101] transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-[#010101] transition-colors">Terms of Service</Link></li>
               </ul>
             </div>
           </div>

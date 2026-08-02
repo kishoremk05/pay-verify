@@ -46,8 +46,8 @@ function ContactPage() {
   return (
     <div className="min-h-screen bg-[#f9fafb] text-slate-900 font-sans selection:bg-blue-500/20 selection:text-blue-900 overflow-x-hidden antialiased relative">
       {/* Background Dot Grid Overlays */}
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-15 bg-[radial-gradient(#e2e8f0_1.2px,transparent_1.2px)] [background-size:24px_24px] mix-blend-multiply" />
-      <div className="fixed inset-0 pointer-events-none z-0 opacity-10 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-15 bg-[radial-gradient(#e2e8f0_1.2px,transparent_1.2px)] bg-size-[24px_24px] mix-blend-multiply" />
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-10 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-size-[4rem_4rem]" />
       
       {/* Floating Ambient Glowing Blobs */}
       <div className="absolute top-0 left-[10%] w-[50rem] h-[35rem] rounded-full bg-indigo-950/[0.01] blur-[140px] pointer-events-none z-0 animate-float" />
@@ -237,3 +237,4 @@ function ContactPage() {
     </div>
   );
 }
+

@@ -33,13 +33,7 @@ export default function Navbar() {
     }
   };
 
-  const navItems = [
-    { label: "Features", target: "features" },
-    { label: "Integrations", target: "integrations" },
-    { label: "AI Tools", target: "ai-tools" },
-    { label: "Pricing", target: "pricing" },
-    { label: "Resources", target: "resources", hasDropdown: true },
-  ];
+
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 w-full font-sans">
@@ -47,15 +41,14 @@ export default function Navbar() {
       <div className="bg-white border-b border-[#e6e4dc] py-2 px-4 text-center text-xs sm:text-sm font-medium text-[#404040] flex items-center justify-center gap-2 select-none">
         <Sparkles className="w-3.5 h-3.5 text-[#e8562a] shrink-0" />
         <span>
-          <strong className="font-semibold text-[#1c1917]">New:</strong> AI Reconciliation Assistant is here!
+          <strong className="font-semibold text-[#1c1917]">New:</strong> SWIFT MT940 statement reconciliation is here!
         </span>
-        <a
-          href="#ai-tools"
-          onClick={(e) => handleNavClick(e, "ai-tools")}
+        <Link
+          to="/reconciliation"
           className="text-[#e8562a] font-semibold hover:underline inline-flex items-center gap-1 ml-1"
         >
           Explore now <ArrowRight className="w-3.5 h-3.5" />
-        </a>
+        </Link>
       </div>
 
       {/* Main Header Navbar */}
@@ -71,17 +64,10 @@ export default function Navbar() {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-7 lg:gap-8 font-sans">
-            {navItems.map((item) => (
-              <a
-                key={item.target}
-                href={`/#${item.target}`}
-                onClick={(e) => handleNavClick(e, item.target)}
-                className="text-[14px] font-medium text-[#404040] hover:text-[#010101] transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                {item.label}
-                {item.hasDropdown && <ChevronDown className="w-3.5 h-3.5 text-[#737373]" />}
-              </a>
-            ))}
+            <Link to="/features" className="text-[14px] font-medium text-[#404040] hover:text-[#010101] transition-colors cursor-pointer" activeProps={{ className: "text-[#010101] font-semibold" }}>Features</Link>
+            <Link to="/integrations" className="text-[14px] font-medium text-[#404040] hover:text-[#010101] transition-colors cursor-pointer" activeProps={{ className: "text-[#010101] font-semibold" }}>Integrations</Link>
+            <Link to="/reconciliation" className="text-[14px] font-medium text-[#404040] hover:text-[#010101] transition-colors cursor-pointer" activeProps={{ className: "text-[#010101] font-semibold" }}>Reconciliation</Link>
+            <Link to="/pricing" className="text-[14px] font-medium text-[#404040] hover:text-[#010101] transition-colors cursor-pointer" activeProps={{ className: "text-[#010101] font-semibold" }}>Pricing</Link>
           </nav>
 
           {/* Auth Actions */}
@@ -115,17 +101,18 @@ export default function Navbar() {
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="absolute left-0 right-0 top-full bg-white border-b border-[#e6e4dc] backdrop-blur-xl px-6 py-6 flex flex-col gap-4 shadow-xl z-50 md:hidden font-sans">
-            {navItems.map((item) => (
-              <a
-                key={item.target}
-                href={`/#${item.target}`}
-                onClick={(e) => handleNavClick(e, item.target)}
-                className="text-sm font-medium text-[#404040] hover:text-[#010101] py-2 border-b border-[#e6e4dc]/60 cursor-pointer flex items-center justify-between"
-              >
-                <span>{item.label}</span>
-                {item.hasDropdown && <ChevronDown className="w-4 h-4 text-[#737373]" />}
-              </a>
-            ))}
+            <Link to="/features" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-[#404040] hover:text-[#010101] py-2 border-b border-[#e6e4dc]/60 cursor-pointer flex items-center justify-between" activeProps={{ className: "text-[#010101] font-bold" }}>
+              <span>Features</span>
+            </Link>
+            <Link to="/integrations" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-[#404040] hover:text-[#010101] py-2 border-b border-[#e6e4dc]/60 cursor-pointer flex items-center justify-between" activeProps={{ className: "text-[#010101] font-bold" }}>
+              <span>Integrations</span>
+            </Link>
+            <Link to="/reconciliation" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-[#404040] hover:text-[#010101] py-2 border-b border-[#e6e4dc]/60 cursor-pointer flex items-center justify-between" activeProps={{ className: "text-[#010101] font-bold" }}>
+              <span>Reconciliation</span>
+            </Link>
+            <Link to="/pricing" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium text-[#404040] hover:text-[#010101] py-2 border-b border-[#e6e4dc]/60 cursor-pointer flex items-center justify-between" activeProps={{ className: "text-[#010101] font-bold" }}>
+              <span>Pricing</span>
+            </Link>
             <div className="flex flex-col gap-2.5 pt-2">
               <Link
                 to="/login"
