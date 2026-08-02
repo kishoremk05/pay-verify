@@ -37,15 +37,15 @@ export default function Engagement() {
   const current = testimonials[currentIndex];
 
   return (
-    <section className="py-16 sm:py-24 bg-[#f7f6f1] text-[#010101] font-sans border-t border-[#e6e4dc]">
+    <section className="py-16 sm:py-24 bg-white text-[#010101] font-sans border-t border-[#e6e4dc]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="bg-linear-to-br from-[#fef3eb] via-[#fff7f4] to-[#fef3eb] border border-[#fcdcc5] rounded-3xl p-8 sm:p-12 shadow-sm relative overflow-hidden">
+        <div className="bg-[#faf9f6] border border-[#ecebe4] rounded-3xl p-8 sm:p-12 shadow-sm relative overflow-hidden">
           
           <div className="flex flex-col md:flex-row items-center md:items-start gap-8 relative z-10">
             
             {/* Quote Icon Badge */}
-            <div className="w-16 h-16 rounded-2xl bg-[#e8562a] text-white flex items-center justify-center shrink-0 shadow-md">
+            <div className="w-16 h-16 rounded-2xl bg-[#010101] text-white flex items-center justify-center shrink-0 shadow-md">
               <Quote className="w-8 h-8 fill-current" />
             </div>
 

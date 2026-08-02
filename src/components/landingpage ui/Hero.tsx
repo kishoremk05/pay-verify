@@ -42,11 +42,11 @@ export default function Hero() {
   } as const;
 
   return (
-    <section className="relative pt-32 sm:pt-36 pb-20 sm:pb-28 bg-[#f7f6f1] text-[#010101] overflow-hidden font-sans">
+    <section className="relative pt-32 sm:pt-36 pb-20 sm:pb-28 bg-white text-[#010101] overflow-hidden font-sans">
       
       {/* Background Decorative Ambient Glows & Grid */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#e6e4dc_1px,transparent_1px),linear-gradient(to_bottom,#e6e4dc_1px,transparent_1px)] bg-size-[4rem_4rem] mask-[radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-40 pointer-events-none" />
-      <div className="absolute top-12 left-1/2 -translate-x-1/2 w-200 h-87.5 bg-linear-to-tr from-[#e8562a]/15 via-[#f06e42]/10 to-transparent blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute top-12 left-1/2 -translate-x-1/2 w-200 h-87.5 bg-linear-to-tr from-blue-500/10 via-neutral-100/10 to-transparent blur-3xl rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -151,7 +151,7 @@ export default function Hero() {
             className="lg:col-span-7 w-full relative"
           >
             {/* Background Subtle Glow Behind Card */}
-            <div className="absolute -inset-2 bg-linear-to-r from-[#e8562a]/20 via-[#fcdcc5]/40 to-transparent blur-xl rounded-3xl" />
+            <div className="absolute -inset-2 bg-linear-to-r from-blue-500/10 via-neutral-100/30 to-transparent blur-xl rounded-3xl" />
 
             <div className="bg-white rounded-2xl border border-[#e6e4dc] shadow-2xl p-4 sm:p-5 relative overflow-hidden font-sans">
               
@@ -201,7 +201,7 @@ export default function Hero() {
                 <div className="bg-[#faf9f6] p-3 rounded-xl border border-[#ecebe4] hover:border-[#e8562a]/40 transition-colors">
                   <p className="text-[11px] font-medium text-[#737373]">Total Collected</p>
                   <div className="flex items-baseline justify-between mt-1">
-                    <span className="text-base sm:text-lg font-bold text-[#010101]">€ 328,540</span>
+                    <span className="text-base sm:text-lg font-bold text-[#010101]">GHS 328,540</span>
                     <span className="text-[10px] font-bold text-[#16a34a] bg-[#dcfce7] px-1.5 py-0.5 rounded flex items-center gap-0.5">
                       <TrendingUp className="w-2.5 h-2.5" /> +12.2%
                     </span>
@@ -212,7 +212,7 @@ export default function Hero() {
                 <div className="bg-[#faf9f6] p-3 rounded-xl border border-[#ecebe4] hover:border-[#e8562a]/40 transition-colors">
                   <p className="text-[11px] font-medium text-[#737373]">Outstanding</p>
                   <div className="flex items-baseline justify-between mt-1">
-                    <span className="text-base sm:text-lg font-bold text-[#010101]">€ 146,320</span>
+                    <span className="text-base sm:text-lg font-bold text-[#010101]">GHS 146,320</span>
                     <span className="text-[10px] font-bold text-[#dc2626] bg-[#fee2e2] px-1.5 py-0.5 rounded flex items-center gap-0.5">
                       <TrendingDown className="w-2.5 h-2.5" /> -5.1%
                     </span>
@@ -297,7 +297,7 @@ export default function Hero() {
                       <circle cx="40" cy="40" r="30" stroke="#e8562a" strokeWidth="10" fill="transparent" strokeDasharray="188" strokeDashoffset="170" />
                     </svg>
                     <div className="absolute text-center">
-                      <span className="text-[10px] font-extrabold text-[#010101] block">€ 328.5k</span>
+                      <span className="text-[10px] font-extrabold text-[#010101] block">GHS 328.5k</span>
                       <span className="text-[8px] font-medium text-[#737373] block">Total</span>
                     </div>
                   </div>
@@ -329,14 +329,14 @@ export default function Hero() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-[11px] bg-white p-2 rounded-lg border border-[#f0eee6]">
                       <div>
-                        <p className="font-semibold text-[#010101]">Payment €750 matched to Invoice #INV-1024</p>
+                        <p className="font-semibold text-[#010101]">Payment GHS 750 matched to Invoice #INV-1024</p>
                         <span className="text-[9px] text-[#a3a3a3]">2m ago</span>
                       </div>
                       <span className="bg-[#eff6ff] text-[#2563eb] text-[9px] font-bold px-2 py-0.5 rounded">Paystack</span>
                     </div>
                     <div className="flex items-center justify-between text-[11px] bg-white p-2 rounded-lg border border-[#f0eee6]">
                       <div>
-                        <p className="font-semibold text-[#010101]">Bank transfer €2,100 matched to Invoice #INV-1021</p>
+                        <p className="font-semibold text-[#010101]">Bank transfer GHS 2,100 matched to Invoice #INV-1021</p>
                         <span className="text-[9px] text-[#a3a3a3]">15m ago</span>
                       </div>
                       <span className="bg-[#fef3c7] text-[#d97706] text-[9px] font-bold px-2 py-0.5 rounded">GCB Bank</span>
@@ -345,14 +345,14 @@ export default function Hero() {
                 </div>
 
                 {/* AI Assistant Floating Prompt Widget */}
-                <div className="md:col-span-5 bg-linear-to-br from-[#fef3eb] to-[#fff7f4] p-3 rounded-xl border border-[#fcdcc5] flex flex-col justify-between">
+                <div className="md:col-span-5 bg-[#faf9f6] p-3 rounded-xl border border-[#ecebe4] flex flex-col justify-between">
                   <div className="flex items-start gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#e8562a] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <div className="w-6 h-6 rounded-full bg-[#010101] text-white flex items-center justify-center shrink-0 shadow-xs">
                       <Bot className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <h5 className="text-xs font-bold text-[#7c2d12]">AI Reconciliation Assistant</h5>
-                      <p className="text-[10px] text-[#7c2d12]/80 mt-1 leading-snug font-medium">
+                      <h5 className="text-xs font-bold text-[#010101]">AI Reconciliation Assistant</h5>
+                      <p className="text-[10px] text-[#737373] mt-1 leading-snug font-medium">
                         12 potential matches found. Review and confirm matches to improve accuracy.
                       </p>
                     </div>

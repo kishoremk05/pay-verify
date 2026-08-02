@@ -12,7 +12,7 @@ export default function Pricing() {
       tagline: "For small businesses",
       monthlyPrice: "12",
       annualPrice: "0",
-      currency: "€",
+      currency: "GHS",
       period: "/ month",
       isPopular: false,
       ctaText: "Get Started Free",
@@ -31,7 +31,7 @@ export default function Pricing() {
       tagline: "For growing businesses",
       monthlyPrice: "119",
       annualPrice: "99",
-      currency: "€",
+      currency: "GHS",
       period: "/ month",
       isPopular: true,
       popularTag: "Most Popular",
@@ -53,7 +53,7 @@ export default function Pricing() {
       tagline: "For large organizations",
       monthlyPrice: "349",
       annualPrice: "299",
-      currency: "€",
+      currency: "GHS",
       period: "/ month",
       isPopular: false,
       ctaText: "Contact Sales",
@@ -72,14 +72,14 @@ export default function Pricing() {
   ];
 
   return (
-    <section id="pricing" className="py-20 sm:py-28 bg-[#f7f6f1] text-[#010101] font-sans border-t border-[#e6e4dc]">
+    <section id="pricing" className="py-20 sm:py-28 bg-white text-[#010101] font-sans border-t border-[#e6e4dc]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#fcdcc5] bg-[#fef3eb] select-none mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#e6e4dc] bg-white select-none mb-4">
             <Sparkles className="w-3.5 h-3.5 text-[#e8562a]" />
-            <span className="text-xs font-bold uppercase tracking-wider text-[#e8562a]">Flexible Plans</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#404040]">Flexible Plans</span>
           </div>
           <h2 className="font-sans font-extrabold text-3xl sm:text-4xl lg:text-[44px] tracking-tight text-[#010101] leading-tight mb-4">
             Simple, transparent pricing

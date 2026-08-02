@@ -2,7 +2,7 @@ import React from "react";
 
 export default function GridLines() {
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 bg-[#f7f6f1]">
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 bg-white">
       {/* Enhanced Grid Background Pattern matching NorthGrid screenshot */}
       <div 
         className="absolute inset-0 opacity-[0.75]"

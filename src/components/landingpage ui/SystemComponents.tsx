@@ -15,7 +15,7 @@ import {
 
 export default function SystemComponents() {
   return (
-    <section id="integrations" className="py-20 sm:py-28 bg-[#f7f6f1] text-[#010101] font-sans border-t border-[#e6e4dc]">
+    <section id="integrations" className="py-20 sm:py-28 bg-white text-[#010101] font-sans border-t border-[#e6e4dc]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
@@ -114,10 +114,10 @@ export default function SystemComponents() {
           </div>
 
           {/* RIGHT BLOCK: AI-POWERED INTELLIGENCE SPOTLIGHT */}
-          <div id="ai-tools" className="lg:col-span-6 bg-linear-to-br from-[#fef3eb] via-[#fff7f4] to-[#fef3eb] border border-[#fcdcc5] rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-sm">
+          <div id="ai-tools" className="lg:col-span-6 bg-[#faf9f6] border border-[#ecebe4] rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-sm">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-[#e8562a] uppercase tracking-wider mb-2">
-                <Sparkles className="w-4 h-4" /> AI-Powered Intelligence
+              <div className="flex items-center gap-2 text-xs font-bold text-[#737373] uppercase tracking-wider mb-2">
+                <Sparkles className="w-4 h-4 text-[#e8562a]" /> AI-Powered Intelligence
               </div>
 
               <h3 className="font-sans font-extrabold text-2xl sm:text-3xl text-[#010101] tracking-tight mb-3">
@@ -175,16 +175,16 @@ export default function SystemComponents() {
             </div>
 
             {/* Interactive Sub-card: Potential Matches (12) */}
-            <div className="bg-white rounded-2xl border border-[#fcdcc5] p-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#ecebe4] p-4 shadow-sm">
               <div className="flex items-center justify-between border-b border-[#f0eee6] pb-2 mb-3">
                 <span className="text-xs font-bold text-[#010101]">Potential Matches (12)</span>
-                <span className="text-[10px] font-semibold text-[#e8562a] bg-[#fef3eb] px-2 py-0.5 rounded">Live AI Suggestions</span>
+                <span className="text-[10px] font-semibold text-[#404040] bg-[#faf9f6] border border-[#e6e4dc] px-2 py-0.5 rounded">Live AI Suggestions</span>
               </div>
 
               <div className="space-y-2 mb-3">
                 <div className="flex items-center justify-between text-xs bg-[#faf9f6] p-2 rounded-lg border border-[#f0eee6]">
                   <div>
-                    <p className="font-semibold text-[#010101]">Payment of €1,500</p>
+                    <p className="font-semibold text-[#010101]">Payment of GHS 1,500</p>
                     <span className="text-[10px] text-[#737373]">from John Doe</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -195,7 +195,7 @@ export default function SystemComponents() {
 
                 <div className="flex items-center justify-between text-xs bg-[#faf9f6] p-2 rounded-lg border border-[#f0eee6]">
                   <div>
-                    <p className="font-semibold text-[#010101]">Payment of €2,000</p>
+                    <p className="font-semibold text-[#010101]">Payment of GHS 2,000</p>
                     <span className="text-[10px] text-[#737373]">from Acme Ltd.</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -206,7 +206,7 @@ export default function SystemComponents() {
 
                 <div className="flex items-center justify-between text-xs bg-[#faf9f6] p-2 rounded-lg border border-[#f0eee6]">
                   <div>
-                    <p className="font-semibold text-[#010101]">Payment of €750</p>
+                    <p className="font-semibold text-[#010101]">Payment of GHS 750</p>
                     <span className="text-[10px] text-[#737373]">from Mary Quaye</span>
                   </div>
                   <div className="flex items-center gap-2">

@@ -12,10 +12,10 @@ export default function Stats() {
   ];
 
   return (
-    <section className="py-12 sm:py-16 bg-[#f7f6f1] border-y border-[#e6e4dc] font-sans">
+    <section className="py-12 sm:py-16 bg-white border-y border-[#e6e4dc] font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-[#737373] mb-8">
-          TRUSTED BY BUSINESSES & INSTITUTIONS
+          SUPPORTED PAYMENTS & NETWORKS
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16 opacity-85 grayscale hover:grayscale-0 transition-all">

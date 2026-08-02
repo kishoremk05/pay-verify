@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   return (
-    <div className="relative min-h-screen bg-[#f7f6f1] text-[#010101] font-sans antialiased selection:bg-[#e8562a] selection:text-white overflow-x-hidden">
+    <div className="relative min-h-screen bg-white text-[#010101] font-sans antialiased selection:bg-[#e8562a] selection:text-white overflow-x-hidden">
       {/* Background Grid Lines */}
       <GridLines />
 

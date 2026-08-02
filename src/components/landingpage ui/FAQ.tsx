@@ -100,7 +100,7 @@ export default function FAQ() {
   };
 
   return (
-    <section id="faq" className="relative py-20 sm:py-28 border-t border-neutral-300/80 shadow-[inset_0_20px_35px_-15px_rgba(0,0,0,0.03)] bg-[#f7f6f1]/60 z-10 scroll-mt-20 font-sans">
+    <section id="faq" className="relative py-20 sm:py-28 border-t border-neutral-300/80 shadow-[inset_0_20px_35px_-15px_rgba(0,0,0,0.03)] bg-white z-10 scroll-mt-20 font-sans">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start relative">
           

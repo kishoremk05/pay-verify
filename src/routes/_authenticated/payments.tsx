@@ -145,7 +145,7 @@ function ExcelPreview() {
   ];
 
   return (
-    <div className="border border-border/60 rounded-2xl overflow-hidden bg-background shadow-[var(--shadow-card)] font-sans text-sm mt-4">
+    <div className="border border-border/60 rounded-2xl overflow-hidden bg-background shadow-(--shadow-card) font-sans text-sm mt-4">
       <div className="bg-muted/30 border-b border-border/60 px-4 py-3 flex items-center justify-between text-xs text-muted-foreground">
         <span className="font-bold flex items-center gap-2 text-foreground">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -554,15 +554,107 @@ function PaymentsPage() {
     { key: "notes", label: "Reconciliation Notes", required: false, type: "string" as const },
   ];
 
-  /* ---- Bulk Excel Import ---- */
+  /* ---- Bulk Excel/MT940 Import ---- */
+  const parseMT940 = (text: string) => {
+    const lines = text.split(/\r?\n/);
+    const transactions: any[] = [];
+    let currentTx: any = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith(":61:")) {
+        const match = line.slice(4).match(/^(\d{6})(\d{4})?(C|D|RC|RD)([A-Z])?(\d+(?:,\d{2})?)([A-Z0-9]{4})?(.*)/);
+        if (match) {
+          const [, dateStr, , type, , amountStr, , reference] = match;
+          const year = "20" + dateStr.slice(0, 2);
+          const month = dateStr.slice(2, 4);
+          const day = dateStr.slice(4, 6);
+          const amount = parseFloat(amountStr.replace(",", "."));
+          
+          currentTx = {
+            payment_date: `${year}-${month}-${day}`,
+            amount_paid: amount,
+            source: "bank",
+            currency: "GHS",
+            reference: reference ? reference.trim() : "",
+            customer_name: "",
+            notes: "",
+          };
+          transactions.push(currentTx);
+        }
+      } else if (line.startsWith(":86:") && currentTx) {
+        let desc = line.slice(4).trim();
+        while (i + 1 < lines.length && !lines[i + 1].trim().startsWith(":") && lines[i + 1].trim().length > 0) {
+          i++;
+          desc += " " + lines[i].trim();
+        }
+        currentTx.notes = desc;
+        
+        const nameMatch = desc.match(/(?:NAME|PAYE|SVWZ|BPA)\/([^\/]+)/i) || desc.match(/(?:\?20)([^\?]+)/);
+        if (nameMatch) {
+          currentTx.customer_name = nameMatch[1].trim();
+        } else {
+          currentTx.customer_name = desc.substring(0, 30).trim();
+        }
+
+        if (!currentTx.reference) {
+          const refMatch = desc.match(/(?:EREF|REMI|REF)\/([^\/]+)/i);
+          if (refMatch) {
+            currentTx.reference = refMatch[1].trim();
+          }
+        }
+      }
+    }
+    return transactions;
+  };
+
   const onImportFile = (file: File) => {
     if (!organization) return;
     const fileExtension = file.name.split(".").pop()?.toLowerCase();
 
-    if (fileExtension !== "xlsx" && fileExtension !== "xls" && fileExtension !== "csv") {
-      return toast.error("Only Excel (.xlsx, .xls) and CSV (.csv) files are supported.");
+    if (
+      fileExtension !== "xlsx" &&
+      fileExtension !== "xls" &&
+      fileExtension !== "csv" &&
+      fileExtension !== "sta" &&
+      fileExtension !== "mt940" &&
+      fileExtension !== "txt"
+    ) {
+      return toast.error("Only Excel (.xlsx, .xls), CSV (.csv), and MT940 (.sta, .mt940, .txt) files are supported.");
     }
 
+    if (fileExtension === "sta" || fileExtension === "mt940" || (fileExtension === "txt" && file.size < 500000)) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const text = e.target?.result as string;
+          if (!text.includes(":61:") && !text.includes(":20:")) {
+            if (fileExtension === "txt") {
+              return importExcelCsv(file);
+            }
+            return toast.error("Invalid MT940 file format. Tag :61: or :20: not found.");
+          }
+          const parsedData = parseMT940(text);
+          if (parsedData.length === 0) {
+            return toast.error("No valid transactions found in MT940 statement.");
+          }
+          const headers = ["payment_date", "amount_paid", "reference", "customer_name", "source", "currency", "notes"];
+          setWizardHeaders(headers);
+          setWizardRows(parsedData);
+          setWizardOpen(true);
+          toast.success(`Successfully parsed ${parsedData.length} transactions from MT940 statement.`);
+        } catch (err: any) {
+          toast.error(`MT940 parsing failed: ${err.message}`);
+        }
+      };
+      reader.onerror = () => toast.error("Error reading file");
+      reader.readAsText(file);
+    } else {
+      importExcelCsv(file);
+    }
+  };
+
+  const importExcelCsv = (file: File) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
@@ -697,7 +789,7 @@ function PaymentsPage() {
           <input
             ref={fileRef}
             type="file"
-            accept=".xlsx,.xls,.csv"
+            accept=".xlsx,.xls,.csv,.sta,.mt940,.txt"
             className="absolute w-0 h-0 opacity-0 pointer-events-none"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -717,7 +809,7 @@ function PaymentsPage() {
                 <Info className="h-4 w-4 text-primary" /> View Excel Format
               </Button>
             </DialogTrigger>
-            <DialogContent className="rounded-3xl border-border/60 bg-card max-w-2xl sm:max-w-3xl p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
+            <DialogContent className="rounded-3xl border-border/60 bg-card max-w-2xl sm:max-w-3xl p-6 sm:p-8 shadow-(--shadow-elegant)">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-xl font-extrabold text-foreground font-sans">
                   <CreditCard className="h-5 w-5 text-emerald-600" />
@@ -752,7 +844,7 @@ function PaymentsPage() {
                     <Plus className="h-4 w-4" /> Add Payment
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="rounded-3xl border-border/60 bg-card max-w-lg p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
+                <DialogContent className="rounded-3xl border-border/60 bg-card max-w-lg p-6 sm:p-8 shadow-(--shadow-elegant)">
                   <DialogHeader className="pb-4 border-b border-border/40">
                     <DialogTitle className="text-xl font-extrabold tracking-tight text-foreground font-sans">
                       Record Transaction
@@ -1001,7 +1093,7 @@ function PaymentsPage() {
         </div>
       </div>
 
-      <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden">
+      <Card className="border-border/60 bg-card shadow-(--shadow-card) rounded-2xl overflow-hidden">
         <div className="px-6 pt-6 border-b border-border/40 flex items-center justify-between bg-muted/10">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-3">
             <button
@@ -1213,7 +1305,7 @@ function PaymentsPage() {
                                 {p.status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="py-4 text-xs text-muted-foreground max-w-[160px] truncate">
+                            <TableCell className="py-4 text-xs text-muted-foreground max-w-40 truncate">
                               {p.notes ? (
                                 <span title={p.notes}>{p.notes}</span>
                               ) : (
@@ -1516,7 +1608,7 @@ function PaymentsPage() {
       </Card>
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-[var(--shadow-elegant)] max-w-md">
+        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-(--shadow-elegant) max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-extrabold text-foreground font-sans">
               Delete Payment
@@ -1541,7 +1633,7 @@ function PaymentsPage() {
       </AlertDialog>
 
       <AlertDialog open={batchDeleteOpen} onOpenChange={setBatchDeleteOpen}>
-        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-[var(--shadow-elegant)] max-w-md">
+        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-(--shadow-elegant) max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-extrabold text-foreground font-sans">
               Delete Selected Payments
@@ -1578,7 +1670,7 @@ function PaymentsPage() {
 
       {/* AI Reconciliation Assistant Dialog */}
       <Dialog open={!!aiAnalysisPaymentId} onOpenChange={(open) => !open && setAiAnalysisPaymentId(null)}>
-        <DialogContent className="rounded-3xl border-border/60 bg-card max-w-lg p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
+        <DialogContent className="rounded-3xl border-border/60 bg-card max-w-lg p-6 sm:p-8 shadow-(--shadow-elegant)">
           <DialogHeader className="pb-4 border-b border-border/40">
             <DialogTitle className="flex items-center gap-2 text-xl font-extrabold text-foreground font-sans">
               <Sparkles className="h-5 w-5 text-purple-500 animate-pulse" />

@@ -62,14 +62,14 @@ export default function WhoWeServe() {
   ];
 
   return (
-    <section id="solutions" className="py-20 sm:py-28 bg-[#faf9f5] border-t border-[#e6e4dc] text-[#010101] font-sans">
+    <section id="solutions" className="py-20 sm:py-28 bg-white border-t border-[#e6e4dc] text-[#010101] font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#fcdcc5] bg-[#fef3eb] select-none mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#e6e4dc] bg-white select-none mb-4">
             <Zap className="w-3.5 h-3.5 text-[#e8562a]" />
-            <span className="text-xs font-bold uppercase tracking-wider text-[#e8562a]">Built for your organization</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#404040]">Built for your organization</span>
           </div>
           <h2 className="font-sans font-extrabold text-3xl sm:text-4xl lg:text-[44px] tracking-tight text-[#010101] leading-tight mb-4">
             Who TODELLAA is built for

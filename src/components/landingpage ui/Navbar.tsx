@@ -44,7 +44,7 @@ export default function Navbar() {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 w-full font-sans">
       {/* Announcement Bar */}
-      <div className="bg-[#fef3eb] border-b border-[#fcdcc5] py-2 px-4 text-center text-xs sm:text-sm font-medium text-[#7c2d12] flex items-center justify-center gap-2 select-none">
+      <div className="bg-white border-b border-[#e6e4dc] py-2 px-4 text-center text-xs sm:text-sm font-medium text-[#404040] flex items-center justify-center gap-2 select-none">
         <Sparkles className="w-3.5 h-3.5 text-[#e8562a] shrink-0" />
         <span>
           <strong className="font-semibold text-[#1c1917]">New:</strong> AI Reconciliation Assistant is here!
@@ -54,12 +54,12 @@ export default function Navbar() {
           onClick={(e) => handleNavClick(e, "ai-tools")}
           className="text-[#e8562a] font-semibold hover:underline inline-flex items-center gap-1 ml-1"
         >
-          Explore now <ArrowRight className="w-3 h-3" />
+          Explore now <ArrowRight className="w-3.5 h-3.5" />
         </a>
       </div>
 
       {/* Main Header Navbar */}
-      <header className="bg-[#f7f6f1]/90 backdrop-blur-md border-b border-[#e6e4dc] transition-all">
+      <header className="bg-white/90 backdrop-blur-md border-b border-[#e6e4dc] transition-all">
         <div className="flex items-center justify-between px-4 sm:px-8 lg:px-12 py-3.5 max-w-7xl mx-auto w-full">
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-2.5 select-none shrink-0 group">
@@ -114,7 +114,7 @@ export default function Navbar() {
 
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="absolute left-0 right-0 top-full bg-[#f7f6f1] border-b border-[#e6e4dc] backdrop-blur-xl px-6 py-6 flex flex-col gap-4 shadow-xl z-50 md:hidden font-sans">
+          <div className="absolute left-0 right-0 top-full bg-white border-b border-[#e6e4dc] backdrop-blur-xl px-6 py-6 flex flex-col gap-4 shadow-xl z-50 md:hidden font-sans">
             {navItems.map((item) => (
               <a
                 key={item.target}

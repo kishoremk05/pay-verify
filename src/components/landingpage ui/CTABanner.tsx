@@ -4,10 +4,10 @@ import { ArrowRight } from "lucide-react";
 
 export default function CTABanner() {
   return (
-    <section className="py-16 sm:py-24 bg-[#f7f6f1] font-sans">
+    <section className="py-16 sm:py-24 bg-white font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="bg-linear-to-r from-[#e8562a] via-[#ea5a2d] to-[#e8562a] rounded-3xl p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden">
+        <div className="bg-[#121214] border border-neutral-800 rounded-3xl p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden">
           
           {/* Background Decorative Curves */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -63,7 +63,7 @@ export default function CTABanner() {
               <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                 <Link
                   to="/signup"
-                  className="w-full sm:w-auto bg-white hover:bg-neutral-100 text-[#e8562a] font-extrabold text-base py-3.5 px-8 rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto bg-[#e8562a] hover:bg-[#d44820] text-white font-extrabold text-base py-3.5 px-8 rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
                 >
                   Start Free Trial <ArrowRight className="w-4 h-4" />
                 </Link>
