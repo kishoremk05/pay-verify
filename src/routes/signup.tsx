@@ -311,8 +311,8 @@ function SignupPage() {
         className="relative hidden lg:flex flex-col justify-between p-12 lg:p-16 text-white overflow-hidden select-none min-h-screen"
       >
         {/* Abstract Smooth Blue Waves Glow Overlay */}
-        <div className="absolute -bottom-32 -left-32 w-[650px] h-[650px] bg-gradient-to-tr from-blue-700/60 via-blue-500/40 to-transparent rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/3 -right-32 w-[500px] h-[500px] bg-blue-900/40 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute -bottom-32 -left-32 w-162.5 h-162.5 bg-linear-to-tr from-blue-700/60 via-blue-500/40 to-transparent rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/3 -right-32 w-125 h-125 bg-blue-900/40 rounded-full blur-[140px] pointer-events-none" />
 
         {/* Top Header: Back to Website button ABOVE the logo */}
         <div className="relative z-10 space-y-8">

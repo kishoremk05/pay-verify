@@ -1,123 +1,125 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Mail } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { Facebook, Linkedin, Twitter, Youtube, Send } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Footer() {
+  const [email, setEmail] = useState("");
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    toast.success("Thank you for subscribing!");
+    setEmail("");
+  };
+
   return (
-    <footer className="relative bg-[#121214] text-white py-16 sm:py-20 px-6 sm:px-12 lg:px-20 z-10 border-t border-neutral-800 font-sans">
-      <div className="max-w-7xl mx-auto">
+    <footer className="bg-[#faf9f5] text-[#010101] pt-16 pb-12 border-t border-[#e6e4dc] font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Top 4-Column Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12 pb-14 border-b border-neutral-800/80 text-left">
+        {/* Top 4 Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-[#e6e4dc]">
           
-          {/* Col 1: Logo & Subtitle (md:col-span-5) */}
-          <div className="md:col-span-5 flex flex-col items-start pr-0 md:pr-6">
-            <Link to="/" className="inline-flex items-center gap-2.5 group">
-              <img src={logo} alt="TODELLAA Logo" className="h-9 w-auto object-contain" />
-              <span className="text-xl font-bold tracking-tight text-white">TODELLAA</span>
-            </Link>
+          {/* Column 1: Logo & Description (4 cols) */}
+          <div className="md:col-span-4 flex flex-col justify-between">
+            <div>
+              <Link to="/" className="flex items-center gap-2.5 select-none mb-4">
+                <div className="w-8 h-8 rounded-lg bg-[#010101] text-white font-black text-sm flex items-center justify-center">
+                  T
+                </div>
+                <span className="text-xl font-bold tracking-tight text-[#010101]">TODELLAA</span>
+              </Link>
 
-            <p className="text-neutral-400 text-sm sm:text-base leading-relaxed font-normal mt-6 max-w-sm font-sans">
-              TODELLAA enables faster, smarter, and more accurate financial reconciliation from invoice generation to payment verification.
+              <p className="text-sm text-[#737373] leading-relaxed max-w-sm font-normal mb-6">
+                Smart payment verification and reconciliation for businesses and educational institutions.
+              </p>
+            </div>
+
+            {/* Social Icons */}
+            <div className="flex items-center gap-2">
+              <a href="#" className="w-9 h-9 rounded-full bg-white border border-[#e6e4dc] text-[#525252] hover:text-[#010101] hover:border-[#010101] flex items-center justify-center transition-colors">
+                <Facebook className="w-4 h-4" />
+              </a>
+              <a href="#" className="w-9 h-9 rounded-full bg-white border border-[#e6e4dc] text-[#525252] hover:text-[#010101] hover:border-[#010101] flex items-center justify-center transition-colors">
+                <Linkedin className="w-4 h-4" />
+              </a>
+              <a href="#" className="w-9 h-9 rounded-full bg-white border border-[#e6e4dc] text-[#525252] hover:text-[#010101] hover:border-[#010101] flex items-center justify-center transition-colors">
+                <Twitter className="w-4 h-4" />
+              </a>
+              <a href="#" className="w-9 h-9 rounded-full bg-white border border-[#e6e4dc] text-[#525252] hover:text-[#010101] hover:border-[#010101] flex items-center justify-center transition-colors">
+                <Youtube className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+
+          {/* Column 2: Product (2 cols) */}
+          <div className="md:col-span-2">
+            <h4 className="text-xs font-bold text-[#010101] uppercase tracking-wider mb-4">Product</h4>
+            <ul className="space-y-2.5 text-xs font-medium text-[#737373]">
+              <li><a href="#features" className="hover:text-[#010101] transition-colors">Features</a></li>
+              <li><a href="#integrations" className="hover:text-[#010101] transition-colors">Integrations</a></li>
+              <li><a href="#ai-tools" className="hover:text-[#010101] transition-colors">AI Tools</a></li>
+              <li><a href="#pricing" className="hover:text-[#010101] transition-colors">Pricing</a></li>
+            </ul>
+          </div>
+
+          {/* Column 3: Resources & Company (3 cols) */}
+          <div className="md:col-span-3 grid grid-cols-2 gap-4">
+            <div>
+              <h4 className="text-xs font-bold text-[#010101] uppercase tracking-wider mb-4">Resources</h4>
+              <ul className="space-y-2.5 text-xs font-medium text-[#737373]">
+                <li><a href="#" className="hover:text-[#010101] transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-[#010101] transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-[#010101] transition-colors">Guides</a></li>
+                <li><a href="#" className="hover:text-[#010101] transition-colors">API Docs</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold text-[#010101] uppercase tracking-wider mb-4">Company</h4>
+              <ul className="space-y-2.5 text-xs font-medium text-[#737373]">
+                <li><a href="#" className="hover:text-[#010101] transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-[#010101] transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-[#010101] transition-colors">Contact Us</a></li>
+                <li><a href="#" className="hover:text-[#010101] transition-colors">Privacy Policy</a></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Column 4: Stay updated (3 cols) */}
+          <div className="md:col-span-3">
+            <h4 className="text-xs font-bold text-[#010101] uppercase tracking-wider mb-2">Stay updated</h4>
+            <p className="text-xs text-[#737373] mb-4">
+              Get tips, product updates, and finance insights straight to your inbox.
             </p>
-          </div>
 
-          {/* Col 2: SYSTEM (md:col-span-2) */}
-          <div className="md:col-span-2 flex flex-col items-start">
-            <span className="font-mono text-xs uppercase tracking-widest text-neutral-500 font-semibold mb-5 block">
-              PLATFORM
-            </span>
-            <ul className="space-y-3 text-sm text-neutral-300 font-sans">
-              <li>
-                <a href="#system" className="hover:text-white transition-colors">
-                  Overview
-                </a>
-              </li>
-              <li>
-                <a href="#capabilities" className="hover:text-white transition-colors">
-                  Capabilities
-                </a>
-              </li>
-              <li>
-                <a href="#who-we-serve" className="hover:text-white transition-colors">
-                  Who We Serve
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 3: OPERATIONS (md:col-span-2) */}
-          <div className="md:col-span-2 flex flex-col items-start">
-            <span className="font-mono text-xs uppercase tracking-widest text-neutral-500 font-semibold mb-5 block">
-              OPERATIONS
-            </span>
-            <ul className="space-y-3 text-sm text-neutral-300 font-sans">
-              <li>
-                <a href="#engagement" className="hover:text-white transition-colors">
-                  Onboarding
-                </a>
-              </li>
-              <li>
-                <a href="#pricing" className="hover:text-white transition-colors">
-                  Pricing
-                </a>
-              </li>
-              <li>
-                <a href="#faq" className="hover:text-white transition-colors">
-                  FAQ
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 4: CONTACT (md:col-span-3) */}
-          <div className="md:col-span-3 flex flex-col items-start space-y-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-neutral-500 font-semibold mb-2 block">
-              CONTACT
-            </span>
-
-            <span className="text-sm font-semibold text-white block font-sans">
-              Dr Noskim Atidigah
-            </span>
-
-            <span className="text-xs text-neutral-400 block font-sans">
-              Accra, Ghana
-            </span>
-
-            <div className="space-y-1.5 pt-1 text-xs text-neutral-300 font-sans">
-              <div>Mobile: <a href="tel:+233264445383" className="text-white hover:text-[#3675ff] font-medium">+233-26 444 53 83</a></div>
-              <div>WhatsApp: <a href="https://wa.me/233508069168" target="_blank" rel="noreferrer" className="text-white hover:text-[#3675ff] font-medium">+233-50 806 9168</a></div>
-              <div>Skype: <span className="text-white font-medium">noskim1</span></div>
-            </div>
-
-            <div className="pt-2 space-y-1.5 text-xs">
-              <a
-                href="mailto:noskim.atidigah@gmail.com"
-                className="inline-flex items-center gap-2 text-white hover:text-[#3675ff] transition-colors font-sans group"
+            <form onSubmit={handleSubscribe} className="flex items-center gap-2">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-white border border-[#e6e4dc] rounded-xl px-3.5 py-2.5 text-xs text-[#010101] placeholder-[#a3a3a3] focus:outline-none focus:border-[#e8562a]"
+              />
+              <button
+                type="submit"
+                className="w-10 h-10 rounded-xl bg-[#e8562a] hover:bg-[#d44820] text-white flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                aria-label="Subscribe"
               >
-                <Mail className="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#3675ff]" />
-                <span className="underline decoration-neutral-600 underline-offset-4 group-hover:decoration-[#3675ff]">
-                  noskim.atidigah@gmail.com
-                </span>
-              </a>
-              <a
-                href="mailto:noskim@bulaiza.com"
-                className="inline-flex items-center gap-2 text-white hover:text-[#3675ff] transition-colors font-sans group block"
-              >
-                <Mail className="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#3675ff]" />
-                <span className="underline decoration-neutral-600 underline-offset-4 group-hover:decoration-[#3675ff]">
-                  noskim@bulaiza.com
-                </span>
-              </a>
-            </div>
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
           </div>
 
         </div>
 
-        {/* Bottom Copyright */}
-        <div className="pt-8 text-center text-xs font-sans text-neutral-500 tracking-normal">
-          © 2026 TODELLAA Financial Operations Platform
+        {/* Bottom Bar */}
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-[#737373]">
+          <div>© 2026 TODELLAA. All rights reserved.</div>
+          <div>Made with ❤️ in Ghana</div>
         </div>
 
       </div>

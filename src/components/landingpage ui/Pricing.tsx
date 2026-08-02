@@ -1,404 +1,183 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { toast } from "sonner";
-import {
-  CheckCircle2,
-  Circle,
-  Database,
-  ShieldCheck,
-  Zap,
-  Lock,
-  FileText,
-  Users,
-  HardDrive,
-  Key,
-  CreditCard,
-  X,
-  Loader2,
-} from "lucide-react";
-
-const tiersData = [
-  {
-    id: "starter",
-    num: "01",
-    name: "Starter",
-    pop: "Up to 10,000 monthly invoices",
-    price: "$48,000",
-    amountKobo: 50000,
-    period: "/ year",
-    desc: "For smaller schools & organizations requiring essential automated matching.",
-    features: [
-      { icon: Database, text: "Paystack & 1 primary bank integration" },
-      { icon: Lock, text: "100% Data ownership & local export" },
-      { icon: Zap, text: "Standard invoice mapping template" },
-      { icon: Users, text: "Up to 3 administrative departments" },
-      { icon: ShieldCheck, text: "Standard email & phone support desk" },
-    ],
-  },
-  {
-    id: "growth",
-    num: "02",
-    name: "Growth",
-    pop: "Up to 50,000 monthly invoices",
-    price: "$95,050",
-    amountKobo: 100000,
-    period: "/ year",
-    desc: "Replaces manual reconciliation across core financial departments.",
-    features: [
-      { icon: Database, text: "Paystack & multi-bank integrations" },
-      { icon: Lock, text: "100% Data ownership & local export" },
-      { icon: Zap, text: "Custom AI policy matching engine" },
-      { icon: Users, text: "Up to 6 departments supported" },
-      { icon: ShieldCheck, text: "SLA-bound technical support & logs" },
-      { icon: HardDrive, text: "Statutory records retention at write" },
-      { icon: Key, text: "SOC 2 Type II compliance audit logs" },
-    ],
-  },
-  {
-    id: "enterprise",
-    num: "03",
-    name: "Enterprise",
-    pop: "Unlimited monthly invoices",
-    price: "$185,000",
-    amountKobo: 200000,
-    period: "/ year",
-    desc: "Comprehensive financial operations substrate for high-volume institutions.",
-    features: [
-      { icon: Database, text: "Unlimited gateway & bank integrations" },
-      { icon: Lock, text: "100% Data ownership & local export" },
-      { icon: Zap, text: "Full cross-agency rules compiler" },
-      { icon: Users, text: "Unlimited administrative departments" },
-      { icon: ShieldCheck, text: "24/7 dedicated support desk" },
-      { icon: HardDrive, text: "Statutory records retention at write" },
-      { icon: Key, text: "Custom enterprise sandbox node" },
-      { icon: FileText, text: "Cryptographic hash-chain audit logs" },
-    ],
-  },
-];
+import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
+import { Check, Sparkles, Zap, ShieldCheck } from "lucide-react";
 
 export default function Pricing() {
-  const navigate = useNavigate();
-  const [selectedId, setSelectedId] = useState("starter");
-  const [showScoped, setShowScoped] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [annualBilling, setAnnualBilling] = useState(true);
 
-  const selectedTier = tiersData.find((t) => t.id === selectedId) || tiersData[0];
-
-  const handleOpenPaymentModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handlePaystackPayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes("@")) {
-      toast.error("Please enter a valid email address.");
-      return;
-    }
-
-    const paystackPublicKey =
-      import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_f4cd532e0f6a2042bb921a713a4f5122b145cb0b";
-
-    if (!(window as any).PaystackPop) {
-      toast.error("Paystack SDK not loaded yet. Please refresh the page and try again.");
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      const handler = (window as any).PaystackPop.setup({
-        key: paystackPublicKey,
-        email: email,
-        amount: selectedTier.amountKobo,
-        currency: "GHS",
-        channels: ["card"],
-        ref: `TODELLAA_${selectedTier.id.toUpperCase()}_${Date.now()}`,
-        metadata: {
-          plan_id: selectedTier.id,
-          plan_name: selectedTier.name,
-          custom_fields: [
-            {
-              display_name: "Plan Name",
-              variable_name: "plan_name",
-              value: selectedTier.name,
-            },
-          ],
-        },
-        callback: (response: any) => {
-          setIsProcessing(false);
-          setIsModalOpen(false);
-          toast.success(`Payment verified! Ref: ${response.reference}`);
-          navigate({ to: "/signup" });
-        },
-        onClose: () => {
-          setIsProcessing(false);
-          toast.info("Payment cancelled.");
-        },
-      });
-
-      handler.openIframe();
-    } catch (err: any) {
-      setIsProcessing(false);
-      toast.error(`Paystack initialization failed: ${err.message || err}`);
-    }
-  };
+  const plans = [
+    {
+      name: "Starter",
+      tagline: "For small businesses",
+      monthlyPrice: "12",
+      annualPrice: "0",
+      currency: "€",
+      period: "/ month",
+      isPopular: false,
+      ctaText: "Get Started Free",
+      ctaLink: "/signup",
+      ctaVariant: "outline",
+      features: [
+        "Up to 100 invoices / month",
+        "Manual reconciliation",
+        "Basic reports & CSV exports",
+        "Email support desk",
+        "Single branch access",
+      ],
+    },
+    {
+      name: "Professional",
+      tagline: "For growing businesses",
+      monthlyPrice: "119",
+      annualPrice: "99",
+      currency: "€",
+      period: "/ month",
+      isPopular: true,
+      popularTag: "Most Popular",
+      ctaText: "Start Free Trial",
+      ctaLink: "/signup",
+      ctaVariant: "solid",
+      features: [
+        "Unlimited invoices",
+        "Auto reconciliation engine",
+        "AI Assistant (Basic)",
+        "Advanced financial reports",
+        "Priority 24/7 support",
+        "Multi-branch & campus scoping",
+        "Audit logs & records retention",
+      ],
+    },
+    {
+      name: "Enterprise",
+      tagline: "For large organizations",
+      monthlyPrice: "349",
+      annualPrice: "299",
+      currency: "€",
+      period: "/ month",
+      isPopular: false,
+      ctaText: "Contact Sales",
+      ctaLink: "/contact",
+      ctaVariant: "outline",
+      features: [
+        "Everything in Professional",
+        "AI Assistant (Advanced)",
+        "Custom ERP & bank integrations",
+        "Dedicated account manager",
+        "99.9% SLA & premium support",
+        "Custom role permissions",
+        "Statutory compliance reporting",
+      ],
+    },
+  ];
 
   return (
-    <section id="pricing" className="relative py-20 sm:py-28 bg-[#121214] text-white z-10 scroll-mt-20 font-sans border-t border-neutral-800">
-      
-      {/* Dark Ambient Radial Glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[450px] bg-[#6366f1]/10 rounded-full blur-[160px] pointer-events-none" />
-
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
+    <section id="pricing" className="py-20 sm:py-28 bg-[#f7f6f1] text-[#010101] font-sans border-t border-[#e6e4dc]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header Section */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center mb-12 sm:mb-16">
-          
-          <div className="md:col-span-8 text-left">
-            <h2 className="font-sans font-bold text-4xl sm:text-5xl lg:text-[56px] tracking-[-0.035em] text-white leading-[1.08]">
-              Simple and sustainable pricing
-            </h2>
-            <p className="mt-4 text-neutral-400 text-base sm:text-lg leading-relaxed max-w-2xl font-normal font-sans">
-              Get the infrastructure automation you need for your organization without seat limits or hidden tiers. Start with a <strong className="text-white font-semibold underline decoration-[#818cf8] underline-offset-4">14-day free trial</strong> and pay a fair, predictable rate scaled to your transaction volume.
-            </p>
+        {/* Header */}
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#fcdcc5] bg-[#fef3eb] select-none mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-[#e8562a]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#e8562a]">Flexible Plans</span>
           </div>
+          <h2 className="font-sans font-extrabold text-3xl sm:text-4xl lg:text-[44px] tracking-tight text-[#010101] leading-tight mb-4">
+            Simple, transparent pricing
+          </h2>
+          <p className="text-[#525252] text-base sm:text-lg font-normal">
+            Choose the plan that fits your business.
+          </p>
 
-          {/* Top Right Bar Chart SVG Illustration */}
-          <div className="md:col-span-4 flex justify-center md:justify-end">
-            <div className="relative w-48 h-40 flex items-center justify-center">
-              <div className="absolute inset-0 bg-[#6366f1]/20 rounded-full blur-2xl opacity-70" />
-              
-              <svg className="w-44 h-36 relative z-10 select-none" viewBox="0 0 160 130" fill="none">
-                <circle cx="20" cy="30" r="3" fill="#818cf8" opacity="0.8" />
-                <circle cx="20" cy="50" r="3" fill="#818cf8" opacity="0.8" />
-                <circle cx="20" cy="70" r="3" fill="#818cf8" opacity="0.8" />
-                <circle cx="20" cy="90" r="3" fill="#818cf8" opacity="0.8" />
-                
-                <line x1="30" y1="20" x2="30" y2="105" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
-                <line x1="30" y1="105" x2="150" y2="105" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
-
-                <line x1="55" y1="105" x2="55" y2="110" stroke="#475569" strokeWidth="2" />
-                <line x1="85" y1="105" x2="85" y2="110" stroke="#475569" strokeWidth="2" />
-                <line x1="115" y1="105" x2="115" y2="110" stroke="#475569" strokeWidth="2" />
-
-                <rect x="42" y="55" width="24" height="50" rx="4" fill="#18181b" stroke="#818cf8" strokeWidth="2" />
-                <circle cx="50" cy="67" r="1.5" fill="#818cf8" />
-                <circle cx="58" cy="67" r="1.5" fill="#818cf8" />
-                <path d="M51 72 Q54 75 57 72" stroke="#818cf8" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-
-                <rect x="72" y="25" width="24" height="80" rx="4" fill="#18181b" stroke="#a5b4fc" strokeWidth="2" />
-                <rect x="102" y="45" width="24" height="60" rx="4" fill="#18181b" stroke="#818cf8" strokeWidth="2" />
-              </svg>
-            </div>
+          {/* Billing Toggle Switch */}
+          <div className="flex items-center justify-center gap-3 mt-8">
+            <span className={`text-xs font-bold ${!annualBilling ? "text-[#010101]" : "text-[#737373]"}`}>
+              Monthly Billing
+            </span>
+            <button
+              onClick={() => setAnnualBilling(!annualBilling)}
+              className="w-12 h-6 rounded-full bg-[#e8562a] p-1 transition-colors cursor-pointer relative"
+              aria-label="Toggle Billing"
+            >
+              <div
+                className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                  annualBilling ? "translate-x-6" : "translate-x-0"
+                }`}
+              />
+            </button>
+            <span className={`text-xs font-bold flex items-center gap-1.5 ${annualBilling ? "text-[#010101]" : "text-[#737373]"}`}>
+              Annual Billing <span className="bg-[#dcfce7] text-[#16a34a] text-[10px] font-extrabold px-2 py-0.5 rounded-full">Save 20%</span>
+            </span>
           </div>
-
         </div>
 
-        {/* 2-Column Pricing Main UI */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left Column: Selectable Tier Options */}
-          <div className="lg:col-span-6 space-y-4 text-left">
-            {tiersData.map((tier) => {
-              const isSelected = selectedId === tier.id;
-              return (
-                <div
-                  key={tier.id}
-                  onClick={() => setSelectedId(tier.id)}
-                  className={`cursor-pointer p-6 rounded-2xl border transition-all flex items-center justify-between shadow-lg ${
-                    isSelected
-                      ? "border-[#818cf8] bg-[#18181b] ring-2 ring-[#818cf8]/30 shadow-[0_0_30px_rgba(99,102,241,0.2)]"
-                      : "border-neutral-800/80 bg-[#18181b]/70 hover:border-neutral-700 hover:bg-[#18181b]"
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-baseline gap-3">
-                      <span className={`text-2xl sm:text-3xl font-extrabold font-sans tracking-tight ${isSelected ? "text-[#818cf8]" : "text-white"}`}>
-                        {tier.price}
-                      </span>
-                      <span className="text-xs font-mono text-neutral-400">/ yr</span>
-                    </div>
-                    <span className="text-xs sm:text-sm font-medium text-neutral-400 mt-1 block font-sans">
-                      {tier.pop}
-                    </span>
+        {/* Pricing Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
+          {plans.map((plan, idx) => {
+            const displayPrice = annualBilling ? plan.annualPrice : plan.monthlyPrice;
+            return (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.4, delay: idx * 0.1 }}
+                className={`rounded-3xl p-7 sm:p-8 flex flex-col justify-between transition-all relative ${
+                  plan.isPopular
+                    ? "bg-white border-2 border-[#e8562a] shadow-xl scale-102 z-10"
+                    : "bg-white border border-[#e6e4dc] shadow-xs hover:border-[#d4d4d4]"
+                }`}
+              >
+                {plan.isPopular && (
+                  <div className="absolute -top-3.5 right-6 bg-[#e8562a] text-white text-xs font-bold px-3.5 py-1 rounded-full shadow-xs flex items-center gap-1">
+                    <Zap className="w-3 h-3 fill-current" /> {plan.popularTag}
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-xl font-bold text-[#010101] tracking-tight">{plan.name}</h3>
+                  <p className="text-xs text-[#737373] mt-1 font-normal">{plan.tagline}</p>
+
+                  <div className="flex items-baseline gap-1 my-6">
+                    <span className="text-3xl font-extrabold text-[#010101]">{plan.currency}</span>
+                    <span className="text-5xl font-extrabold text-[#010101] tracking-tight">{displayPrice}</span>
+                    <span className="text-sm font-semibold text-[#737373]">{plan.period}</span>
                   </div>
 
-                  <div className="shrink-0 pl-4">
-                    {isSelected ? (
-                      <CheckCircle2 className="w-6 h-6 text-[#818cf8]" />
-                    ) : (
-                      <Circle className="w-6 h-6 text-neutral-600" />
-                    )}
+                  <div className="border-t border-[#f0eee6] pt-6 space-y-3 mb-8">
+                    {plan.features.map((feat, i) => (
+                      <div key={i} className="flex items-center gap-2.5 text-xs sm:text-sm text-[#404040]">
+                        <div className="w-4 h-4 rounded-full bg-[#fef3eb] text-[#e8562a] flex items-center justify-center shrink-0">
+                          <Check className="w-3 h-3 stroke-[2.5]" />
+                        </div>
+                        <span className="font-medium">{feat}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              );
-            })}
 
-            {/* Action Buttons Row */}
-            <div className="pt-4 flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => setShowScoped(!showScoped)}
-                className="px-4 py-2 rounded-full bg-[#10b981]/15 text-[#34d399] text-xs font-semibold hover:bg-[#10b981]/25 transition-colors border border-[#10b981]/30"
-              >
-                {showScoped ? "Hide custom plans" : "Get custom enterprise quote"}
-              </button>
-              <Link
-                to="/contact"
-                className="px-4 py-2 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold transition-colors border border-neutral-700"
-              >
-                Inquire custom MSA
-              </Link>
-            </div>
-          </div>
-
-          {/* Right Column: Feature Details Card */}
-          <div className="lg:col-span-6 bg-[#18181b] border border-neutral-800 rounded-3xl p-8 sm:p-9 text-left shadow-2xl flex flex-col justify-between min-h-[460px]">
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight font-sans">
-                  All {selectedTier.name} plans include:
-                </h3>
-                <span className="text-xs font-mono font-bold text-[#818cf8] bg-[#6366f1]/15 border border-[#6366f1]/30 px-3 py-1 rounded-full uppercase">
-                  Tier {selectedTier.num}
-                </span>
-              </div>
-
-              <ul className="space-y-4">
-                {selectedTier.features.map((item, idx) => {
-                  const Icon = item.icon;
-                  return (
-                    <li key={idx} className="flex items-center gap-3 text-xs sm:text-sm font-medium text-neutral-300 font-sans">
-                      <div className="w-7 h-7 rounded-lg bg-[#6366f1]/20 border border-[#6366f1]/40 text-[#818cf8] flex items-center justify-center shrink-0 shadow-2xs">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <span>{item.text}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-neutral-800 space-y-3">
-              <Link
-                to="/signup"
-                search={{ plan: selectedTier.id }}
-                className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-2xl bg-[#09a5db] hover:bg-[#0788b5] text-white font-semibold text-sm shadow-lg hover:shadow-cyan-500/25 transition-all"
-              >
-                <CreditCard className="w-4 h-4" />
-                <span>Pay Now with Paystack ({selectedTier.price})</span>
-              </Link>
-              <Link
-                to="/signup"
-                search={{ plan: selectedTier.id }}
-                className="w-full block text-center py-3 px-6 rounded-2xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-medium text-xs border border-neutral-700 transition-all"
-              >
-                Or start 14-day trial without payment
-              </Link>
-            </div>
-          </div>
-
+                <div>
+                  {plan.ctaVariant === "solid" ? (
+                    <Link
+                      to={plan.ctaLink}
+                      className="w-full bg-[#e8562a] hover:bg-[#d44820] text-white font-bold text-sm py-3.5 px-6 rounded-xl transition-all shadow-xs block text-center"
+                    >
+                      {plan.ctaText}
+                    </Link>
+                  ) : (
+                    <Link
+                      to={plan.ctaLink}
+                      className="w-full bg-white hover:bg-neutral-50 text-[#010101] font-bold text-sm py-3.5 px-6 rounded-xl border border-[#d4d4d4] transition-all shadow-2xs block text-center"
+                    >
+                      {plan.ctaText}
+                    </Link>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
-
-        {/* Subtext Footer */}
-        <p className="mt-12 text-center text-xs text-neutral-500 font-sans leading-relaxed max-w-2xl mx-auto">
-          All pricing is in USD and scales with transaction volume footprint. If you need custom enterprise scoping,{" "}
-          <Link to="/contact" className="underline text-neutral-300 hover:text-white">
-            get in touch with our team
-          </Link>.
-        </p>
 
       </div>
-
-      {/* Paystack Email Modal */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[#18181b] border border-neutral-700 rounded-3xl p-6 sm:p-8 max-w-md w-full text-left shadow-2xl relative"
-            >
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-5 right-5 text-neutral-400 hover:text-white transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-[#09a5db]/20 border border-[#09a5db]/40 text-[#09a5db] flex items-center justify-center">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white font-sans">
-                    Complete Order — {selectedTier.name}
-                  </h3>
-                  <p className="text-xs text-neutral-400 font-mono">
-                    {selectedTier.price} / year via Paystack
-                  </p>
-                </div>
-              </div>
-
-              <p className="text-xs text-neutral-300 mb-6 leading-relaxed">
-                Enter your email address to initiate payment. You will be prompted by Paystack's secure checkout.
-              </p>
-
-              <form onSubmit={handlePaystackPayment} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-neutral-300 mb-1.5 font-sans">
-                    Billing Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="billing@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-neutral-900 border border-neutral-700 text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-[#09a5db] transition-colors"
-                  />
-                </div>
-
-                <div className="pt-2 flex items-center justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2.5 rounded-xl text-neutral-400 hover:text-white text-xs font-semibold transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isProcessing}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#09a5db] hover:bg-[#0788b5] text-white text-xs font-semibold shadow-md transition-all disabled:opacity-50"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Opening Paystack...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="w-4 h-4" />
-                        <span>Proceed to Payment</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }
-

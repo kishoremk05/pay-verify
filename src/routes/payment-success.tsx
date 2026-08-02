@@ -85,7 +85,7 @@ function PaymentSuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0d0e12] text-white px-4 py-12 relative overflow-hidden font-sans">
       {/* Glow Effects */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-100 bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10 text-center">
         {/* Brand Header */}
@@ -156,7 +156,7 @@ function PaymentSuccessPage() {
                 {reference && (
                   <div className="flex justify-between text-neutral-400">
                     <span>Paystack Ref:</span>
-                    <span className="text-emerald-400 font-bold max-w-[180px] truncate">{reference}</span>
+                    <span className="text-emerald-400 font-bold max-w-45 truncate">{reference}</span>
                   </div>
                 )}
                 {verifiedInvoice?.invoice_number && (

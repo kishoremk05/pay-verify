@@ -1,327 +1,222 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { 
-  Cloud, 
-  Pencil, 
-  GitBranch, 
-  FileText, 
-  Building2, 
-  Inbox, 
-  Grid3X3, 
-  TrendingUp 
+import {
+  Users,
+  FileText,
+  CreditCard,
+  Sparkles,
+  BarChart3,
+  RotateCcw,
+  Bot,
+  ShieldCheck,
+  Building2,
+  FileCheck,
+  CheckCircle2,
+  Zap,
+  Lock,
+  ArrowUpRight
 } from "lucide-react";
 
 export default function Capabilities() {
-  return (
-    <section id="features" className="relative py-20 sm:py-28 bg-[#121214] text-white z-10 scroll-mt-20 font-sans">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        
-        {/* Section Header */}
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16 sm:mb-20">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-neutral-700/80 bg-neutral-800/80 text-neutral-300 backdrop-blur-xs shadow-2xs select-none mb-6">
-            <Cloud className="w-3.5 h-3.5 text-neutral-300" />
-            <span className="text-xs sm:text-sm font-normal tracking-tight">
-              Capabilities
+  const features = [
+    {
+      icon: Users,
+      title: "Manage Customers",
+      desc: "Store customer details, contacts, groups and payment history in a unified CRM view.",
+      widget: (
+        <div className="bg-[#faf9f5] border border-[#ecebe4] rounded-xl p-2.5 space-y-2 mt-4 font-sans text-xs">
+          <div className="flex items-center justify-between bg-white p-2 rounded-lg border border-[#f0eee6]">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[#e8562a]/20 text-[#e8562a] font-bold text-[10px] flex items-center justify-center">JD</div>
+              <span className="font-bold text-[#010101] text-[11px]">John Doe</span>
+            </div>
+            <span className="bg-[#fef3eb] text-[#e8562a] text-[9px] font-bold px-1.5 py-0.5 rounded">SME</span>
+          </div>
+          <div className="flex items-center justify-between text-[10px] text-[#737373] px-1">
+            <span>3 Active Invoices</span>
+            <span className="font-bold text-[#16a34a]">€ 4,500 Paid</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      icon: FileText,
+      title: "Create Invoices",
+      desc: "Generate professional PDF & online invoices with instant payment links in seconds.",
+      widget: (
+        <div className="bg-[#faf9f5] border border-[#ecebe4] rounded-xl p-2.5 space-y-1.5 mt-4 font-sans text-xs">
+          <div className="flex items-center justify-between bg-white p-2 rounded-lg border border-[#f0eee6]">
+            <div>
+              <span className="font-bold text-[#010101] text-[11px] block">#INV-2041</span>
+              <span className="text-[9px] text-[#737373]">Due May 30</span>
+            </div>
+            <span className="bg-[#dcfce7] text-[#16a34a] text-[9px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
+              <CheckCircle2 className="w-2.5 h-2.5" /> PAID
             </span>
           </div>
+        </div>
+      ),
+    },
+    {
+      icon: CreditCard,
+      title: "Accept Payments",
+      desc: "Collect payments via Paystack, direct bank transfers, and Mobile Money.",
+      widget: (
+        <div className="bg-[#faf9f5] border border-[#ecebe4] rounded-xl p-2.5 mt-4 font-sans text-xs">
+          <div className="flex items-center justify-between gap-1">
+            <span className="bg-white border border-[#f0eee6] px-2 py-1 rounded text-[10px] font-bold text-[#010101]">Paystack</span>
+            <span className="bg-white border border-[#f0eee6] px-2 py-1 rounded text-[10px] font-bold text-[#010101]">MoMo</span>
+            <span className="bg-white border border-[#f0eee6] px-2 py-1 rounded text-[10px] font-bold text-[#010101]">Bank</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      icon: Sparkles,
+      title: "Auto Reconciliation",
+      desc: "Automatically match payments to invoices with high AI accuracy and zero manual errors.",
+      widget: (
+        <div className="bg-[#faf9f5] border border-[#ecebe4] rounded-xl p-2.5 mt-4 font-sans text-xs">
+          <div className="flex items-center justify-between text-[10px] font-bold text-[#010101] mb-1">
+            <span>Match Accuracy</span>
+            <span className="text-[#16a34a]">99.4%</span>
+          </div>
+          <div className="w-full h-2 bg-[#e6e4dc] rounded-full overflow-hidden">
+            <div className="h-full bg-[#16a34a] w-[99.4%]" />
+          </div>
+        </div>
+      ),
+    },
+    {
+      icon: BarChart3,
+      title: "Track Balances",
+      desc: "Monitor outstanding balances and overdue invoices in real-time operational views.",
+      widget: (
+        <div className="bg-[#faf9f5] border border-[#ecebe4] rounded-xl p-2.5 mt-4 font-sans text-xs">
+          <div className="flex items-center justify-between text-[10px]">
+            <span className="text-[#737373]">Outstanding</span>
+            <span className="font-bold text-[#dc2626]">-5.1% YoY</span>
+          </div>
+          <div className="flex items-end gap-1 h-6 mt-1">
+            <div className="w-full bg-[#e8562a]/40 h-[80%] rounded-t-xs" />
+            <div className="w-full bg-[#e8562a]/60 h-[60%] rounded-t-xs" />
+            <div className="w-full bg-[#e8562a] h-[40%] rounded-t-xs" />
+          </div>
+        </div>
+      ),
+    },
+    {
+      icon: RotateCcw,
+      title: "Refunds & Adjustments",
+      desc: "Process refunds and fee adjustments easily with full approval auditing.",
+      widget: (
+        <div className="bg-[#faf9f5] border border-[#ecebe4] rounded-xl p-2 mt-4 font-sans text-xs">
+          <div className="flex items-center justify-between text-[10px] bg-white p-1.5 rounded border border-[#f0eee6]">
+            <span className="text-[#737373]">REF-8841</span>
+            <span className="bg-[#eff6ff] text-[#2563eb] font-bold px-1.5 py-0.5 rounded text-[9px]">Approved</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      icon: Bot,
+      title: "AI Insights & Reports",
+      desc: "Get smart insights, payment trends, and financial summaries powered by AI.",
+      widget: (
+        <div className="bg-[#fef3eb] border border-[#fcdcc5] rounded-xl p-2 mt-4 font-sans text-[10px] text-[#7c2d12]">
+          <span className="font-bold block">💡 AI Tip:</span>
+          <span>85% of MoMo payments cleared on Fridays.</span>
+        </div>
+      ),
+    },
+    {
+      icon: ShieldCheck,
+      title: "Secure & Reliable",
+      desc: "Bank-grade security, role permissions, 256-bit SSL encryption, and daily data backup.",
+      widget: (
+        <div className="bg-[#faf9f5] border border-[#ecebe4] rounded-xl p-2 mt-4 font-sans text-xs flex items-center justify-between">
+          <span className="text-[10px] font-bold text-[#010101] flex items-center gap-1">
+            <Lock className="w-3 h-3 text-[#16a34a]" /> 256-bit SSL
+          </span>
+          <span className="bg-[#dcfce7] text-[#16a34a] text-[9px] font-bold px-1.5 py-0.5 rounded">SOC-2</span>
+        </div>
+      ),
+    },
+    {
+      icon: Building2,
+      title: "Multi-Branch Support",
+      desc: "Manage multiple branches, campuses, or regional divisions in one platform.",
+      widget: (
+        <div className="bg-[#faf9f5] border border-[#ecebe4] rounded-xl p-2 mt-4 font-sans text-[10px] flex items-center justify-between">
+          <span className="bg-white border border-[#f0eee6] px-1.5 py-0.5 rounded font-bold text-[#010101]">Accra</span>
+          <span className="bg-white border border-[#f0eee6] px-1.5 py-0.5 rounded font-bold text-[#010101]">Kumasi</span>
+          <span className="bg-white border border-[#f0eee6] px-1.5 py-0.5 rounded font-bold text-[#010101]">Takoradi</span>
+        </div>
+      ),
+    },
+    {
+      icon: FileCheck,
+      title: "Audit Logs",
+      desc: "Track every payment modification and user action with immutable audit trails.",
+      widget: (
+        <div className="bg-[#faf9f5] border border-[#ecebe4] rounded-xl p-2 mt-4 font-sans text-[9px] text-[#737373]">
+          <span className="font-mono font-bold text-[#010101] block">LOG #4082</span>
+          <span>Matched #INV-1024 by System</span>
+        </div>
+      ),
+    },
+  ];
 
-          <h2 className="font-sans font-bold text-3xl sm:text-5xl lg:text-[60px] tracking-[-0.035em] text-white leading-[1.08] text-center">
-            <span className="block">Built For Reconciliation.</span>
-            <span className="block">Operated For Transparency.</span>
+  return (
+    <section id="features" className="py-20 sm:py-28 bg-[#f7f6f1] text-[#010101] font-sans border-t border-[#e6e4dc]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#fcdcc5] bg-[#fef3eb] select-none mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-[#e8562a]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#e8562a]">Platform Capabilities</span>
+          </div>
+          <h2 className="font-sans font-extrabold text-3xl sm:text-4xl lg:text-[44px] tracking-tight text-[#010101] leading-tight mb-4">
+            Everything you need to manage payments
           </h2>
-
-          <p className="mt-4 text-neutral-400 text-base sm:text-lg leading-[1.6] max-w-2xl mx-auto text-center font-normal font-sans">
-            <span className="block sm:inline">The primitives below are the load-bearing surfaces</span>{" "}
-            <span className="block sm:inline">every financial operations workflow relies on.</span>
+          <p className="text-[#525252] text-base sm:text-lg font-normal">
+            From invoices to reconciliation, TODELLAA brings it all together.
           </p>
         </div>
 
-        {/* Capabilities Grid */}
-        <div className="space-y-6">
-          
-          {/* Row 1: 3 Equal Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Card 1: Intake classification */}
-            <motion.div
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0 }}
-              className="bg-white text-neutral-900 rounded-2xl p-7 flex flex-col justify-between min-h-[380px] shadow-sm"
-            >
-              <div>
-                <div className="w-8 h-8 rounded-lg border border-neutral-200/80 bg-neutral-50 flex items-center justify-center text-neutral-700 mb-5">
-                  <Pencil className="w-4 h-4" />
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight text-[#0a0a0a]">
-                  Intake classification
-                </h3>
-                <p className="mt-3 text-neutral-500 text-sm leading-relaxed font-normal">
-                  Ingest Paystack, direct bank transfers, mobile money, and manual deposit receipts into one unified stream.
-                </p>
-              </div>
-
-              {/* Tag Rows Visual Mockup */}
-              <div className="mt-8 space-y-2 bg-[#fcfbf9] border border-neutral-200/80 rounded-xl p-3">
-                <div className="flex items-center justify-between text-[11px] bg-white border border-neutral-200/70 rounded-lg p-2 font-mono">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-bold">PST</span>
-                    <span className="text-neutral-700">Paystack · Student Tuition</span>
+        {/* 10 Feature Cards Grid (5 cols on lg) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5">
+          {features.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                className="bg-white border border-[#e6e4dc] rounded-2xl p-5 hover:border-[#e8562a]/40 hover:shadow-md transition-all flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-[#fef3eb] border border-[#fcdcc5] text-[#e8562a] flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                    <Icon className="w-5 h-5" />
                   </div>
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  <h3 className="text-base font-bold text-[#010101] tracking-tight mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-[#737373] leading-relaxed font-normal">
+                    {item.desc}
+                  </p>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] bg-white border border-neutral-200/70 rounded-lg p-2 font-mono">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold">TRF</span>
-                    <span className="text-neutral-700">Bank Transfer · B2B Invoice</span>
-                  </div>
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] bg-white border border-neutral-200/70 rounded-lg p-2 font-mono">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded text-[10px] font-bold">MOM</span>
-                    <span className="text-neutral-700">Mobile Money · Vendor Payout</span>
-                  </div>
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Card 2: Policy-aware routing */}
-            <motion.div
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-white text-neutral-900 rounded-2xl p-7 flex flex-col justify-between min-h-[380px] shadow-sm"
-            >
-              <div>
-                <div className="w-8 h-8 rounded-lg border border-neutral-200/80 bg-neutral-50 flex items-center justify-center text-neutral-700 mb-5">
-                  <GitBranch className="w-4 h-4" />
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight text-[#0a0a0a]">
-                  Rules-based AI matching
-                </h3>
-                <p className="mt-3 text-neutral-500 text-sm leading-relaxed font-normal">
-                  Custom matching logic per organization. Reconciles exact matches, fuzzy references, and multi-line invoices.
-                </p>
-              </div>
-
-              {/* AI Matching Visual Mockup */}
-              <div className="mt-8 space-y-2 bg-[#fcfbf9] border border-neutral-200/80 rounded-xl p-3">
-                <div className="flex items-center justify-between text-[11px] bg-white border border-neutral-200/70 rounded-lg p-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="text-neutral-700 font-medium">INV-0042 · Exact Match</span>
-                  </div>
-                  <span className="text-emerald-600 font-semibold text-[10px]">VERIFIED</span>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] bg-white border border-neutral-200/70 rounded-lg p-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                    <span className="text-neutral-700 font-medium">INV-0091 · Fuzzy Ref</span>
-                  </div>
-                  <span className="text-amber-600 font-semibold text-[10px]">PARTIAL</span>
-                </div>
-
-                <div className="flex items-center justify-between text-[11px] bg-white border border-neutral-200/70 rounded-lg p-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                    <span className="text-neutral-700 font-medium">INV-0113 · Multi-line</span>
-                  </div>
-                  <span className="text-blue-600 font-semibold text-[10px]">MATCHED</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Card 3: Records retention */}
-            <motion.div
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-white text-neutral-900 rounded-2xl p-7 flex flex-col justify-between min-h-[380px] shadow-sm"
-            >
-              <div>
-                <div className="w-8 h-8 rounded-lg border border-neutral-200/80 bg-neutral-50 flex items-center justify-center text-neutral-700 mb-5">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight text-[#0a0a0a]">
-                  Statutory audit schedules
-                </h3>
-                <p className="mt-3 text-neutral-500 text-sm leading-relaxed font-normal">
-                  Retention policies applied at transaction creation. Audit exports and financial logs generated automatically.
-                </p>
-              </div>
-
-              {/* Retention Timeline Visual Mockup */}
-              <div className="mt-8 bg-[#fcfbf9] border border-neutral-200/80 rounded-xl p-4">
-                <div className="h-4 w-full bg-neutral-100 rounded-full overflow-hidden flex mb-3">
-                  <div className="w-1/3 bg-blue-500 h-full" />
-                  <div className="w-1/3 bg-teal-500 h-full" />
-                  <div className="w-1/3 bg-neutral-200 h-full" />
-                </div>
-                <div className="flex justify-between text-[10px] font-mono text-neutral-400">
-                  <span>Q1</span>
-                  <span>Q2</span>
-                  <span>Q3</span>
-                  <span>Q4</span>
-                </div>
-                <div className="flex justify-between items-center mt-3 pt-3 border-t border-neutral-200/60 text-[11px]">
-                  <span className="text-neutral-400 font-mono">Ledger FY2026</span>
-                  <span className="text-blue-600 font-semibold italic">100% Reconciled</span>
-                </div>
-              </div>
-            </motion.div>
-
-          </div>
-
-          {/* Row 2: 2 Asymmetric Cards (3 cols + 2 cols) */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-            
-            {/* Card 4: Cross-agency handoffs */}
-            <motion.div
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="md:col-span-3 bg-white text-neutral-900 rounded-2xl p-7 flex flex-col justify-between min-h-[320px] shadow-sm"
-            >
-              <div>
-                <div className="w-8 h-8 rounded-lg border border-neutral-200/80 bg-neutral-50 flex items-center justify-center text-neutral-700 mb-5">
-                  <Building2 className="w-4 h-4" />
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight text-[#0a0a0a]">
-                  Cross-departmental handoffs
-                </h3>
-                <p className="mt-3 text-neutral-500 text-sm leading-relaxed font-normal max-w-lg">
-                  Financial state is preserved across accounting, bursar, and executive dashboards without spreadsheet siloing.
-                </p>
-              </div>
-
-              {/* Bar Chart & Stat Box */}
-              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-[#fcfbf9] border border-neutral-200/80 rounded-xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider block mb-2">
-                    RECONCILIATION · 7D
-                  </span>
-                  <div className="flex items-end gap-1.5 h-12 pt-2">
-                    <div className="w-full bg-blue-500 rounded-t h-[60%]" />
-                    <div className="w-full bg-blue-500 rounded-t h-[80%]" />
-                    <div className="w-full bg-blue-500 rounded-t h-[50%]" />
-                    <div className="w-full bg-amber-500 rounded-t h-[90%]" />
-                    <div className="w-full bg-blue-600 rounded-t h-[100%]" />
-                  </div>
-                </div>
-
-                <div className="bg-[#fcfbf9] border border-neutral-200/80 rounded-xl p-4 flex flex-col justify-between">
-                  <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider block mb-1">
-                    VERIFIED INVOICES
-                  </span>
-                  <div>
-                    <div className="text-2xl font-bold text-neutral-900">48,290</div>
-                    <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 mt-0.5">
-                      <TrendingUp className="w-3 h-3" />
-                      <span>99.8% match rate</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Card 5: Auditable by default (DARK CARD) */}
-            <motion.div
-              initial={{ opacity: 0, y: 25 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="md:col-span-2 bg-[#050505] text-white border border-neutral-800 rounded-2xl p-7 flex flex-col justify-between min-h-[320px] shadow-md relative overflow-hidden"
-            >
-              <div>
-                <div className="w-9 h-9 rounded-xl bg-blue-950/80 border border-blue-800/60 flex items-center justify-center text-blue-400 mb-5">
-                  <Inbox className="w-4 h-4" />
-                </div>
-                <h3 className="text-2xl font-bold tracking-tight text-white">
-                  Auditable by default
-                </h3>
-                <p className="mt-3 text-neutral-300 text-sm leading-relaxed font-normal">
-                  <span className="text-white font-medium">Every action is hash-chained.</span> Audit logs provide immutable evidence for finance teams.
-                </p>
-              </div>
-
-              {/* Hash Chain Log Mockup */}
-              <div className="mt-8 space-y-2 bg-[#0d111a] border border-neutral-800/80 rounded-xl p-3.5 text-xs font-mono">
-                <div className="flex items-center justify-between text-neutral-300">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span>0x4a7f..e2c1 · invoice created</span>
-                  </div>
-                  <span className="text-neutral-500 text-[10px]">V1</span>
-                </div>
-
-                <div className="flex items-center justify-between text-neutral-300">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span>0x9b3d..7f48 · Paystack deposit synced</span>
-                  </div>
-                  <span className="text-neutral-500 text-[10px]">V2</span>
-                </div>
-
-                <div className="flex items-center justify-between text-neutral-300">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span>0x1e8c..a52f · AI matched & verified</span>
-                  </div>
-                  <span className="text-neutral-500 text-[10px]">V3</span>
-                </div>
-              </div>
-            </motion.div>
-
-          </div>
-
-          {/* Row 3: Full Width Card (Connector substrate) */}
-          <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="bg-white text-neutral-900 rounded-2xl p-7 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm"
-          >
-            <div className="max-w-xl">
-              <div className="w-8 h-8 rounded-lg border border-neutral-200/80 bg-neutral-50 flex items-center justify-center text-neutral-700 mb-5">
-                <Grid3X3 className="w-4 h-4" />
-              </div>
-              <h3 className="text-2xl font-bold tracking-tight text-[#0a0a0a]">
-                Multi-provider connector substrate
-              </h3>
-              <p className="mt-3 text-neutral-500 text-sm leading-relaxed font-normal">
-                Directly connects to Paystack, commercial bank APIs, ERPs, Quickbooks, and custom SQL databases with zero code overhead.
-              </p>
-            </div>
-
-            {/* Protocol Buttons Grid */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 w-full md:w-auto font-mono text-xs text-center">
-              <div className="bg-[#050505] text-blue-400 py-3 px-4 rounded-xl font-bold">SQL</div>
-              <div className="bg-[#fcfbf9] border border-neutral-200/80 text-neutral-700 py-3 px-4 rounded-xl">CSV</div>
-              <div className="bg-[#fff7ed] text-orange-600 border border-orange-200/60 py-3 px-4 rounded-xl font-medium">REST</div>
-              <div className="bg-[#fcfbf9] border border-neutral-200/80 text-neutral-700 py-3 px-4 rounded-xl">SFTP</div>
-              <div className="bg-[#050505] text-blue-400 py-3 px-4 rounded-xl font-bold">SOAP</div>
-              <div className="bg-[#ecfeff] text-cyan-700 border border-cyan-200/60 py-3 px-4 rounded-xl">XML</div>
-
-              <div className="bg-[#fcfbf9] border border-neutral-200/80 text-neutral-700 py-3 px-4 rounded-xl">JSON</div>
-              <div className="bg-[#fefce8] text-amber-700 border border-amber-200/60 py-3 px-4 rounded-xl">EDI</div>
-              <div className="bg-[#050505] text-white py-3 px-4 rounded-xl font-bold">LDAP</div>
-              <div className="bg-[#f5f3ff] text-purple-700 border border-purple-200/60 py-3 px-4 rounded-xl">SAML</div>
-              <div className="bg-[#fcfbf9] border border-neutral-200/80 text-neutral-700 py-3 px-4 rounded-xl">OAuth</div>
-              <div className="bg-[#ecfeff] text-cyan-700 border border-cyan-200/60 py-3 px-4 rounded-xl">SMTP</div>
-            </div>
-          </motion.div>
-
+                {/* Render Custom Mini-UI Widget */}
+                {item.widget}
+              </motion.div>
+            );
+          })}
         </div>
+
       </div>
     </section>
   );

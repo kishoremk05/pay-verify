@@ -1,120 +1,122 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { Sliders, ChevronRight } from "lucide-react";
-
-const steps = [
-  {
-    step: "01",
-    phase: "Phase 01 · Feed Integration",
-    week: "Week 01",
-    title: "Connect payment channels",
-    desc: "Link Paystack API keys, bank statement feeds, and CSV invoice templates into TODELLAA.",
-  },
-  {
-    step: "02",
-    phase: "Phase 02 · AI Tuning",
-    week: "Wks 01–02",
-    title: "Configure matching rules",
-    desc: "Train TODELLAA's matching engine against historical reference numbers, partial payments, and fee structures.",
-  },
-  {
-    step: "03",
-    phase: "Phase 03 · Live Sync",
-    week: "Wks 02–03",
-    title: "Activate real-time matching",
-    desc: "Automate invoice verification and instant status syncing across billing databases and portals.",
-  },
-  {
-    step: "04",
-    phase: "Phase 04 · Continuous Audit",
-    week: "Ongoing",
-    title: "Automate compliance & insights",
-    desc: "Continuous operations with real-time audit logging, anomaly flags, and automated financial reporting.",
-  },
-];
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Quote, ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Engagement() {
+  const testimonials = [
+    {
+      quote: "TODELLAA gives us accuracy, visibility and control over our finances like never before.",
+      author: "Michael Dei",
+      role: "Finance Director, Bright Future Schools",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80",
+    },
+    {
+      quote: "Our month-end payment reconciliation went from taking 5 days down to under 20 minutes.",
+      author: "Sarah Kwakye",
+      role: "Head of Operations, Apex Health Clinics",
+      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80",
+    },
+    {
+      quote: "Matching bank transfers and Mobile Money deposits across our 3 campuses is now 100% automated.",
+      author: "Emmanuel Mensah",
+      role: "Bursar, Heritage International College",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80",
+    },
+  ];
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
+
+  const current = testimonials[currentIndex];
+
   return (
-    <section id="engagement" className="relative py-20 sm:py-28 border-t border-neutral-300/80 shadow-[inset_0_20px_35px_-15px_rgba(0,0,0,0.03)] bg-[#f7f6f1]/60 z-10 scroll-mt-20 font-sans">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+    <section className="py-16 sm:py-24 bg-[#f7f6f1] text-[#010101] font-sans border-t border-[#e6e4dc]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start relative">
+        <div className="bg-linear-to-br from-[#fef3eb] via-[#fff7f4] to-[#fef3eb] border border-[#fcdcc5] rounded-3xl p-8 sm:p-12 shadow-sm relative overflow-hidden">
           
-          {/* Left Column - STICKY Header */}
-          <div className="lg:col-span-5 lg:sticky lg:top-28 space-y-6 text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-neutral-300/80 bg-white/70 backdrop-blur-xs text-xs font-normal text-neutral-800 shadow-2xs select-none">
-              <Sliders className="w-3.5 h-3.5 text-neutral-800" />
-              <span>Onboarding</span>
-            </div>
-
-            <h2 className="font-sans font-bold text-3xl sm:text-4xl lg:text-[46px] tracking-[-0.035em] text-[#0a0a0a] leading-[1.12]">
-              <span className="block">How We Onboard.</span>
-              <span className="block">In Days, Not Months</span>
-            </h2>
-
-            <p className="text-neutral-500 text-base sm:text-lg leading-[1.6] font-normal">
-              TODELLAA integrates with your existing billing software, bank feeds, and payment gateways in <strong className="text-neutral-900 font-semibold">days</strong>.
-            </p>
-
-            <p className="text-neutral-500 text-base sm:text-lg leading-[1.6] font-normal">
-              Eliminate manual reconciliation backlogs without altering how your organization accepts payments.
-            </p>
-
-            <div className="pt-4">
-              <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-2xs flex items-center justify-between">
-                <span className="text-sm sm:text-base font-semibold text-neutral-800">
-                  Setup to live reconciliation
-                </span>
-                <span className="text-xl sm:text-2xl font-bold text-[#3675ff]">
-                  1–4 weeks
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column - SCROLLABLE Timeline */}
-          <div className="lg:col-span-7 relative pl-8 sm:pl-10 space-y-16 sm:space-y-20 border-l-2 border-[#3675ff]/40">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8 relative z-10">
             
-            {steps.map((item, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="relative bg-white/70 border border-neutral-200/80 rounded-2xl p-7 sm:p-8 shadow-2xs text-left group hover:border-neutral-300 hover:bg-white transition-all"
-              >
-                {/* Timeline Node Dot on Vertical Line */}
-                <div className="absolute -left-[41px] sm:-left-[49px] top-8 w-5 h-5 rounded-full bg-[#3675ff] border-4 border-[#f7f6f1] shadow-2xs" />
+            {/* Quote Icon Badge */}
+            <div className="w-16 h-16 rounded-2xl bg-[#e8562a] text-white flex items-center justify-center shrink-0 shadow-md">
+              <Quote className="w-8 h-8 fill-current" />
+            </div>
 
-                {/* Top Row: Number & Week Badge */}
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-2xl font-bold font-mono text-[#3675ff]">
-                    {item.step}
-                  </span>
-                  
-                  <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-neutral-200 bg-white text-xs font-mono font-medium text-neutral-700 shadow-2xs">
-                    <ChevronRight className="w-3 h-3 text-neutral-500" />
-                    <span>{item.week}</span>
+            {/* Content & Carousel */}
+            <div className="grow text-center md:text-left">
+              
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <blockquote className="font-sans font-extrabold text-2xl sm:text-3xl md:text-[32px] text-[#010101] leading-snug tracking-tight mb-8">
+                    "{current.quote}"
+                  </blockquote>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#fcdcc5] pt-6">
+                    <div className="flex items-center gap-4 text-left">
+                      <img
+                        src={current.avatar}
+                        alt={current.author}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-[#e8562a]"
+                      />
+                      <div>
+                        <h4 className="font-bold text-base text-[#010101]">{current.author}</h4>
+                        <p className="text-xs text-[#737373] font-medium">{current.role}</p>
+                      </div>
+                    </div>
+
+                    {/* Controls */}
+                    <div className="flex items-center gap-4">
+                      {/* Pagination Dots */}
+                      <div className="flex items-center gap-1.5">
+                        {testimonials.map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setCurrentIndex(i)}
+                            className={`h-2 rounded-full transition-all cursor-pointer ${
+                              i === currentIndex ? "w-6 bg-[#e8562a]" : "w-2 bg-[#d4d4d4]"
+                            }`}
+                            aria-label={`Go to slide ${i + 1}`}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Arrows */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handlePrev}
+                          className="w-9 h-9 rounded-full bg-white border border-[#d4d4d4] hover:bg-neutral-50 text-[#010101] flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
+                          aria-label="Previous Testimonial"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={handleNext}
+                          className="w-9 h-9 rounded-full bg-white border border-[#d4d4d4] hover:bg-neutral-50 text-[#010101] flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
+                          aria-label="Next Testimonial"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Phase Label */}
-                <span className="text-xs font-medium tracking-wider text-neutral-400 uppercase block font-sans">
-                  {item.phase}
-                </span>
+                </motion.div>
+              </AnimatePresence>
 
-                {/* Title */}
-                <h3 className="text-2xl font-bold text-[#0a0a0a] tracking-tight mt-1 font-sans">
-                  {item.title}
-                </h3>
-
-                {/* Description */}
-                <p className="mt-3 text-neutral-600 text-base leading-relaxed font-normal font-sans">
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
+            </div>
 
           </div>
 

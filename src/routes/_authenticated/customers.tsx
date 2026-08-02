@@ -125,7 +125,7 @@ function CustomerExcelPreview() {
   ];
 
   return (
-    <div className="border border-border/60 rounded-2xl overflow-hidden bg-background shadow-[var(--shadow-card)] font-sans text-sm mt-4">
+    <div className="border border-border/60 rounded-2xl overflow-hidden bg-background shadow-(--shadow-card) font-sans text-sm mt-4">
       <div className="bg-muted/30 border-b border-border/60 px-4 py-3 flex items-center justify-between text-xs text-muted-foreground">
         <span className="font-bold flex items-center gap-2 text-foreground">
           <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
@@ -633,7 +633,7 @@ function CustomersPage() {
                 <Info className="h-4 w-4 text-primary" /> View Excel Format
               </Button>
             </DialogTrigger>
-            <DialogContent className="rounded-3xl border-border/60 bg-card max-w-2xl sm:max-w-3xl p-6 sm:p-8 shadow-[var(--shadow-elegant)]">
+            <DialogContent className="rounded-3xl border-border/60 bg-card max-w-2xl sm:max-w-3xl p-6 sm:p-8 shadow-(--shadow-elegant)">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-xl font-extrabold text-foreground font-sans">
                   <Users className="h-5 w-5 text-blue-600" />
@@ -669,7 +669,7 @@ function CustomersPage() {
                     <Plus className="h-4 w-4" /> Add Customer
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="rounded-3xl border-border/60 bg-card max-w-md p-6 sm:p-8 shadow-[var(--shadow-elegant)] max-h-[90vh] overflow-y-auto">
+                <DialogContent className="rounded-3xl border-border/60 bg-card max-w-md p-6 sm:p-8 shadow-(--shadow-elegant) max-h-[90vh] overflow-y-auto">
                   <DialogHeader className="pb-4 border-b border-border/40">
                     <DialogTitle className="text-xl font-extrabold tracking-tight text-foreground font-sans">
                       {editing ? "Modify Customer Details" : "Register New Customer"}
@@ -727,7 +727,7 @@ function CustomersPage() {
                       </Label>
                       <div className="flex gap-2">
                         <Select value={phoneCode} onValueChange={setPhoneCode}>
-                          <SelectTrigger className="w-[120px] rounded-full px-4 h-10 border-border/80 bg-background text-foreground transition-all shrink-0">
+                          <SelectTrigger className="w-30 rounded-full px-4 h-10 border-border/80 bg-background text-foreground transition-all shrink-0">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -798,10 +798,10 @@ function CustomersPage() {
         </div>
       </div>
 
-      <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden">
+      <Card className="border-border/60 bg-card shadow-(--shadow-card) rounded-2xl overflow-hidden">
         <CardContent className="p-6 space-y-6">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative max-w-md flex-1 min-w-[280px]">
+            <div className="relative max-w-md flex-1 min-w-70">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 className="pl-11 pr-5 h-11 rounded-full border-border/80 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary/85 bg-background text-foreground transition-all"
@@ -971,7 +971,7 @@ function CustomersPage() {
       </Card>
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-[var(--shadow-elegant)] max-w-md">
+        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-(--shadow-elegant) max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-extrabold text-foreground font-sans">
               Delete Customer
@@ -996,7 +996,7 @@ function CustomersPage() {
       </AlertDialog>
 
       <AlertDialog open={batchDeleteOpen} onOpenChange={setBatchDeleteOpen}>
-        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-[var(--shadow-elegant)] max-w-md">
+        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-(--shadow-elegant) max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-extrabold text-foreground font-sans">
               Delete Selected Customers
@@ -1025,7 +1025,7 @@ function CustomersPage() {
         open={!!duplicateCustomer}
         onOpenChange={(open) => !open && setDuplicateCustomer(null)}
       >
-        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-[var(--shadow-elegant)] max-w-md">
+        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-(--shadow-elegant) max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-extrabold text-foreground font-sans">
               Possible Duplicate Found

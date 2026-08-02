@@ -4,12 +4,12 @@ import Navbar from "@/components/landingpage ui/Navbar";
 import Hero from "@/components/landingpage ui/Hero";
 import Stats from "@/components/landingpage ui/Stats";
 import HeroImage from "@/components/landingpage ui/HeroImage";
-import SystemComponents from "@/components/landingpage ui/SystemComponents";
-import Why from "@/components/landingpage ui/Why";
 import Capabilities from "@/components/landingpage ui/Capabilities";
 import WhoWeServe from "@/components/landingpage ui/WhoWeServe";
-import Engagement from "@/components/landingpage ui/Engagement";
+import SystemComponents from "@/components/landingpage ui/SystemComponents";
 import Pricing from "@/components/landingpage ui/Pricing";
+import Engagement from "@/components/landingpage ui/Engagement";
+import CTABanner from "@/components/landingpage ui/CTABanner";
 import FAQ from "@/components/landingpage ui/FAQ";
 import Footer from "@/components/landingpage ui/Footer";
 
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "TODELLAA — AI-Powered Payment Reconciliation Platform" },
-      { name: "description", content: "TODELLAA automates payment reconciliation for organizations and businesses. Match invoices with Paystack, bank transfers, and mobile money providers in real time." },
+      { name: "description", content: "TODELLAA automates payment verification, matches payments from multiple sources, and gives you real-time clarity in one secure platform." },
     ],
   }),
   component: LandingPage,
@@ -27,22 +27,23 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   return (
-    <div className="relative min-h-screen bg-[#f7f6f1] text-[#010101] font-sans antialiased selection:bg-[#010101] selection:text-[#f7f6f1]">
-      {/* Background Grid Lines & Glows */}
+    <div className="relative min-h-screen bg-[#f7f6f1] text-[#010101] font-sans antialiased selection:bg-[#e8562a] selection:text-white overflow-x-hidden">
+      {/* Background Grid Lines */}
       <GridLines />
 
       {/* Page Layout */}
       <div className="relative z-10 flex flex-col min-h-screen">
         <Navbar />
-        <main className="flex-grow">
+        <main className="grow">
           <Hero />
           <Stats />
           <HeroImage />
-          <SystemComponents />
           <Capabilities />
           <WhoWeServe />
-          <Engagement />
+          <SystemComponents />
           <Pricing />
+          <Engagement />
+          <CTABanner />
           <FAQ />
         </main>
         <Footer />

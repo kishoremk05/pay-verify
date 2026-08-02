@@ -590,7 +590,7 @@ function InvoicesPage() {
                 <Plus className="h-4.5 w-4.5" /> Create Invoice
               </Button>
             </DialogTrigger>
-            <DialogContent className="border border-border/60 bg-card shadow-[var(--shadow-elegant)] rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="border border-border/60 bg-card shadow-(--shadow-elegant) rounded-3xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-lg font-bold text-foreground">
                   Create New Invoice
@@ -839,7 +839,7 @@ function InvoicesPage() {
                         }
                       }}
                     >
-                      <SelectTrigger className="w-[120px] h-8 text-xs rounded-lg px-2">
+                      <SelectTrigger className="w-30 h-8 text-xs rounded-lg px-2">
                         <SelectValue placeholder="None" />
                       </SelectTrigger>
                       <SelectContent>
@@ -922,9 +922,8 @@ function InvoicesPage() {
         )}
       </div>
 
-      {/* KPI Cards */}
       <div className="grid gap-5 sm:grid-cols-3">
-        <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
+        <Card className="border-border/60 bg-card shadow-(--shadow-card) rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -940,7 +939,7 @@ function InvoicesPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
+        <Card className="border-border/60 bg-card shadow-(--shadow-card) rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -956,7 +955,7 @@ function InvoicesPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-card shadow-[var(--shadow-card)] rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
+        <Card className="border-border/60 bg-card shadow-(--shadow-card) rounded-2xl overflow-hidden hover:scale-[1.01] transition-transform duration-200">
           <CardContent className="p-6 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
@@ -974,7 +973,7 @@ function InvoicesPage() {
       </div>
 
       {/* Table & Searches */}
-      <Card className="border-border/60 bg-card/90 backdrop-blur-xl shadow-[var(--shadow-card)] rounded-[2rem] overflow-hidden">
+      <Card className="border-border/60 bg-card/90 backdrop-blur-xl shadow-(--shadow-card) rounded-[2rem] overflow-hidden">
         <div className="p-6 border-b border-border/40 flex flex-wrap gap-4 items-center justify-between bg-muted/10">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
@@ -988,7 +987,7 @@ function InvoicesPage() {
           <div className="flex items-center gap-3">
             <DateRangeFilter onChange={setDateRange} />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[170px] rounded-full h-10 border-border/80">
+              <SelectTrigger className="w-42.5 rounded-full h-10 border-border/80">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -1018,7 +1017,7 @@ function InvoicesPage() {
               </p>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse min-w-[800px]">
+            <table className="w-full text-left border-collapse min-w-200">
               <thead>
                 <tr className="border-b border-border/40 text-[10px] font-black uppercase text-muted-foreground bg-muted/20">
                   {!isReadOnly && (
@@ -1474,7 +1473,7 @@ function InvoicesPage() {
       </Dialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-[var(--shadow-elegant)] max-w-md">
+        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-(--shadow-elegant) max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-extrabold text-foreground font-sans">
               Delete Invoice
@@ -1499,7 +1498,7 @@ function InvoicesPage() {
       </AlertDialog>
 
       <AlertDialog open={batchDeleteOpen} onOpenChange={setBatchDeleteOpen}>
-        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-[var(--shadow-elegant)] max-w-md">
+        <AlertDialogContent className="rounded-3xl border-border/60 bg-card p-6 sm:p-8 shadow-(--shadow-elegant) max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-extrabold text-foreground font-sans">
               Delete Selected Invoices
