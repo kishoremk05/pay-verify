@@ -123,16 +123,16 @@ export default function FAQ() {
             <div className="pt-4">
               <div className="bg-white border border-neutral-200/80 rounded-2xl p-5 shadow-2xs space-y-3">
                 <span className="text-sm font-bold text-[#0a0a0a] block tracking-tight">
-                  Have custom requirements?
+                  Need a custom solution?
                 </span>
                 <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed font-normal">
-                  Reach out directly to our architecture engineers to discuss your agency setup.
+                  Every business operates differently. If you have unique payment workflows or reconciliation requirements, our team can help tailor Todellaa to suit your organisation.
                 </p>
                 <Link
                   to="/contact"
                   className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0a0a0a] hover:bg-black text-white text-xs font-semibold shadow-2xs transition-colors mt-2"
                 >
-                  <span>Contact Architecture Team</span>
+                  <span>Contact Our Team</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>

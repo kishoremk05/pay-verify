@@ -17,8 +17,6 @@ export default function HeroImage() {
 
   return (
     <section ref={containerRef} className="relative py-16 sm:py-24 bg-transparent overflow-hidden z-10">
-      {/* Dark Black Fill Box in lower section */}
-      <div className="absolute bottom-0 inset-x-0 h-1/2 bg-[#121214] border-t border-neutral-800 z-0" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-center relative z-10">
         <motion.div
