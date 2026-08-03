@@ -26,10 +26,26 @@ export default function Footer() {
           {/* Column 1: Logo & Description (4 cols) */}
           <div className="md:col-span-4 flex flex-col justify-between">
             <div>
-              <Link to="/" className="flex items-center gap-2.5 select-none mb-4">
-                <div className="w-8 h-8 rounded-lg bg-[#010101] text-white font-black text-sm flex items-center justify-center">
-                  T
-                </div>
+              <Link to="/" className="flex items-center gap-2.5 select-none mb-4 group">
+                <svg className="w-8 h-8 shrink-0 group-hover:scale-105 transition-transform duration-200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="footerLogoGrad" x1="30" y1="30" x2="170" y2="170" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#0052FF" />
+                      <stop offset="100%" stopColor="#00D3FF" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M40 50 C 40 50, 90 40, 160 40 C 170 40, 170 50, 160 60 C 130 90, 120 120, 105 160 C 100 170, 90 170, 85 160 C 75 140, 70 120, 75 90 Z"
+                    fill="url(#footerLogoGrad)"
+                  />
+                  <path
+                    d="M80 95 L105 120 L150 70"
+                    stroke="white"
+                    strokeWidth="16"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
                 <span className="text-xl font-bold tracking-tight text-[#010101]">TODELLAA</span>
               </Link>
 

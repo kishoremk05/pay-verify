@@ -37,28 +37,30 @@ export default function Navbar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 w-full font-sans">
-      {/* Announcement Bar */}
-      <div className="bg-white border-b border-[#e6e4dc] py-2 px-4 text-center text-xs sm:text-sm font-medium text-[#404040] flex items-center justify-center gap-2 select-none">
-        <Sparkles className="w-3.5 h-3.5 text-[#e8562a] shrink-0" />
-        <span>
-          <strong className="font-semibold text-[#1c1917]">New:</strong> SWIFT MT940 statement reconciliation is here!
-        </span>
-        <Link
-          to="/reconciliation"
-          className="text-[#e8562a] font-semibold hover:underline inline-flex items-center gap-1 ml-1"
-        >
-          Explore now <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
-
       {/* Main Header Navbar */}
       <header className="bg-white/90 backdrop-blur-md border-b border-[#e6e4dc] transition-all">
         <div className="flex items-center justify-between px-4 sm:px-8 lg:px-12 py-3.5 max-w-7xl mx-auto w-full">
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-2.5 select-none shrink-0 group">
-            <div className="w-8 h-8 rounded-lg bg-[#010101] text-white font-black text-sm flex items-center justify-center shadow-xs">
-              T
-            </div>
+            <svg className="w-8 h-8 shrink-0 group-hover:scale-105 transition-transform duration-200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="logoGrad" x1="30" y1="30" x2="170" y2="170" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#0052FF" />
+                  <stop offset="100%" stopColor="#00D3FF" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M40 50 C 40 50, 90 40, 160 40 C 170 40, 170 50, 160 60 C 130 90, 120 120, 105 160 C 100 170, 90 170, 85 160 C 75 140, 70 120, 75 90 Z"
+                fill="url(#logoGrad)"
+              />
+              <path
+                d="M80 95 L105 120 L150 70"
+                stroke="white"
+                strokeWidth="16"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             <span className="text-xl font-bold tracking-tight text-[#010101]">TODELLAA</span>
           </Link>
 
