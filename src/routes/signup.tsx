@@ -337,8 +337,8 @@ function SignupPage() {
           </Link>
         </div>
 
-        {/* Bottom Testimonial Quote */}
-        <div className="relative z-10 max-w-lg mb-8 space-y-4 text-left">
+        {/* Bottom Testimonial Quote - Hidden for now since reviews are not actual reviews */}
+        {/* <div className="relative z-10 max-w-lg mb-8 space-y-4 text-left">
           <blockquote className="text-3xl lg:text-4xl font-extrabold tracking-tight leading-[1.2] text-white font-sans">
             "Simply all the tools that my team and I need."
           </blockquote>
@@ -350,7 +350,7 @@ function SignupPage() {
               Enterprise Account Executive
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* ─── RIGHT PANEL: FORM / PLAN SELECTION / PLAN DETAILS ─── */}

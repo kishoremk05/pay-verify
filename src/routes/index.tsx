@@ -8,7 +8,7 @@ import Capabilities from "@/components/landingpage ui/Capabilities";
 import WhoWeServe from "@/components/landingpage ui/WhoWeServe";
 import SystemComponents from "@/components/landingpage ui/SystemComponents";
 import Pricing from "@/components/landingpage ui/Pricing";
-import Engagement from "@/components/landingpage ui/Engagement";
+// import Engagement from "@/components/landingpage ui/Engagement";
 import CTABanner from "@/components/landingpage ui/CTABanner";
 import FAQ from "@/components/landingpage ui/FAQ";
 import Footer from "@/components/landingpage ui/Footer";
@@ -42,7 +42,7 @@ function LandingPage() {
           <WhoWeServe />
           <SystemComponents />
           <Pricing />
-          <Engagement />
+          {/* <Engagement /> */}
           <CTABanner />
           <FAQ />
         </main>

@@ -40,7 +40,7 @@ function LandingPage() {
       <ClarityAndAction />
       <HalftoneSpreadsheets />
       <JournalSection />
-      <TestimonialSection />
+      {/* <TestimonialSection /> */}
       <CTABanner />
       <Footer />
     </div>
