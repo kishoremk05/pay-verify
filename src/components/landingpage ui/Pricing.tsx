@@ -41,7 +41,7 @@ export default function Pricing() {
       features: [
         "Unlimited invoices",
         "Auto reconciliation engine",
-        "AI Assistant (Basic)",
+        "Smart Assistant (Basic)",
         "Advanced financial reports",
         "Priority 24/7 support",
         "Multi-branch & campus scoping",
@@ -61,7 +61,7 @@ export default function Pricing() {
       ctaVariant: "outline",
       features: [
         "Everything in Professional",
-        "AI Assistant (Advanced)",
+        "Smart Assistant (Advanced)",
         "Custom ERP & bank integrations",
         "Dedicated account manager",
         "99.9% SLA & premium support",

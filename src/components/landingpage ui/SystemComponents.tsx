@@ -113,19 +113,19 @@ export default function SystemComponents() {
             </div>
           </div>
 
-          {/* RIGHT BLOCK: AI-POWERED INTELLIGENCE SPOTLIGHT */}
+          {/* RIGHT BLOCK: SMART AUTOMATION SPOTLIGHT */}
           <div id="ai-tools" className="lg:col-span-6 bg-[#faf9f6] border border-[#ecebe4] rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-sm">
             <div>
               <div className="flex items-center gap-2 text-xs font-bold text-[#737373] uppercase tracking-wider mb-2">
-                <Sparkles className="w-4 h-4 text-[#e8562a]" /> AI-Powered Intelligence
+                <Sparkles className="w-4 h-4 text-[#e8562a]" /> Smart Automation
               </div>
 
               <h3 className="font-sans font-extrabold text-2xl sm:text-3xl text-[#010101] tracking-tight mb-3">
-                Work smarter with AI
+                Work smarter with automation
               </h3>
 
               <p className="text-sm text-[#525252] leading-relaxed mb-6">
-                TODELLAA's AI engine helps you detect issues, suggest matches and deliver actionable insights.
+                TODELLAA's smart engine helps you detect issues, suggest matches and deliver actionable insights.
               </p>
 
               {/* AI Capabilities List */}
@@ -136,7 +136,7 @@ export default function SystemComponents() {
                     <Bot className="w-4 h-4" />
                   </div>
                   <div>
-                    <h5 className="font-bold text-sm text-[#010101]">AI Reconciliation Assistant</h5>
+                    <h5 className="font-bold text-sm text-[#010101]">Smart Reconciliation Assistant</h5>
                     <p className="text-xs text-[#737373]">Find potential matches and reduce manual work.</p>
                   </div>
                 </div>
@@ -178,7 +178,7 @@ export default function SystemComponents() {
             <div className="bg-white rounded-2xl border border-[#ecebe4] p-4 shadow-sm">
               <div className="flex items-center justify-between border-b border-[#f0eee6] pb-2 mb-3">
                 <span className="text-xs font-bold text-[#010101]">Potential Matches (12)</span>
-                <span className="text-[10px] font-semibold text-[#404040] bg-[#faf9f6] border border-[#e6e4dc] px-2 py-0.5 rounded">Live AI Suggestions</span>
+                <span className="text-[10px] font-semibold text-[#404040] bg-[#faf9f6] border border-[#e6e4dc] px-2 py-0.5 rounded">Live Suggestions</span>
               </div>
 
               <div className="space-y-2 mb-3">

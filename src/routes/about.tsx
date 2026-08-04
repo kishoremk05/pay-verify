@@ -52,7 +52,7 @@ function AboutPage() {
               Todellaa started with a simple realization: matching mobile money SMS alerts, bank transfers, and processor webhooks manually with billing invoices is highly prone to human error and creates massive accounting delays.
             </p>
             <p className="text-sm text-slate-550 leading-relaxed font-light">
-              We set out to build an isolated, real-time matching system that parses statements dynamically, isolates tenant databases cryptographically, and utilizes semantic AI to resolve incomplete records. Today, businesses across West Africa rely on Todellaa for core payment operations.
+              We set out to build an isolated, real-time matching system that parses statements dynamically, isolates tenant databases cryptographically, and utilizes smart matching algorithms to resolve incomplete records. Today, businesses across West Africa rely on Todellaa for core payment operations.
             </p>
           </motion.div>
 

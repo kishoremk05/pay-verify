@@ -1322,7 +1322,7 @@ function PaymentsPage() {
                                   variant="outline"
                                   className="h-9 w-9 rounded-full border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 text-purple-600 dark:text-purple-400 mr-2 cursor-pointer transition-transform hover:scale-105"
                                   onClick={() => setAiAnalysisPaymentId(p.id)}
-                                  title="AI Reconciliation Insight"
+                                  title="Smart Reconciliation Insight"
                                 >
                                   <Sparkles className="h-4 w-4" />
                                 </Button>
@@ -1538,7 +1538,7 @@ function PaymentsPage() {
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        <p className="text-xs font-semibold">AI Reconciliation Assistant</p>
+                                          <p className="text-xs font-semibold">Smart Reconciliation Assistant</p>
                                       </TooltipContent>
                                     </Tooltip>
 
@@ -1674,7 +1674,7 @@ function PaymentsPage() {
           <DialogHeader className="pb-4 border-b border-border/40">
             <DialogTitle className="flex items-center gap-2 text-xl font-extrabold text-foreground font-sans">
               <Sparkles className="h-5 w-5 text-purple-500 animate-pulse" />
-              AI Reconciliation Analysis
+              Smart Reconciliation Analysis
             </DialogTitle>
           </DialogHeader>
 

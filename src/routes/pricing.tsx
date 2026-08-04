@@ -34,7 +34,7 @@ function PricingPage() {
       features: [
         "Up to 15,000 monthly transactions",
         "SWIFT MT940 statement parsing",
-        "AI Reconciliation Assistant",
+        "Smart Reconciliation Assistant",
         "Multi-branch workspace support",
         "Priority Slack & email support",
       ],

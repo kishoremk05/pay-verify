@@ -74,21 +74,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TODELLAA — AI-Powered Payment Reconciliation Platform" },
+      { title: "TODELLAA — Automated Payment Reconciliation Platform" },
       {
         name: "description",
         content:
           "TODELLAA automates payment reconciliation for organizations and businesses. Match invoices with Paystack, bank transfers, and mobile money providers in real time.",
       },
       { name: "author", content: "Dr Noskim Atidigah, TODELLAA" },
-      { name: "keywords", content: "payment reconciliation, invoice matching, Paystack, bank sync, mobile money, financial operations, AI reconciliation, TODELLAA" },
+      { name: "keywords", content: "payment reconciliation, invoice matching, Paystack, bank sync, mobile money, financial operations, automated reconciliation, TODELLAA" },
       { name: "theme-color", content: "#3675ff" },
       // Open Graph
-      { property: "og:title", content: "TODELLAA — AI-Powered Payment Reconciliation" },
+      { property: "og:title", content: "TODELLAA — Automated Payment Reconciliation" },
       {
         property: "og:description",
         content:
-          "Automate invoice matching with Paystack, bank transfers, and mobile money. Built-in analytics, audit logs, and AI insights for financial operations teams.",
+          "Automate invoice matching with Paystack, bank transfers, and mobile money. Built-in analytics, audit logs, and smart insights for financial operations teams.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://todellaa.com" },
@@ -97,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:site_name", content: "TODELLAA" },
       // Twitter Card
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "TODELLAA — AI-Powered Payment Reconciliation" },
+      { name: "twitter:title", content: "TODELLAA — Automated Payment Reconciliation" },
       {
         name: "twitter:description",
         content:

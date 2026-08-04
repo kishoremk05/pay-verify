@@ -84,7 +84,7 @@ function AIDashboardInsights({ stats, orgId }: { stats: any; orgId?: string }) {
         setSummary(resData.summary);
         sessionStorage.setItem(`todella_dashboard_ai_summary_${orgId}`, resData.summary);
       } else {
-        throw new Error(resData.error || "AI pipeline failure");
+        throw new Error(resData.error || "Insights pipeline failure");
       }
     } catch (err: any) {
       console.error(err);
@@ -102,7 +102,7 @@ function AIDashboardInsights({ stats, orgId }: { stats: any; orgId?: string }) {
             <Sparkles className="h-5 w-5 animate-pulse" />
           </div>
           <div>
-            <h3 className="text-lg font-bold tracking-tight text-foreground font-sans">AI Dashboard Insights</h3>
+            <h3 className="text-lg font-bold tracking-tight text-foreground font-sans">Smart Dashboard Insights</h3>
             <p className="text-xs text-muted-foreground">Automated ledger analysis and auditing recommendations</p>
           </div>
         </div>
@@ -111,7 +111,7 @@ function AIDashboardInsights({ stats, orgId }: { stats: any; orgId?: string }) {
             onClick={generateSummary}
             className="bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-md px-5 h-9 text-xs rounded-full shrink-0"
           >
-            Generate AI Insights
+            Generate Insights
           </Button>
         )}
       </div>

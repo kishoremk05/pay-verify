@@ -7,7 +7,7 @@ export const Route = createFileRoute("/reconciliation")({
   head: () => ({
     meta: [
       { title: "Reconciliation Engine — Todellaa" },
-      { name: "description", content: "Learn how Todellaa utilizes AI-driven ledger synthesis, matching prompts, and neural mapping engines to automate transaction verification." }
+      { name: "description", content: "Learn how Todellaa utilizes automated ledger synthesis, matching logic, and smart mapping engines to automate transaction verification." }
     ],
   }),
   component: ReconciliationPage,
@@ -38,7 +38,7 @@ function ReconciliationPage() {
               Reconciliation Engine
             </h1>
             <p className="mt-5 text-slate-550 max-w-xl mx-auto font-sans font-light leading-relaxed">
-              Synthesize mismatched records, resolve fuzzy payment narration texts, and run custom natural-language prompts against your transaction sheets.
+              Synthesize mismatched records, resolve fuzzy payment narration texts, and run custom queries against your transaction sheets.
             </p>
           </motion.div>
 
@@ -56,7 +56,7 @@ function ReconciliationPage() {
               <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-900 shadow-sm mb-6">
                 <Bot className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2 font-sans">AI Reconciliation Assistant</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-2 font-sans">Smart Reconciliation Assistant</h3>
               <p className="text-sm text-slate-550 font-light leading-relaxed">
                 Interact with your upload worksheets using plain language. Ask "find all matches above GHS 1,000 paid via GCB" or "identify mismatch dates".
               </p>
@@ -72,7 +72,7 @@ function ReconciliationPage() {
             <div className="flex items-center gap-2 mb-6">
               <Terminal className="w-5 h-5 text-slate-700" />
               <h3 className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
-                Neural Inference Interface
+                Smart Match Engine Interface
               </h3>
             </div>
             
@@ -83,8 +83,8 @@ function ReconciliationPage() {
               </div>
               <div className="space-y-2">
                 <p className="text-indigo-400">$ todellaa-reconciliation analyze --file payment_upload_template.xlsx</p>
-                <p className="text-slate-400">Loading neural inference model v2.4.1...</p>
-                <p className="text-slate-400">Running semantic matching pipelines over 1,540 ledger rows...</p>
+                <p className="text-slate-400">Loading smart matching engines...</p>
+                <p className="text-slate-400">Running smart matching pipelines over 1,540 ledger rows...</p>
                 <p className="text-emerald-400 font-bold">✓ Analysis complete: 1,532 direct matches resolved. 8 fuzzy mismatches identified.</p>
                 <p className="text-slate-300">Run "show mismatches" to open reconciliation sidebar.</p>
               </div>

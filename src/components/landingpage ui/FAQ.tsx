@@ -6,7 +6,7 @@ import { Plus, Minus, HelpCircle, ArrowRight } from "lucide-react";
 const faqData = [
   {
     q: "How does TODELLAA match bank transfers with invoices?",
-    a: "TODELLAA uses an AI-powered fuzzy matching engine that checks incoming transaction references, sender names, bank deposit amounts, and timestamp windows against outstanding invoices. It automatically verifies exact and high-confidence matches while flagging edge cases for quick one-click human review.",
+    a: "TODELLAA uses a smart fuzzy matching engine that checks incoming transaction references, sender names, bank deposit amounts, and timestamp windows against outstanding invoices. It automatically verifies exact and high-confidence matches while flagging edge cases for quick one-click human review.",
   },
   {
     q: "Which payment gateways and banks are supported out of the box?",

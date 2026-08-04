@@ -74,7 +74,7 @@ export default function Capabilities() {
     {
       icon: Sparkles,
       title: "Auto Reconciliation",
-      desc: "Automatically match payments to invoices with high AI accuracy and zero manual errors.",
+      desc: "Automatically match payments to invoices with high precision and zero manual errors.",
       widget: (
         <div className="bg-slate-50 border border-[#ecebe4] rounded-xl p-2.5 mt-4 font-sans text-xs">
           <div className="flex items-center justify-between text-[10px] font-bold text-[#010101] mb-1">
@@ -120,11 +120,11 @@ export default function Capabilities() {
     },
     {
       icon: Bot,
-      title: "AI Insights & Reports",
-      desc: "Get smart insights, payment trends, and financial summaries powered by AI.",
+      title: "Smart Insights & Reports",
+      desc: "Get smart insights, payment trends, and automated financial summaries.",
       widget: (
         <div className="bg-[#faf9f6] border border-[#ecebe4] rounded-xl p-2 mt-4 font-sans text-[10px] text-[#010101]">
-          <span className="font-bold block">💡 AI Tip:</span>
+          <span className="font-bold block">💡 Smart Tip:</span>
           <span className="text-[#737373]">85% of MoMo payments cleared on Fridays.</span>
         </div>
       ),

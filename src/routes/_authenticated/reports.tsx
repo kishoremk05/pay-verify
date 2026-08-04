@@ -266,14 +266,14 @@ function ReportsPage() {
                   <Sparkles className="h-5 w-5 animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold tracking-tight text-foreground font-sans">AI Reconciliation Audit Insights</h3>
+                  <h3 className="text-lg font-bold tracking-tight text-foreground font-sans">Automated Reconciliation Audit Insights</h3>
                   <p className="text-xs text-muted-foreground">Autonomous review summary & recommendations</p>
                 </div>
               </div>
               <div className="space-y-3">
                 <div className="flex items-start gap-2.5 text-sm text-foreground">
                   <ShieldCheck className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
-                  <span><strong>94.5% automated matching efficiency:</strong> AI consensus engines mapped incoming bank/Paystack transfer rows with zero manual human clicks.</span>
+                  <span><strong>94.5% automated matching efficiency:</strong> smart matching engines mapped incoming bank/Paystack transfer rows with zero manual human clicks.</span>
                 </div>
                 <div className="flex items-start gap-2.5 text-sm text-foreground">
                   <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />

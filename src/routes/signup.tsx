@@ -51,7 +51,7 @@ const plansMap: Record<string, { id: string; name: string; price: string; amount
     features: [
       "Paystack & multi-bank integrations",
       "100% Data ownership & local export",
-      "Custom AI policy matching engine",
+      "Custom policy matching engine",
       "Up to 6 departments supported",
       "SLA-bound technical support & logs",
       "Statutory records retention at write",

@@ -59,11 +59,11 @@ const formatDate = (d: string | null | undefined) => {
 const SCAN_MESSAGES = [
   { pct: 5, msg: "Initializing secure scanning protocol..." },
   { pct: 15, msg: "Decrypting uploaded screenshot metadata..." },
-  { pct: 25, msg: "Connecting to Triple-Engine AI cluster..." },
+  { pct: 25, msg: "Connecting to secure matching engine..." },
   { pct: 40, msg: "Extracting text tokens via OCR pipeline..." },
-  { pct: 55, msg: "xAI Grok Vision analyzing receipt structure..." },
-  { pct: 65, msg: "NVIDIA NIM cross-validating extracted fields..." },
-  { pct: 75, msg: "AI consensus engine comparing results..." },
+  { pct: 55, msg: "Analyzing receipt layout and structure..." },
+  { pct: 65, msg: "Cross-validating extracted fields..." },
+  { pct: 75, msg: "Consensus engine comparing results..." },
   { pct: 85, msg: "Cross-referencing against ledger expected amount..." },
   { pct: 92, msg: "Finalizing reconciliation verdict..." },
   { pct: 100, msg: "Analysis complete." },
@@ -574,7 +574,7 @@ function InvoicePortalPage() {
             <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mb-4" />
             <h3 className="text-lg font-black text-white mb-1">Scanning Receipt</h3>
             <p className="text-xs text-indigo-300 max-w-sm mx-auto leading-relaxed">
-              Your payment proof is being analyzed securely by the AI engines. Please do not close
+              Your payment proof is being analyzed securely by the matching engine. Please do not close
               this window.
             </p>
           </div>

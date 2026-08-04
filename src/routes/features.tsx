@@ -7,7 +7,7 @@ export const Route = createFileRoute("/features")({
   head: () => ({
     meta: [
       { title: "Core Features — Todellaa" },
-      { name: "description", content: "Explore the core features of Todellaa, including AI-driven ledger matching, multi-format spreadsheet imports, and instant transaction validation." }
+      { name: "description", content: "Explore the core features of Todellaa, including automated ledger matching, multi-format spreadsheet imports, and instant transaction validation." }
     ],
   }),
   component: FeaturesPage,
@@ -22,8 +22,8 @@ function FeaturesPage() {
     },
     {
       icon: Sparkles,
-      title: "AI Resolution Engine",
-      desc: "Resolve fuzzy matches, mismatch dates, and custom narration notes automatically with our advanced semantic verification assistant."
+      title: "Smart Resolution Engine",
+      desc: "Resolve fuzzy matches, mismatch dates, and custom narration notes automatically with our automated verification engine."
     },
     {
       icon: FileText,

@@ -351,7 +351,7 @@ export default function Hero() {
                       <Bot className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <h5 className="text-xs font-bold text-[#010101]">AI Reconciliation Assistant</h5>
+                      <h5 className="text-xs font-bold text-[#010101]">Smart Reconciliation Assistant</h5>
                       <p className="text-[10px] text-[#737373] mt-1 leading-snug font-medium">
                         12 potential matches found. Review and confirm matches to improve accuracy.
                       </p>
