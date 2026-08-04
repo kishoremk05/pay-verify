@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/payments")({
-  head: () => ({ meta: [{ title: "Payments — Todella" }] }),
+  head: () => ({ meta: [{ title: "Payments — Todellaa" }] }),
   component: PaymentsPage,
 });
 

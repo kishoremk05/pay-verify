@@ -18,8 +18,8 @@ export { Navbar, Footer };
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "TODELLAA — Automated Payment Reconciliation Platform" },
-      { name: "description", content: "TODELLAA automates payment verification, matches payments from multiple sources, and gives you real-time clarity in one secure platform." },
+      { title: "Todellaa | Payment Verification & Reconciliation" },
+      { name: "description", content: "Todellaa helps businesses verify payments, reconcile transactions, and maintain accurate financial records with confidence." },
     ],
   }),
   component: LandingPage,

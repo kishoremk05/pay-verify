@@ -30,7 +30,7 @@ import {
 import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/audit-logs")({
-  head: () => ({ meta: [{ title: "Audit Trail — Todella" }] }),
+  head: () => ({ meta: [{ title: "Audit Trail — Todellaa" }] }),
   component: SecureAuditLogsPage,
 });
 

@@ -21,8 +21,8 @@ type FormValues = z.infer<typeof schema>;
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact Sales & Technical Support — Todella" },
-      { name: "description", content: "Reach out to Todella integration specialists for high-integrity payment reconciliation." }
+      { title: "Contact Sales & Technical Support — Todellaa" },
+      { name: "description", content: "Reach out to Todellaa integration specialists for high-integrity payment verification and reconciliation." }
     ],
   }),
   component: ContactPage,

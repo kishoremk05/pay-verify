@@ -49,7 +49,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/refunds")({
-  head: () => ({ meta: [{ title: "Refunds — Todella" }] }),
+  head: () => ({ meta: [{ title: "Refunds — Todellaa" }] }),
   component: RefundsPage,
 });
 

@@ -66,7 +66,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/customers")({
-  head: () => ({ meta: [{ title: "Customers — Todella" }] }),
+  head: () => ({ meta: [{ title: "Customers — Todellaa" }] }),
   component: CustomersPage,
 });
 

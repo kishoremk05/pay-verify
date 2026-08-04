@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 const API_URL = (import.meta as any).env?.VITE_BACKEND_URL || "http://localhost:5000";
 
 export const Route = createFileRoute("/payment-success")({
-  head: () => ({ meta: [{ title: "Payment Successful — TODELLAA" }] }),
+  head: () => ({ meta: [{ title: "Payment Successful — Todellaa" }] }),
   component: PaymentSuccessPage,
 });
 

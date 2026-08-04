@@ -50,15 +50,30 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border py-4 px-3 bg-sidebar">
-        <Link to="/" className="flex items-center gap-3 select-none">
-          <div className="relative h-9 w-9 flex items-center justify-center font-sans text-2xl font-black italic shrink-0">
-            <span className="absolute text-blue-400 select-none" style={{ transform: "translate(-3px, -2px)" }}>P</span>
-            <span className="absolute text-cyan-400 opacity-85 select-none" style={{ transform: "translate(3px, 2px)" }}>V</span>
-          </div>
+        <Link to="/" className="flex items-center gap-2.5 select-none shrink-0 group">
+          <svg className="w-8 h-8 shrink-0 group-hover:scale-105 transition-transform duration-200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sidebarLogoGrad" x1="30" y1="30" x2="170" y2="170" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#e8562a" />
+                <stop offset="100%" stopColor="#f06e42" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M40 50 C 40 50, 90 40, 160 40 C 170 40, 170 50, 160 60 C 130 90, 120 120, 105 160 C 100 170, 90 170, 85 160 C 75 140, 70 120, 75 90 Z"
+              fill="url(#sidebarLogoGrad)"
+            />
+            <path
+              d="M80 95 L105 120 L150 70"
+              stroke="white"
+              strokeWidth="16"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <span className="font-extrabold text-sm tracking-tight text-white leading-none">
-                Pay<span className="text-cyan-400">Verify</span>
+                Todellaa
               </span>
               <span className="text-[10px] text-sidebar-foreground/60 font-medium truncate mt-1">{organization?.name ?? "Workspace"}</span>
             </div>

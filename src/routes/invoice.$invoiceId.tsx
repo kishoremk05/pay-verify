@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/invoice/$invoiceId")({
-  head: () => ({ meta: [{ title: "Pay Invoice — Todella" }] }),
+  head: () => ({ meta: [{ title: "Pay Invoice — Todellaa" }] }),
   component: InvoicePortalPage,
 });
 
@@ -253,7 +253,7 @@ function InvoicePortalPage() {
 
   const isPaid = invoice.status === "paid";
   const isReview = invoice.status === "review_required";
-  const orgName = invoice.organizations?.name || "Todella";
+  const orgName = invoice.organizations?.name || "Todellaa";
   const initials =
     invoice.customers?.name
       ?.split(" ")
@@ -290,7 +290,7 @@ function InvoicePortalPage() {
 
           <div className="flex items-center gap-5">
             <a
-              href="mailto:support@todella.com"
+              href="mailto:support@todellaa.com"
               className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors font-medium"
             >
               <HelpCircle className="h-3.5 w-3.5" />
@@ -757,7 +757,7 @@ function InvoicePortalPage() {
           </p>
           <p className="text-[10px] text-slate-650 flex items-center gap-1.5 justify-center">
             <span>
-              Secured by <span className="font-bold text-indigo-400/80">Todella</span>
+              Secured by <span className="font-bold text-indigo-400/80">Todellaa</span>
             </span>
             <span>•</span>
             <span>End-to-end encrypted</span>

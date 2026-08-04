@@ -74,41 +74,41 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TODELLAA — Automated Payment Reconciliation Platform" },
+      { title: "Todellaa | Payment Verification & Reconciliation" },
       {
         name: "description",
         content:
-          "TODELLAA automates payment reconciliation for organizations and businesses. Match invoices with Paystack, bank transfers, and mobile money providers in real time.",
+          "Todellaa helps businesses verify payments, reconcile transactions, and maintain accurate financial records with confidence.",
       },
-      { name: "author", content: "Dr Noskim Atidigah, TODELLAA" },
-      { name: "keywords", content: "payment reconciliation, invoice matching, Paystack, bank sync, mobile money, financial operations, automated reconciliation, TODELLAA" },
-      { name: "theme-color", content: "#3675ff" },
+      { name: "author", content: "Dr Noskim Atidigah, Todellaa" },
+      { name: "keywords", content: "payment verification, payment reconciliation, invoice matching, Paystack, bank sync, mobile money, financial operations, automated reconciliation, Todellaa" },
+      { name: "theme-color", content: "#e8562a" },
       // Open Graph
-      { property: "og:title", content: "TODELLAA — Automated Payment Reconciliation" },
+      { property: "og:title", content: "Todellaa | Payment Verification & Reconciliation" },
       {
         property: "og:description",
         content:
-          "Automate invoice matching with Paystack, bank transfers, and mobile money. Built-in analytics, audit logs, and smart insights for financial operations teams.",
+          "Todellaa helps businesses verify payments, reconcile transactions, and maintain accurate financial records with confidence.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://todellaa.com" },
       { property: "og:image", content: "/logo.png" },
-      { property: "og:image:alt", content: "TODELLAA Logo" },
-      { property: "og:site_name", content: "TODELLAA" },
+      { property: "og:image:alt", content: "Todellaa Logo" },
+      { property: "og:site_name", content: "Todellaa" },
       // Twitter Card
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "TODELLAA — Automated Payment Reconciliation" },
+      { name: "twitter:title", content: "Todellaa | Payment Verification & Reconciliation" },
       {
         name: "twitter:description",
         content:
-          "Automate payment matching from invoice to verification. Real-time Paystack, bank, and mobile money reconciliation.",
+          "Todellaa helps businesses verify payments, reconcile transactions, and maintain accurate financial records with confidence.",
       },
       { name: "twitter:image", content: "/logo.png" },
     ],
     links: [
       // Favicon from logo
-      { rel: "icon", type: "image/png", href: "/logo.png" },
-      { rel: "apple-touch-icon", href: "/logo.png" },
+      { rel: "icon", type: "image/png", href: "/logo.png?v=2" },
+      { rel: "apple-touch-icon", href: "/logo.png?v=2" },
       {
         rel: "preconnect",
         href: "https://fonts.googleapis.com",

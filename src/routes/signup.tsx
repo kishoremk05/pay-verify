@@ -80,7 +80,7 @@ const plansMap: Record<string, { id: string; name: string; price: string; amount
 const plansArray = [plansMap.starter, plansMap.growth, plansMap.enterprise];
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Create account — TODELLAA" }] }),
+  head: () => ({ meta: [{ title: "Create account — Todellaa" }] }),
   component: SignupPage,
 });
 
@@ -310,9 +310,9 @@ function SignupPage() {
         style={{ backgroundColor: "#040814" }}
         className="relative hidden lg:flex flex-col justify-between p-12 lg:p-16 text-white overflow-hidden select-none min-h-screen"
       >
-        {/* Abstract Smooth Blue Waves Glow Overlay */}
-        <div className="absolute -bottom-32 -left-32 w-162.5 h-162.5 bg-linear-to-tr from-blue-700/60 via-blue-500/40 to-transparent rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-1/3 -right-32 w-125 h-125 bg-blue-900/40 rounded-full blur-[140px] pointer-events-none" />
+        {/* Abstract Smooth Orange Waves Glow Overlay */}
+        <div className="absolute -bottom-32 -left-32 w-162.5 h-162.5 bg-linear-to-tr from-orange-700/40 via-orange-500/25 to-transparent rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/3 -right-32 w-125 h-125 bg-orange-950/20 rounded-full blur-[140px] pointer-events-none" />
 
         {/* Top Header: Back to Website button ABOVE the logo */}
         <div className="relative z-10 space-y-8">
@@ -330,9 +330,9 @@ function SignupPage() {
           </div>
 
           <Link to="/" className="flex items-center gap-3 select-none">
-            <img src={logo} alt="TODELLAA Logo" className="h-10 w-auto object-contain" />
+            <img src={logo} alt="Todellaa Logo" className="h-10 w-auto object-contain" />
             <span className="text-2xl font-bold tracking-tight text-white font-sans">
-              TODELLAA
+              Todellaa
             </span>
           </Link>
         </div>
@@ -358,9 +358,9 @@ function SignupPage() {
         {/* Mobile Header (Only visible on small screens) */}
         <div className="w-full max-w-md flex items-center justify-between mb-8 lg:hidden">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src={logo} alt="TODELLAA Logo" className="h-8 w-auto object-contain" />
+            <img src={logo} alt="Todellaa Logo" className="h-8 w-auto object-contain" />
             <span className="text-lg font-bold tracking-tight text-black font-sans">
-              TODELLAA
+              Todellaa
             </span>
           </Link>
 
@@ -381,7 +381,7 @@ function SignupPage() {
                 <p className="text-sm text-neutral-500 leading-relaxed font-normal font-sans">
                   {inviteDetails
                     ? `Join ${inviteDetails.organization_name} workspace`
-                    : `Get started with Todella payment reconciliation in minutes.`}
+                    : `Get started with Todellaa payment verification and reconciliation in minutes.`}
                 </p>
               </div>
 

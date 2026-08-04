@@ -148,7 +148,7 @@ function AIDashboardInsights({ stats, orgId }: { stats: any; orgId?: string }) {
 }
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — Todella" }] }),
+  head: () => ({ meta: [{ title: "Dashboard — Todellaa" }] }),
   component: DashboardPage,
 });
 

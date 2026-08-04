@@ -43,7 +43,7 @@ import {
 import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/staff-management")({
-  head: () => ({ meta: [{ title: "Staff Directory — Todella" }] }),
+  head: () => ({ meta: [{ title: "Staff Directory — Todellaa" }] }),
   component: StaffManagementPage,
 });
 

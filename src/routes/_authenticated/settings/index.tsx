@@ -45,7 +45,7 @@ const SUPPORTED_CURRENCIES = [
 ];
 
 export const Route = createFileRoute("/_authenticated/settings/")({
-  head: () => ({ meta: [{ title: "Settings — Todella" }] }),
+  head: () => ({ meta: [{ title: "Settings — Todellaa" }] }),
   component: SettingsPage,
 });
 

@@ -30,8 +30,8 @@ export default function Footer() {
                 <svg className="w-8 h-8 shrink-0 group-hover:scale-105 transition-transform duration-200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <linearGradient id="footerLogoGrad" x1="30" y1="30" x2="170" y2="170" gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stopColor="#0052FF" />
-                      <stop offset="100%" stopColor="#00D3FF" />
+                      <stop offset="0%" stopColor="#e8562a" />
+                      <stop offset="100%" stopColor="#f06e42" />
                     </linearGradient>
                   </defs>
                   <path
@@ -46,7 +46,7 @@ export default function Footer() {
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span className="text-xl font-bold tracking-tight text-[#010101]">TODELLAA</span>
+                <span className="text-xl font-bold tracking-tight text-[#010101]">Todellaa</span>
               </Link>
 
               <p className="text-sm text-[#737373] leading-relaxed max-w-sm font-normal mb-6">

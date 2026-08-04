@@ -24,7 +24,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
-  head: () => ({ meta: [{ title: "Notifications — Todella" }] }),
+  head: () => ({ meta: [{ title: "Notifications — Todellaa" }] }),
   component: NotificationsPage,
 });
 

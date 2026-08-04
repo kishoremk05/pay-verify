@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowLeft, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/payment-failed")({
-  head: () => ({ meta: [{ title: "Payment Cancelled — TODELLAA" }] }),
+  head: () => ({ meta: [{ title: "Payment Cancelled — Todellaa" }] }),
   component: PaymentFailedPage,
 });
 
